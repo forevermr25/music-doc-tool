@@ -117,6 +117,15 @@
         .preview-table .editable-cell:focus { background: rgba(255,255,255,0.08); box-shadow: 0 0 0 2px rgba(247,151,30,0.2); }
         .preview-table .editable-cell.warning { border: 1px solid rgba(245,87,108,0.5); background: rgba(245,87,108,0.05); }
         .preview-table .seq-cell { text-align: center; width: 50px; color: #8892b0; }
+        .preview-table .voice-select {
+            width: 100%; min-width: 100px; padding: 6px 28px 6px 8px; font-size: 0.82rem;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px; color: #e0e0e0; cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center;
+        }
+        .preview-table .voice-select:focus { outline: none; border-color: #f7971e; }
+        .preview-table .voice-select option { background: #1a1a2e; color: #e0e0e0; }
         .info-tip {
             display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px;
             background: rgba(79,172,254,0.08); border: 1px solid rgba(79,172,254,0.2);
@@ -170,16 +179,17 @@
 
         <!-- 音色选择区域 -->
         <div class="card">
-            <div class="card-title">🎙️ 音色设置</div>
+            <div class="card-title">🎙️ 默认音色设置</div>
+            <div class="info-tip">选择默认音色人物和描述，生成后可在预览表格中为每句配音单独修改音色。</div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="voiceCharacterSelect">音色人物</label>
+                    <label for="voiceCharacterSelect">默认音色人物</label>
                     <select id="voiceCharacterSelect">
                         <option value="">请选择音色人物</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="voiceToneSelect">音色描述</label>
+                    <label for="voiceToneSelect">默认音色描述</label>
                     <select id="voiceToneSelect">
                         <option value="">请选择音色描述</option>
                     </select>
@@ -239,6 +249,8 @@
                         <tr>
                             <th>序号</th>
                             <th>应用场景</th>
+                            <th>音色人物</th>
+                            <th>音色描述</th>
                             <th>中文配音内容</th>
                             <th>英文配音内容</th>
                         </tr>
@@ -435,6 +447,47 @@
     // =============================================
     // 预览表格渲染
     // =============================================
+    function buildVoiceCharacterSelect(selectedValue, index) {
+        var html = '<select class="voice-select" data-index="'+index+'" data-field="voiceCharacter" onchange="handleVoiceCharacterChange(this)">';
+        html += '<option value="">请选择</option>';
+        Object.keys(VOICE_CHARACTERS).forEach(function(char) {
+            html += '<option value="'+char+'"'+(char===selectedValue?' selected':'')+'>'+char+'</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function buildVoiceToneSelect(character, selectedTone, index) {
+        var tones = getTonesForCharacter(character);
+        var html = '<select class="voice-select" data-index="'+index+'" data-field="voiceTone" onchange="handleVoiceToneChange(this)">';
+        html += '<option value="">请选择</option>';
+        tones.forEach(function(tone) {
+            html += '<option value="'+tone+'"'+(tone===selectedTone?' selected':'')+'>'+tone+'</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function handleVoiceCharacterChange(selectEl) {
+        var index = parseInt(selectEl.dataset.index);
+        var newChar = selectEl.value;
+        if (appEntries[index]) {
+            appEntries[index].voiceCharacter = newChar;
+            appEntries[index].voiceTone = ''; // 切换人物时清空描述
+        }
+        // 更新同行的音色描述下拉
+        var row = selectEl.closest('tr');
+        var toneCell = row.querySelectorAll('td')[3]; // 第4列是音色描述
+        toneCell.innerHTML = buildVoiceToneSelect(newChar, '', index);
+    }
+
+    function handleVoiceToneChange(selectEl) {
+        var index = parseInt(selectEl.dataset.index);
+        if (appEntries[index]) {
+            appEntries[index].voiceTone = selectEl.value;
+        }
+    }
+
     function renderPreviewTable(entries) {
         var tbody = document.getElementById('previewTableBody');
         var previewCard = document.getElementById('previewCard');
@@ -444,12 +497,24 @@
 
         entries.forEach(function(entry, index) {
             var tr = document.createElement('tr');
+
+            // 序号
             var tdSeq = document.createElement('td');
             tdSeq.className = 'seq-cell'; tdSeq.textContent = index + 1;
 
+            // 应用场景
             var tdScene = document.createElement('td');
             tdScene.textContent = entry.scene;
 
+            // 音色人物下拉
+            var tdChar = document.createElement('td');
+            tdChar.innerHTML = buildVoiceCharacterSelect(entry.voiceCharacter || '', index);
+
+            // 音色描述下拉
+            var tdTone = document.createElement('td');
+            tdTone.innerHTML = buildVoiceToneSelect(entry.voiceCharacter || '', entry.voiceTone || '', index);
+
+            // 中文配音
             var tdChinese = document.createElement('td');
             var inputCn = document.createElement('input');
             inputCn.type = 'text'; inputCn.className = 'editable-cell';
@@ -460,6 +525,7 @@
             if (!entry.chinese || entry.chinese.trim() === '') inputCn.classList.add('warning');
             tdChinese.appendChild(inputCn);
 
+            // 英文配音
             var tdEnglish = document.createElement('td');
             var inputEn = document.createElement('input');
             inputEn.type = 'text'; inputEn.className = 'editable-cell';
@@ -471,6 +537,7 @@
             tdEnglish.appendChild(inputEn);
 
             tr.appendChild(tdSeq); tr.appendChild(tdScene);
+            tr.appendChild(tdChar); tr.appendChild(tdTone);
             tr.appendChild(tdChinese); tr.appendChild(tdEnglish);
             tbody.appendChild(tr);
         });
@@ -535,13 +602,15 @@
                         var found = result.find(function(g) { return g.scene === sceneName; });
                         allEntries.push({
                             scene: sceneName,
+                            voiceCharacter: character,
+                            voiceTone: tone,
                             chinese: found ? found.chinese : '',
                             english: found ? found.english : ''
                         });
                     });
                 } else {
                     normalScenes.forEach(function(sceneName) {
-                        allEntries.push({ scene: sceneName, chinese: '', english: '' });
+                        allEntries.push({ scene: sceneName, voiceCharacter: character, voiceTone: tone, chinese: '', english: '' });
                     });
                 }
             }
@@ -568,13 +637,13 @@
                             var found = jpResult.find(function(j) { return j.chinese === chineseText; });
                             if (found) englishText = found.english;
                         }
-                        allEntries.push({ scene: sceneName, chinese: chineseText, english: englishText });
+                        allEntries.push({ scene: sceneName, voiceCharacter: character, voiceTone: tone, chinese: chineseText, english: englishText });
                     });
                 } catch(e) {
                     // fallback: 直接用固定文本
                     jackpotScenes.forEach(function(sceneName) {
                         var text = getJackpotText(sceneName);
-                        allEntries.push({ scene: sceneName, chinese: text, english: text });
+                        allEntries.push({ scene: sceneName, voiceCharacter: character, voiceTone: tone, chinese: text, english: text });
                     });
                 }
             }
@@ -612,8 +681,6 @@
 
         var theme = document.getElementById('themeInput').value.trim();
         var atmosphere = document.getElementById('atmosphereInput').value.trim();
-        var character = document.getElementById('voiceCharacterSelect').value;
-        var tone = document.getElementById('voiceToneSelect').value;
 
         try {
             var wb = new ExcelJS.Workbook();
@@ -655,7 +722,7 @@
             appEntries.forEach(function(entry, index) {
                 var row = ws.getRow(4 + index);
                 row.height = 20;
-                var values = [index + 1, entry.scene, character, tone, entry.chinese || '', entry.english || ''];
+                var values = [index + 1, entry.scene, entry.voiceCharacter || '', entry.voiceTone || '', entry.chinese || '', entry.english || ''];
                 values.forEach(function(val, i) {
                     var cell = row.getCell(i + 1);
                     cell.value = val; cell.font = baseFont;
