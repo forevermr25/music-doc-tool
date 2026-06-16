@@ -6,7 +6,6 @@
     <title>老虎机配乐需求文档生成器</title>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-    <script src="https://js.puter.com/v2/"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -130,37 +129,44 @@
 
     <script>
     // =============================================
-    // AI Engine - 直接调用 Puter.js（已在head中加载）
+    // AI Engine - 动态加载 Puter.js（避免页面被Puter接管）
     // =============================================
     let aiReady = false;
+    let puterLoading = false;
 
-    // 检测Puter.js是否加载成功
-    function checkPuterReady() {
-        if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
-            aiReady = true;
-            return true;
-        }
-        return false;
-    }
-
-    // 等待Puter.js加载完成（最多等15秒）
-    function waitForPuter() {
-        return new Promise(function(resolve) {
-            if (checkPuterReady()) { resolve(true); return; }
-            var attempts = 0;
-            var timer = setInterval(function() {
-                attempts++;
-                if (checkPuterReady()) { clearInterval(timer); resolve(true); }
-                else if (attempts > 30) { clearInterval(timer); resolve(false); }
-            }, 500);
+    // 动态加载Puter.js（仅在用户点击生成时才加载）
+    function loadPuterJS() {
+        return new Promise(function(resolve, reject) {
+            if (aiReady) { resolve(); return; }
+            if (puterLoading) {
+                // 正在加载中，等待完成
+                var waitTimer = setInterval(function() {
+                    if (aiReady) { clearInterval(waitTimer); resolve(); }
+                }, 300);
+                setTimeout(function() { clearInterval(waitTimer); reject(new Error('加载超时')); }, 20000);
+                return;
+            }
+            puterLoading = true;
+            var script = document.createElement('script');
+            script.src = 'https://js.puter.com/v2/';
+            script.onload = function() {
+                // 等待puter对象初始化
+                var checkTimer = setInterval(function() {
+                    if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
+                        aiReady = true;
+                        clearInterval(checkTimer);
+                        resolve();
+                    }
+                }, 300);
+                setTimeout(function() { clearInterval(checkTimer); if (!aiReady) reject(new Error('Puter.js初始化超时，请刷新页面重试')); }, 15000);
+            };
+            script.onerror = function() { puterLoading = false; reject(new Error('Puter.js加载失败，请检查网络/VPN')); };
+            document.head.appendChild(script);
         });
     }
 
     async function callAI(prompt) {
-        if (!aiReady) {
-            var ready = await waitForPuter();
-            if (!ready) throw new Error('Puter.js 加载失败，请检查网络/VPN后刷新页面重试');
-        }
+        await loadPuterJS();
         var response = await puter.ai.chat(prompt, {model:'gpt-4o-mini', temperature:0.8});
         if (typeof response === 'string') return response;
         if (response && response.message && response.message.content) {
@@ -172,10 +178,8 @@
         return String(response);
     }
 
-    // 页面加载时初始化
+    // 页面加载时初始化UI（不加载Puter.js）
     document.addEventListener('DOMContentLoaded', function() {
-        // 延迟检测Puter.js加载状态
-        setTimeout(function() { checkPuterReady(); }, 2000);
         updateSections();
         document.getElementById('musicCount').addEventListener('change', updateSections);
         document.getElementById('musicCount').addEventListener('input', updateGradientHint);
@@ -195,12 +199,7 @@
         btn.classList.add('loading'); btn.disabled = true;
 
         try {
-            setStatus('🔄 正在连接AI服务...', 'generating');
-            
-            // 先检查Puter.js是否可用
-            if (typeof puter === 'undefined' || !puter.ai) {
-                throw new Error('AI服务加载失败。请确认：1.网络/VPN已连接 2.刷新页面重试');
-            }
+            setStatus('🔄 正在连接AI服务（首次使用需授权）...', 'generating');
 
             setStatus('🔄 正在生成整体氛围描述...', 'generating');
             var atmosphere = await callAI('你是老虎机游戏创意策划。为主题"' + theme + '"写一段整体氛围描述(150-250字)。要求：描述世界观和视觉场景，有画面感，融入转动、财富、宝藏等老虎机隐喻。直接输出文字，不加标题。');
