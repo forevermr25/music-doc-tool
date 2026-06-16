@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>老虎机配乐需求文档生成器</title>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; padding: 40px 20px; color: #e0e0e0;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            text-align: center; font-size: 2rem; margin-bottom: 10px;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -moz-background-clip: text; background-clip: text; color: transparent;
+        }
+        .subtitle { text-align: center; color: #8892b0; margin-bottom: 40px; font-size: 0.95rem; }
+        .card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 32px; margin-bottom: 24px; backdrop-filter: blur(10px);
+        }
+        .form-group { margin-bottom: 24px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #ccd6f6; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 12px 16px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; color: #e0e0e0; font-size: 0.95rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #f7971e; box-shadow: 0 0 0 3px rgba(247,151,30,0.15); }
+        textarea { min-height: 120px; resize: vertical; line-height: 1.6; font-family: inherit; }
+        .music-sections { margin-top: 16px; }
+        .music-section {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: border-color 0.3s;
+        }
+        .music-section:hover { border-color: rgba(247,151,30,0.3); }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .section-number { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #fff; }
+        .intensity-low { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .intensity-mid { background: linear-gradient(135deg, #f7971e, #ffd200); }
+        .intensity-high { background: linear-gradient(135deg, #f5576c, #ff6b6b); }
+        .section-title { font-weight: 600; color: #ccd6f6; }
+        .intensity-badge { margin-left: auto; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; color: #fff; }
+        .badge-low { background: rgba(79,172,254,0.3); }
+        .badge-mid { background: rgba(247,151,30,0.3); }
+        .badge-high { background: rgba(245,87,108,0.3); }
+        .scene-input { margin-bottom: 10px; }
+        .scene-input label { font-size: 0.82rem; color: #8892b0; }
+        .scene-input input { padding: 8px 12px; font-size: 0.88rem; }
+        .btn-generate { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #f7971e, #ffd200); border: none; border-radius: 12px; color: #1a1a2e; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(247,151,30,0.3); }
+        .btn-generate:active { transform: translateY(0); }
+        .btn-ai { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; margin-top: 8px; }
+        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+        .btn-ai:active { transform: translateY(0); }
+        .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-ai .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        .btn-ai.loading .spinner { display: block; }
+        .btn-ai.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .info-tip { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: rgba(79,172,254,0.08); border: 1px solid rgba(79,172,254,0.2); border-radius: 8px; margin-bottom: 24px; font-size: 0.85rem; color: #8892b0; line-height: 1.5; }
+        .info-tip::before { content: '💡'; flex-shrink: 0; }
+        .count-control { display: flex; align-items: center; gap: 12px; }
+        .count-control input { width: 80px; text-align: center; }
+        .count-control button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e0e0e0; font-size: 1.2rem; cursor: pointer; transition: background 0.2s; }
+        .count-control button:hover { background: rgba(247,151,30,0.2); border-color: #f7971e; }
+        .gradient-hint { font-size: 0.8rem; color: #8892b0; margin-top: 8px; font-style: italic; }
+        .success-toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: rgba(39,174,96,0.95); color: #fff; border-radius: 8px; font-weight: 600; transform: translateX(120%); transition: transform 0.4s ease; z-index: 1000; }
+        .success-toast.show { transform: translateX(0); }
+        .generated-tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: rgba(102,126,234,0.2); color: #a78bfa; margin-left: 8px; }
+        .ai-status { font-size: 0.8rem; color: #8892b0; margin-top: 10px; min-height: 1.2em; }
+        .ai-status.generating { color: #a78bfa; }
+        .ai-status.error { color: #ff6b6b; }
+        .ai-status.done { color: #27ae60; }
+        @media (max-width: 600px) { body { padding: 20px 12px; } .card { padding: 20px; } h1 { font-size: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 老虎机配乐需求文档生成器</h1>
+        <p class="subtitle">AI 驱动 · 免费 · 无需注册 · 快速生成配乐需求文档</p>
+
+        <div class="card">
+            <div class="info-tip">
+                输入主题名称和配乐数量，点击「AI 智能生成」即可。首次使用会弹出授权窗口，点击允许即可（完全免费，无需注册、无需API Key）。
+            </div>
+            <div class="form-group">
+                <label for="theme">🎨 主题名称</label>
+                <input type="text" id="theme" placeholder="例如：圣帕特里克节、犀牛2026、赛博舞狮、海盗、招财猫...">
+            </div>
+            <div class="form-group">
+                <label>🎵 配乐数量</label>
+                <div class="count-control">
+                    <button type="button" onclick="adjustCount(-1)">−</button>
+                    <input type="number" id="musicCount" value="3" min="1" max="10">
+                    <button type="button" onclick="adjustCount(1)">+</button>
+                </div>
+                <p class="gradient-hint" id="gradientHint">情绪梯度：最高触发 > 中间触发 > BASE</p>
+            </div>
+            <button class="btn-ai" id="btnAI" onclick="autoGenerate()">
+                <span class="btn-text">🤖 AI 智能生成</span>
+                <span class="spinner"></span>
+            </button>
+            <div class="ai-status" id="aiStatus"></div>
+        </div>
+
+        <div class="card">
+            <div class="form-group">
+                <label for="atmosphere">🌍 整体氛围描述 <span class="generated-tag" id="atmoTag" style="display:none;">AI 生成</span></label>
+                <textarea id="atmosphere" placeholder="点击上方「AI 智能生成」按钮自动填充，或手动输入..."></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <label style="margin-bottom: 16px; font-size: 1rem;">📝 各段配乐详情 <span class="generated-tag" id="sectionsTag" style="display:none;">AI 生成</span></label>
+            <div class="music-sections" id="musicSections"></div>
+        </div>
+
+        <button class="btn-generate" onclick="generateExcel()">📥 生成配乐需求文档</button>
+    </div>
+    <div class="success-toast" id="toast"></div>
+
+    <script>
+    // =============================================
+    // AI Engine - 动态加载 Puter.js（避免页面被Puter接管）
+    // =============================================
+    let aiReady = false;
+    let puterLoading = false;
+
+    // 动态加载Puter.js（仅在用户点击生成时才加载）
+    function loadPuterJS() {
+        return new Promise(function(resolve, reject) {
+            if (aiReady) { resolve(); return; }
+            if (puterLoading) {
+                // 正在加载中，等待完成
+                var waitTimer = setInterval(function() {
+                    if (aiReady) { clearInterval(waitTimer); resolve(); }
+                }, 300);
+                setTimeout(function() { clearInterval(waitTimer); reject(new Error('加载超时')); }, 20000);
+                return;
+            }
+            puterLoading = true;
+            var script = document.createElement('script');
+            script.src = 'https://js.puter.com/v2/';
+            script.onload = function() {
+                // 等待puter对象初始化
+                var checkTimer = setInterval(function() {
+                    if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
+                        aiReady = true;
+                        clearInterval(checkTimer);
+                        resolve();
+                    }
+                }, 300);
+                setTimeout(function() { clearInterval(checkTimer); if (!aiReady) reject(new Error('Puter.js初始化超时，请刷新页面重试')); }, 15000);
+            };
+            script.onerror = function() { puterLoading = false; reject(new Error('Puter.js加载失败，请检查网络/VPN')); };
+            document.head.appendChild(script);
+        });
+    }
+
+    async function callAI(prompt) {
+        await loadPuterJS();
+        var response = await puter.ai.chat(prompt, {model:'gpt-4o-mini', temperature:0.8});
+        if (typeof response === 'string') return response;
+        if (response && response.message && response.message.content) {
+            var c = response.message.content;
+            if (Array.isArray(c)) return c.map(function(x){return x.text||x;}).join('');
+            return c;
+        }
+        if (response && response.text) return response.text;
+        return String(response);
+    }
+
+    // 页面加载时初始化UI（不加载Puter.js）
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSections();
+        document.getElementById('musicCount').addEventListener('change', updateSections);
+        document.getElementById('musicCount').addEventListener('input', updateGradientHint);
+    });
+
+    function setStatus(text, type) {
+        var el = document.getElementById('aiStatus');
+        el.textContent = text; el.className = 'ai-status ' + (type || '');
+    }
+
+    async function autoGenerate() {
+        var theme = document.getElementById('theme').value.trim();
+        var count = parseInt(document.getElementById('musicCount').value) || 3;
+        if (!theme) { alert('请先输入主题名称'); return; }
+
+        var btn = document.getElementById('btnAI');
+        btn.classList.add('loading'); btn.disabled = true;
+
+        try {
+            setStatus('🔄 正在连接AI服务（首次使用需授权）...', 'generating');
+
+            setStatus('🔄 正在生成整体氛围描述...', 'generating');
+            var atmosphere = await callAI('你是老虎机游戏创意策划。为主题"' + theme + '"写一段整体氛围描述(150-250字)。要求：描述世界观和视觉场景，有画面感，融入转动、财富、宝藏等老虎机隐喻。直接输出文字，不加标题。');
+            document.getElementById('atmosphere').value = atmosphere.trim();
+            document.getElementById('atmoTag').style.display = 'inline-block';
+
+            updateSections();
+            var sectionEls = document.querySelectorAll('.music-section');
+            var sceneNames = [];
+            for (var i = 0; i < sectionEls.length; i++) {
+                sceneNames.push(sectionEls[i].querySelector('.scene-name').value);
+            }
+            var scenesStr = sceneNames.map(function(n, i) { return '第'+(i+1)+'段:"'+n+'"'; }).join('、');
+
+            setStatus('🔄 正在生成各段配乐情绪描述...', 'generating');
+            var raw = await callAI('你是老虎机音乐策划。主题"' + theme + '"，氛围：' + atmosphere.trim().substring(0, 200) + '。\n为' + count + '段配乐写情绪描述，场景：' + scenesStr + '。\n要求：1.情绪从第1段到第' + count + '段逐渐增强 2.第1段平静舒缓 3.最后一段全面爆发 4.每段写具体乐器、节奏、情绪(100-180字) 5.贴合主题\n严格返回JSON数组(不要markdown代码块)：[{"scene":"名称","emotion":"描述"}]');
+
+            var emotions = null;
+            try { emotions = JSON.parse(raw); } catch(e) {
+                var m = raw.match(/\[[\s\S]*?\]/);
+                if (m) emotions = JSON.parse(m[0]);
+            }
+            if (Array.isArray(emotions)) {
+                for (var i = 0; i < Math.min(emotions.length, sectionEls.length); i++) {
+                    sectionEls[i].querySelector('.emotion-desc').value = emotions[i].emotion || '';
+                    if (emotions[i].scene) sectionEls[i].querySelector('.scene-name').value = emotions[i].scene;
+                }
+            }
+            document.getElementById('sectionsTag').style.display = 'inline-block';
+            setStatus('✅ 生成完成！可手动修改后导出', 'done');
+            showToast('✨ AI 已生成所有描述');
+        } catch (err) {
+            console.error(err);
+            setStatus('❌ ' + (err.message || '生成失败，请检查网络后重试'), 'error');
+        } finally { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    // =============================================
+    // UI
+    // =============================================
+    function adjustCount(d) {
+        var input = document.getElementById('musicCount');
+        input.value = Math.max(1, Math.min(10, parseInt(input.value) + d));
+        updateSections(); updateGradientHint();
+    }
+    function updateGradientHint() {
+        var c = parseInt(document.getElementById('musicCount').value) || 3;
+        var h = document.getElementById('gradientHint');
+        if (c === 1) h.textContent = '情绪梯度：仅一段配乐';
+        else if (c === 2) h.textContent = '情绪梯度：高触发 > BASE';
+        else if (c === 3) h.textContent = '情绪梯度：最高触发 > 中间触发 > BASE';
+        else h.textContent = '情绪梯度：第'+c+'段(最强) > ... > 第2段 > 第1段(BASE)';
+    }
+    function getIntensityLevel(i, t) { if(t===1)return'mid'; var r=i/(t-1); return r<0.4?'low':r<0.75?'mid':'high'; }
+    function getIntensityLabel(i, t) { if(t===1)return'基础'; var r=i/(t-1); return r===0?'平静':r<0.4?'轻快':r<0.75?'激昂':'高潮'; }
+    function getDefaultSceneName(i, t) {
+        if(t===1)return'Base'; if(i===0)return'Base';
+        if(t===2)return'触发'; if(t===3)return i===1?'单、双触发':'三触发';
+        if(i===t-1)return'Super Free'; if(i===1)return'Free Games'; return'触发'+i;
+    }
+    function updateSections() {
+        var count = parseInt(document.getElementById('musicCount').value) || 3;
+        var container = document.getElementById('musicSections');
+        var existing = [];
+        var sections = container.querySelectorAll('.music-section');
+        for (var j = 0; j < sections.length; j++) {
+            existing.push({
+                scene: sections[j].querySelector('.scene-name') ? sections[j].querySelector('.scene-name').value : '',
+                emotion: sections[j].querySelector('.emotion-desc') ? sections[j].querySelector('.emotion-desc').value : ''
+            });
+        }
+        container.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+            var lv = getIntensityLevel(i, count), lb = getIntensityLabel(i, count);
+            var sc = (existing[i] && existing[i].scene) ? existing[i].scene : getDefaultSceneName(i, count);
+            var em = (existing[i] && existing[i].emotion) ? existing[i].emotion : '';
+            var div = document.createElement('div'); div.className = 'music-section';
+            div.innerHTML = '<div class="section-header"><div class="section-number intensity-'+lv+'">'+(i+1)+'</div><span class="section-title">第 '+(i+1)+' 段配乐</span><span class="intensity-badge badge-'+lv+'">情绪：'+lb+'</span></div><div class="scene-input"><label>使用场景名称</label><input type="text" class="scene-name" value="'+sc+'"></div><div class="scene-input"><label>需求情绪描述</label><textarea class="emotion-desc" placeholder="AI将自动生成，也可手动输入...">'+em+'</textarea></div>';
+            container.appendChild(div);
+        }
+    }
+    function showToast(m) { var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3000); }
+
+    // =============================================
+    // Excel
+    // =============================================
+    async function generateExcel() {
+        var theme = document.getElementById('theme').value.trim();
+        var atmosphere = document.getElementById('atmosphere').value.trim();
+        var count = parseInt(document.getElementById('musicCount').value) || 3;
+        if (!theme) { alert('请输入主题名称'); return; }
+        if (!atmosphere) { alert('请输入整体氛围描述（或点击AI智能生成）'); return; }
+        var sections = [];
+        var els = document.querySelectorAll('.music-section');
+        for (var i = 0; i < els.length; i++) {
+            var s = els[i].querySelector('.scene-name').value.trim();
+            var e = els[i].querySelector('.emotion-desc').value.trim();
+            if (!e) { alert('请填写第'+(i+1)+'段的需求情绪描述'); return; }
+            sections.push({ scene: s||('场景'+(i+1)), emotion: e });
+        }
+        var gradArr = sections.slice().reverse();
+        var grad = count===1?'仅BASE':gradArr.map(function(s){return s.scene;}).join(' > ');
+
+        var wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Sheet1');
+        ws.columns = [{width:9},{width:15},{width:42},{width:76},{width:41}];
+        var baseFont = {name:'Microsoft YaHei', size:14};
+        var boldFont = {name:'Microsoft YaHei', size:14, bold:true};
+        var baseAlign = {vertical:'middle', horizontal:'left', wrapText:true};
+        var bd = {top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
+        var sceneFill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF92D050'}};
+
+        ws.getRow(1).height=28; ws.mergeCells('B1:D1');
+        ws.getCell('B1').value='主题：'+theme; ws.getCell('B1').font=boldFont; ws.getCell('B1').alignment=baseAlign;
+        ws.getRow(2).height=28; ws.mergeCells('B2:D2');
+        ws.getCell('B2').value='配乐数量：'+count; ws.getCell('B2').font=boldFont; ws.getCell('B2').alignment=baseAlign;
+        ws.getRow(3).height=200; ws.mergeCells('C3:D3');
+        ws.getCell('B3').value='氛围描述：'; ws.getCell('B3').font=boldFont; ws.getCell('B3').alignment=baseAlign;
+        ws.getCell('C3').value=atmosphere; ws.getCell('C3').font=baseFont; ws.getCell('C3').alignment=baseAlign;
+        ws.getRow(4).height=28; ws.mergeCells('B4:D4');
+        ws.getCell('B4').value='情绪梯度要求：'+grad; ws.getCell('B4').font=boldFont; ws.getCell('B4').alignment=baseAlign;
+        ws.getRow(5).height=20; ws.getRow(6).height=28;
+        var headers = ['使用场景','需求情绪','效果图'];
+        ['B6','C6','D6'].forEach(function(c,i){ ws.getCell(c).value=headers[i]; ws.getCell(c).font=boldFont; ws.getCell(c).alignment=baseAlign; ws.getCell(c).border=bd; });
+
+        sections.forEach(function(s,i){
+            var r=7+i; ws.getRow(r).height=200;
+            ws.getCell('B'+r).value=s.scene; ws.getCell('B'+r).font=boldFont; ws.getCell('B'+r).alignment=baseAlign; ws.getCell('B'+r).border=bd; ws.getCell('B'+r).fill=sceneFill;
+            ws.getCell('C'+r).value=s.emotion; ws.getCell('C'+r).font=baseFont; ws.getCell('C'+r).alignment=baseAlign; ws.getCell('C'+r).border=bd;
+            ws.getCell('D'+r).value=''; ws.getCell('D'+r).border=bd; ws.getCell('D'+r).alignment=baseAlign;
+        });
+        var otherRow = 8+sections.length;
+        ws.getCell('B'+otherRow).value='其他场景'; ws.getCell('B'+otherRow).font=boldFont; ws.getCell('B'+otherRow).alignment=baseAlign;
+
+        var buf = await wb.xlsx.writeBuffer();
+        saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配乐需求文档.xlsx');
+        showToast('✅ 文档已成功生成并下载！');
+    }
+    </script>
+</body>
+</html>
