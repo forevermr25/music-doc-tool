@@ -164,6 +164,14 @@
         .char-tab-btn.active { background: rgba(247,151,30,0.15); border-color: #f7971e; color: #ffd200; }
         .char-scene-panel { display: none; }
         .char-scene-panel.active { display: block; }
+        .char-card { flex: 1; min-width: 200px; max-width: 300px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
+        .char-card-header { font-size: 0.82rem; color: #ccd6f6; line-height: 1.6; margin-bottom: 12px; }
+        .char-card-header strong { color: #ffd200; }
+        .char-card-img { width: 100%; height: 140px; border: 2px dashed rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color 0.3s; position: relative; }
+        .char-card-img:hover { border-color: rgba(247,151,30,0.5); }
+        .char-card-img img { width: 100%; height: 100%; object-fit: contain; }
+        .char-card-img .placeholder { text-align: center; color: #8892b0; font-size: 0.78rem; }
+        .char-card-img input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         .preview-table-wrapper { overflow-x: auto; margin-top: 16px; }
         .preview-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
         .preview-table thead th { padding: 12px 14px; background: rgba(247,151,30,0.1); border: 1px solid rgba(255,255,255,0.1); color: #ffd200; font-weight: 600; text-align: left; white-space: nowrap; }
@@ -223,9 +231,10 @@
                     <span class="btn-text">🎙️ AI 生成音色</span><span class="spinner"></span>
                 </button>
                 <div class="ai-status" id="v_voiceStatus"></div>
-                <div id="v_voiceResult" style="display:none; margin-top:14px; padding:16px; background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px;">
-                    <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-bottom:8px;">🎙️ AI 音色匹配结果</div>
-                    <div id="v_voiceResultText" style="font-size:0.85rem; color:#ccd6f6; line-height:1.7;"></div>
+                <div id="v_voiceResult" style="display:none; margin-top:14px;">
+                    <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-bottom:12px;">🎙️ 配音人物描述：</div>
+                    <div id="v_voiceResultText" style="font-size:0.85rem; color:#ccd6f6; line-height:1.7; margin-bottom:16px;"></div>
+                    <div id="v_charCards" style="display:flex; gap:16px; flex-wrap:wrap;"></div>
                 </div>
             </div>
             <div class="card">
@@ -502,27 +511,34 @@
                 window._aiVoiceChars = result.map(function(r) {
                     return { character: r.character, gender: r.gender, toneDesc: r.toneDesc || '', reason: r.reason || '' };
                 });
-                // 兼容旧单角色变量
                 window._aiVoiceChar = result[0].character;
                 window._aiVoiceTone = result[0].toneDesc || '';
                 window._aiVoiceGender = result[0].gender;
                 window._aiVoiceReason = result[0].reason || '';
+                // 存储角色图片数组
+                window._aiVoiceImages = new Array(result.length).fill(null);
 
-                // 显示结果
-                var displayHtml = '';
+                // 显示氛围描述
+                var atmosText = document.getElementById('v_atmosphere').value.trim();
+                resultText.textContent = '整体氛围：' + atmosText.substring(0, 150) + (atmosText.length > 150 ? '...' : '');
+
+                // 渲染角色列卡片
+                var cardsDiv = document.getElementById('v_charCards');
+                cardsDiv.innerHTML = '';
                 result.forEach(function(r, i) {
-                    displayHtml += '<div style="'+(i>0?'margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);':'')+'">' +
-                        '<div><strong>🎭 角色'+(i+1)+'：</strong>'+r.character+'</div>' +
-                        '<div><strong>👤 性别：</strong>'+r.gender+'</div>' +
-                        '<div><strong>🔊 音色：</strong>'+(r.toneDesc||'')+'</div>' +
-                        '<div><strong>💡 理由：</strong>'+(r.reason||'')+'</div></div>';
+                    var card = document.createElement('div'); card.className = 'char-card';
+                    card.innerHTML = '<div class="char-card-header">' +
+                        '<div><strong>音色人物：</strong>'+r.gender+'，'+r.character+'</div>' +
+                        '<div><strong>音色描述：</strong>'+(r.toneDesc||'')+'</div></div>' +
+                        '<div class="char-card-img" id="v_charImg_'+i+'">' +
+                        '<div class="placeholder">📷 点击上传角色图片</div>' +
+                        '<input type="file" accept="image/*" onchange="voiceUploadCharImg('+i+', this)">' +
+                        '</div>';
+                    cardsDiv.appendChild(card);
                 });
-                resultText.innerHTML = displayHtml;
+
                 resultBox.style.display = 'block';
-
-                // 如果有多角色，显示角色分配区域
                 voiceUpdateCharAssign();
-
                 st.textContent = '✅ 已匹配'+result.length+'个配音角色'; st.className = 'ai-status done';
             } else {
                 st.textContent = '⚠️ AI未能返回有效结果，请重试'; st.className = 'ai-status error';
@@ -581,6 +597,21 @@
     function voiceSwitchCharTab(idx) {
         document.querySelectorAll('.char-tab-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
         document.querySelectorAll('.char-scene-panel').forEach(function(p,i){p.classList.toggle('active',i===idx);});
+    }
+
+    // 角色图片上传
+    function voiceUploadCharImg(idx, inputEl) {
+        var file = inputEl.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var imgArea = document.getElementById('v_charImg_'+idx);
+            imgArea.innerHTML = '<img src="'+e.target.result+'">' +
+                '<input type="file" accept="image/*" onchange="voiceUploadCharImg('+idx+', this)">';
+            // 存储base64图片数据
+            if (window._aiVoiceImages) window._aiVoiceImages[idx] = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 
     async function voiceGenerate() {
@@ -672,21 +703,70 @@
         if (!voiceEntries.length) { alert('没有可导出的配音内容，请先生成'); return; }
         var theme = document.getElementById('v_theme').value.trim();
         var atmo = document.getElementById('v_atmosphere').value.trim();
+        var chars = window._aiVoiceChars || [];
+        var charImages = window._aiVoiceImages || [];
         try {
             var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet('配音需求');
-            ws.columns = [{width:8},{width:30},{width:40},{width:28},{width:14},{width:14}];
-            var bf={name:'Microsoft YaHei',size:11}, bld={name:'Microsoft YaHei',size:11,bold:true}, tf={name:'Microsoft YaHei',size:14,bold:true};
+            ws.columns = [{width:8},{width:26},{width:36},{width:28},{width:18},{width:18},{width:18}];
+            var bf={name:'Microsoft YaHei',size:11}, bld={name:'Microsoft YaHei',size:11,bold:true}, tf={name:'Microsoft YaHei',size:12,bold:true};
             var al={vertical:'middle',horizontal:'left',wrapText:true}, bd={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
-            ws.mergeCells('A1:F1'); ws.getRow(1).height=28; ws.getCell('A1').value='主题名称：'+theme; ws.getCell('A1').font=tf; ws.getCell('A1').alignment=al;
-            ws.mergeCells('A2:F2'); ws.getRow(2).height=22; ws.getCell('A2').value='故事氛围：'+atmo; ws.getCell('A2').font=bf; ws.getCell('A2').alignment=al;
-            var hdr=['序号','中文配音内容','英文配音内容','应用场景','音色人物','音色描述'];
-            var hr=ws.getRow(3); hr.height=22;
+
+            // Row 1: 配音人物描述标题
+            ws.mergeCells('A1:G1'); ws.getRow(1).height=20;
+            ws.getCell('A1').value='配音人物描述：'; ws.getCell('A1').font=bld;
+
+            // Row 2: 故事氛围
+            ws.mergeCells('A2:G2'); ws.getRow(2).height=40;
+            ws.getCell('A2').value='整体氛围：'+atmo; ws.getCell('A2').font=bf; ws.getCell('A2').alignment=al;
+
+            // Row 3: 角色音色信息行
+            var row3 = ws.getRow(3); row3.height = 30;
+            if (chars.length > 0) {
+                var charInfos = chars.map(function(c){ return '音色人物：'+c.gender+'，'+c.character+'\n音色描述：'+c.toneDesc; });
+                // 每个角色占两列左右显示
+                for (var ci=0; ci<chars.length; ci++) {
+                    var colStart = 1 + ci * 2;
+                    if (colStart+1 <= 7) {
+                        ws.getCell(3, colStart).value = charInfos[ci];
+                        ws.getCell(3, colStart).font = bf;
+                        ws.getCell(3, colStart).alignment = al;
+                    }
+                }
+            }
+
+            // Row 4: 角色图片行（高度大一点放图片）
+            var imgRow = 4;
+            ws.getRow(imgRow).height = 100;
+            for (var ci=0; ci<chars.length; ci++) {
+                if (charImages[ci]) {
+                    try {
+                        var base64 = charImages[ci].split(',')[1];
+                        var ext = charImages[ci].match(/data:image\/(\w+)/);
+                        var imgId = wb.addImage({ base64: base64, extension: ext ? ext[1] : 'png' });
+                        var colStart = ci * 2;
+                        ws.addImage(imgId, { tl:{col:colStart, row:imgRow-1}, ext:{width:120, height:90} });
+                    } catch(e) { /* 图片添加失败则跳过 */ }
+                }
+            }
+
+            // Row 5: 空行
+            ws.getRow(5).height = 10;
+
+            // Row 6: 表头
+            var dataStartRow = 6;
+            var hdr=['序号','中文内容','内容（翻译）','应用场景','音色人物','音色描述','备注'];
+            var hr=ws.getRow(dataStartRow); hr.height=22;
             hdr.forEach(function(h,i){var c=hr.getCell(i+1); c.value=h; c.font=bld; c.alignment={vertical:'middle',horizontal:'center',wrapText:true}; c.border=bd; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE8D44D'}};});
+
+            // Row 7+: 数据行
             voiceEntries.forEach(function(e,i){
-                var row=ws.getRow(4+i); row.height=20;
-                [i+1, e.chinese||'', e.english||'', e.scene, e.voiceCharacter||'', e.voiceTone||''].forEach(function(v,j){var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;});
+                var row=ws.getRow(dataStartRow+1+i); row.height=20;
+                [i+1, e.chinese||'', e.english||'', e.scene, e.voiceCharacter||'', e.voiceTone||'', ''].forEach(function(v,j){
+                    var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;
+                });
                 row.getCell(1).alignment={vertical:'middle',horizontal:'center'};
             });
+
             var buf = await wb.xlsx.writeBuffer();
             saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配音需求文档.xlsx');
             showToast('✅ 配音文档已下载！');
