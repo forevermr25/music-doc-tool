@@ -342,7 +342,7 @@ function renderGp(){
     var ct=document.getElementById('gpContent');
     sb.innerHTML='';ct.innerHTML='';
     D.sections.forEach((sec,i)=>{
-        sb.innerHTML+='<div class="nav-item'+(i===gpActive?' active':'')+'" onclick="switchGp('+i+')">'+sec.title+'</div>';
+        sb.innerHTML+='<div class="nav-item'+(i===gpActive?' active':'')+'" onclick="switchGp('+i+')"><input type="text" value="'+sec.title+'" onclick="event.stopPropagation()" onchange="D.sections['+i+'].title=this.value" style="background:transparent;border:none;color:inherit;font-size:inherit;font-weight:inherit;width:100%;padding:0;outline:none"></div>';
         var limH=sec.limits.map((l,li)=>'<div class="limit-item"><input type="checkbox"'+(l.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+l.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderGp()">×</button></div>').join('');
         var trigLines=(sec.trigger||'').split('\n').filter(l=>l.trim());
         var trigH=trigLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updTrigLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmTrigLine('+i+','+li+')">×</button></div>').join('');
@@ -358,7 +358,7 @@ function renderGp(){
             '<div class="form-row"><div class="form-group"><label>高低Bet</label><select id="f_bet" onchange="buildBet()"><option value="0">无</option><option value="2">2档</option><option value="3">3档</option><option value="4">4档</option></select></div></div><div id="betCfg"></div></div>';
         }
         ct.innerHTML+='<div class="section-area'+(i===gpActive?' active':'')+'" id="gpa_'+i+'">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()">删除</button></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="if(confirm(\'确定删除该段落?\')){D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()}">删除</button></div>'+
         baseExtra+
         '<div class="form-group"><label>核心玩法描述</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则，AI会自动扩充">'+(sec.core||'')+'</textarea></div>'+
         '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加触发条件" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
