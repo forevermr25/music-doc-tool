@@ -574,22 +574,37 @@
 
                 // 如果有音色偏好（手动选择或AI推荐）
                 if (effectiveChar && effectiveTone) {
-                    prompt += '配音人物偏好：'+effectiveChar+' - '+effectiveTone+(aiGender?' ('+aiGender+')':'')+'\n\n';
+                    prompt += '配音人物设定：'+effectiveChar+' - '+effectiveTone+(aiGender?' ('+aiGender+')':'')+'\n';
+                    // 加入AI推荐理由作为角色氛围参考
+                    var reasonEl = document.getElementById('v_voiceResultText');
+                    if (reasonEl && reasonEl.textContent) {
+                        prompt += '角色背景参考：'+reasonEl.textContent.replace(/[\\n]/g,' ').substring(0,200)+'\n';
+                    }
+                    prompt += '\n';
                 } else if (aiGender) {
                     prompt += '配音性别偏好：'+aiGender+'\n\n';
                 }
 
                 prompt += '可选音色人物库：'+voiceLib+'\n\n' +
-                    '节点如下：\n'+scenesText+'\n\n' +
-                    '输出要求：\n' +
-                    '1. 为每个节点生成一条英文配音台词（简短有力，1-5个英文单词或短语）\n' +
-                    '2. 给出对应的中文解释/翻译（1-10字）\n' +
-                    '3. 根据主题氛围为每条配音选择最贴切的音色人物和音色描述\n' +
-                    '4. 配音要紧扣主题故事氛围，有角色感和代入感\n' +
-                    '5. 对于"进入关卡"生成欢迎/引入类台词\n' +
-                    '6. 对于"预告中奖"生成激动兴奋类台词\n' +
-                    '7. 对于"大赢动画播放时"生成庆祝/狂喜类台词\n' +
-                    '8. 对于"free/Respin"相关节点生成对应开始或结算类台词\n\n' +
+                    '节点如下（仅表示配音播放的时机，不是台词内容）：\n'+scenesText+'\n\n' +
+                    '核心要求：\n' +
+                    '1. 所有配音台词必须以配音人物的第一视角说出，就像这个角色真的在对玩家说话\n' +
+                    '2. 台词要符合真人说话的语境和语气，有情感、有性格，不要像机器翻译\n' +
+                    '3. 英文配音是主要输出（2-8个单词的自然口语短句），中文是对应的意译而非直译\n' +
+                    '4. 根据主题故事氛围和角色性格来构建台词的情绪基调\n\n' +
+                    '各节点台词指导：\n' +
+                    '- 进入关卡：角色以自己的身份欢迎/引诱/召唤玩家，带有角色特有的说话方式\n' +
+                    '- 预告中奖：角色感应到好运来临时的兴奋反应，像是角色自己在期待\n' +
+                    '- scatter/Bonus触发：角色被激活或觉醒时的反应台词\n' +
+                    '- JACKPOT弹板：角色为玩家庆祝大奖的方式\n' +
+                    '- free/Respin开始：角色宣告特殊模式开启，带有角色特色的宣言\n' +
+                    '- free/Respin结算：角色对成果的总结或赞叹\n' +
+                    '- 收集区触发：角色收集到重要物品时的反应\n' +
+                    '- 大赢动画：角色极度兴奋的狂喜表达\n\n' +
+                    '示例参考（假设角色是海盗船长）：\n' +
+                    '- 进入关卡：英文"Ahoy! Ready to plunder?" 中文"嘿！准备好掠夺了吗？"\n' +
+                    '- 预告中奖：英文"I smell treasure ahead!" 中文"我闻到前方宝藏的气息了！"\n' +
+                    '- 大赢：英文"What a haul, matey!" 中文"好大一笔收获啊，伙计！"\n\n' +
                     '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"音色人物","voiceTone":"音色描述","chinese":"中文台词","english":"English line"}]';
 
                 var raw = await callAI(prompt);
