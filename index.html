@@ -158,6 +158,12 @@
         .custom-scene-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(247,151,30,0.1); border: 1px solid rgba(247,151,30,0.3); border-radius: 20px; font-size: 0.82rem; color: #ffd200; }
         .custom-scene-tag .remove-btn { cursor: pointer; font-size: 1rem; line-height: 1; opacity: 0.7; transition: opacity 0.2s; }
         .custom-scene-tag .remove-btn:hover { opacity: 1; }
+        .char-tab-nav { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+        .char-tab-btn { padding: 8px 16px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.03); color: #8892b0; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .char-tab-btn:hover { border-color: rgba(247,151,30,0.4); color: #ccd6f6; }
+        .char-tab-btn.active { background: rgba(247,151,30,0.15); border-color: #f7971e; color: #ffd200; }
+        .char-scene-panel { display: none; }
+        .char-scene-panel.active { display: block; }
         .preview-table-wrapper { overflow-x: auto; margin-top: 16px; }
         .preview-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
         .preview-table thead th { padding: 12px 14px; background: rgba(247,151,30,0.1); border: 1px solid rgba(255,255,255,0.1); color: #ffd200; font-weight: 600; text-align: left; white-space: nowrap; }
@@ -224,28 +230,29 @@
             </div>
             <div class="card">
                 <div class="card-title">🎬 应用场景</div>
-                <div class="info-tip">请选择配音的时机，并为每个场景指定配音角色（多角色时可选择不同角色负责不同场景）。</div>
-                <div id="v_charAssignArea" style="display:none; margin-bottom:16px; padding:12px 16px; background:rgba(247,151,30,0.05); border:1px solid rgba(247,151,30,0.2); border-radius:8px;">
-                    <label style="font-size:0.85rem; margin-bottom:6px;">为场景指定配音角色：</label>
-                    <p style="font-size:0.78rem; color:#8892b0; margin-bottom:8px;">勾选场景后，从下拉框选择该场景由哪个角色配音</p>
-                </div>
-                <div class="scene-checkbox-group" id="v_sceneGroup">
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_0" value="进入关卡"><label for="vs_0">进入关卡</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_1" value="预告中奖"><label for="vs_1">预告中奖</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_2" value="scatter图标播放触发动画时"><label for="vs_2">scatter图标播放触发动画时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_3" value="Bonus图标播放触发动画时"><label for="vs_3">Bonus图标播放触发动画时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_4" value="MINI弹板弹出"><label for="vs_4">MINI弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_5" value="MINOR弹板弹出"><label for="vs_5">MINOR弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_6" value="MAJOR弹板弹出"><label for="vs_6">MAJOR弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_7" value="MAXI弹板弹出"><label for="vs_7">MAXI弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_8" value="MEGA弹板弹出"><label for="vs_8">MEGA弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_9" value="GRAND弹板弹出"><label for="vs_9">GRAND弹板弹出</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_10" value="收集区播放触发动画时"><label for="vs_10">收集区播放触发动画时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_11" value="free结算弹板弹出时"><label for="vs_11">free结算弹板弹出时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_12" value="Respin结算弹板弹出时"><label for="vs_12">Respin结算弹板弹出时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_13" value="free开始弹板弹出时"><label for="vs_13">free开始弹板弹出时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_14" value="Respin开始弹板弹出时"><label for="vs_14">Respin开始弹板弹出时</label></div>
-                    <div class="scene-checkbox-item"><input type="checkbox" id="vs_15" value="大赢动画播放时"><label for="vs_15">大赢动画播放时</label></div>
+                <div class="info-tip">先选择角色，再为该角色勾选对应的配音场景。如果同一个场景被多个角色勾选，则该场景由多个角色分别配音。</div>
+                <div id="v_sceneAssignArea">
+                    <!-- 角色场景分配区，由JS动态生成 -->
+                    <div id="v_defaultSceneArea">
+                        <div class="scene-checkbox-group" id="v_sceneGroup">
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_0" value="进入关卡" data-char="0"><label for="vs_0">进入关卡</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_1" value="预告中奖" data-char="0"><label for="vs_1">预告中奖</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_2" value="scatter图标播放触发动画时" data-char="0"><label for="vs_2">scatter图标播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_3" value="Bonus图标播放触发动画时" data-char="0"><label for="vs_3">Bonus图标播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_4" value="MINI弹板弹出" data-char="0"><label for="vs_4">MINI弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_5" value="MINOR弹板弹出" data-char="0"><label for="vs_5">MINOR弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_6" value="MAJOR弹板弹出" data-char="0"><label for="vs_6">MAJOR弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_7" value="MAXI弹板弹出" data-char="0"><label for="vs_7">MAXI弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_8" value="MEGA弹板弹出" data-char="0"><label for="vs_8">MEGA弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_9" value="GRAND弹板弹出" data-char="0"><label for="vs_9">GRAND弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_10" value="收集区播放触发动画时" data-char="0"><label for="vs_10">收集区播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_11" value="free结算弹板弹出时" data-char="0"><label for="vs_11">free结算弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_12" value="Respin结算弹板弹出时" data-char="0"><label for="vs_12">Respin结算弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_13" value="free开始弹板弹出时" data-char="0"><label for="vs_13">free开始弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_14" value="Respin开始弹板弹出时" data-char="0"><label for="vs_14">Respin开始弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_15" value="大赢动画播放时" data-char="0"><label for="vs_15">大赢动画播放时</label></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="custom-scene-area">
                     <label>添加自定义场景</label>
@@ -524,24 +531,56 @@
         finally { btn.classList.remove('loading'); btn.disabled = false; }
     }
 
-    // 更新场景的角色分配下拉（多角色时显示）
+    // 更新场景区域为角色Tab结构（多角色时）
     function voiceUpdateCharAssign() {
         var chars = window._aiVoiceChars || [];
-        var area = document.getElementById('v_charAssignArea');
-        if (chars.length <= 1) { area.style.display = 'none'; return; }
-        area.style.display = 'block';
-        // 给每个场景checkbox添加角色选择属性（通过data存储）
-        var checkboxes = document.querySelectorAll('#v_sceneGroup input[type="checkbox"]');
-        checkboxes.forEach(function(cb) {
-            var item = cb.closest('.scene-checkbox-item');
-            // 如果已有下拉则跳过
-            if (item.querySelector('.char-assign-select')) return;
-            var sel = document.createElement('select');
-            sel.className = 'char-assign-select';
-            sel.style.cssText = 'margin-left:auto; padding:4px 24px 4px 6px; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:4px; color:#e0e0e0; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'8\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%238892b0\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 6px center; min-width:80px;';
-            chars.forEach(function(c, i) { var o = document.createElement('option'); o.value = i; o.textContent = '角色'+(i+1)+':'+c.character.substring(0,4); sel.appendChild(o); });
-            item.appendChild(sel);
+        var area = document.getElementById('v_sceneAssignArea');
+        var defaultArea = document.getElementById('v_defaultSceneArea');
+
+        if (chars.length <= 1) {
+            // 单角色：保持原有checkbox结构
+            defaultArea.style.display = 'block';
+            // 清除之前多角色生成的面板
+            area.querySelectorAll('.char-tab-nav, .char-scene-panel').forEach(function(el){el.remove();});
+            return;
+        }
+
+        // 多角色：隐藏默认面板，生成角色Tab
+        defaultArea.style.display = 'none';
+        area.querySelectorAll('.char-tab-nav, .char-scene-panel').forEach(function(el){el.remove();});
+
+        // 创建Tab导航
+        var tabNav = document.createElement('div'); tabNav.className = 'char-tab-nav';
+        chars.forEach(function(c, i) {
+            var btn = document.createElement('button'); btn.type = 'button';
+            btn.className = 'char-tab-btn' + (i===0?' active':'');
+            btn.textContent = '角色'+(i+1)+'：'+c.character;
+            btn.onclick = function() { voiceSwitchCharTab(i); };
+            tabNav.appendChild(btn);
         });
+        area.insertBefore(tabNav, defaultArea);
+
+        // 为每个角色创建场景面板
+        var presetScenes = ['进入关卡','预告中奖','scatter图标播放触发动画时','Bonus图标播放触发动画时','MINI弹板弹出','MINOR弹板弹出','MAJOR弹板弹出','MAXI弹板弹出','MEGA弹板弹出','GRAND弹板弹出','收集区播放触发动画时','free结算弹板弹出时','Respin结算弹板弹出时','free开始弹板弹出时','Respin开始弹板弹出时','大赢动画播放时'];
+        chars.forEach(function(c, ci) {
+            var panel = document.createElement('div');
+            panel.className = 'char-scene-panel' + (ci===0?' active':'');
+            panel.id = 'v_charPanel_'+ci;
+            var grid = document.createElement('div'); grid.className = 'scene-checkbox-group';
+            presetScenes.forEach(function(sc, si) {
+                var item = document.createElement('div'); item.className = 'scene-checkbox-item';
+                var cbId = 'vsc_'+ci+'_'+si;
+                item.innerHTML = '<input type="checkbox" id="'+cbId+'" value="'+sc+'" data-char="'+ci+'"><label for="'+cbId+'">'+sc+'</label>';
+                grid.appendChild(item);
+            });
+            panel.appendChild(grid);
+            area.insertBefore(panel, defaultArea);
+        });
+    }
+
+    function voiceSwitchCharTab(idx) {
+        document.querySelectorAll('.char-tab-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
+        document.querySelectorAll('.char-scene-panel').forEach(function(p,i){p.classList.toggle('active',i===idx);});
     }
 
     async function voiceGenerate() {
@@ -549,12 +588,25 @@
         var atmo = document.getElementById('v_atmosphere').value.trim();
         var chars = window._aiVoiceChars || [];
         if (!chars.length && window._aiVoiceChar) chars = [{character:window._aiVoiceChar, gender:window._aiVoiceGender||'', toneDesc:window._aiVoiceTone||'', reason:window._aiVoiceReason||''}];
-        var scenes = Array.from(document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked')).map(function(cb){
-            var item = cb.closest('.scene-checkbox-item');
-            var assignSel = item.querySelector('.char-assign-select');
-            var charIdx = assignSel ? parseInt(assignSel.value) : 0;
-            return { scene: cb.value, charIdx: charIdx };
-        });
+
+        // 收集场景和角色分配
+        var scenes = []; // [{scene, charIdx}]
+        if (chars.length > 1) {
+            // 多角色：从每个角色面板收集
+            chars.forEach(function(c, ci) {
+                var panel = document.getElementById('v_charPanel_'+ci);
+                if (!panel) return;
+                panel.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
+                    scenes.push({scene: cb.value, charIdx: ci});
+                });
+            });
+        } else {
+            // 单角色：从默认面板收集
+            document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked').forEach(function(cb) {
+                scenes.push({scene: cb.value, charIdx: 0});
+            });
+        }
+
         if (!theme) { alert('请输入主题名称'); return; }
         if (!atmo) { alert('请输入故事氛围描述'); return; }
         if (!chars.length) { alert('请先点击「AI 生成音色」匹配配音角色'); return; }
@@ -564,63 +616,52 @@
         var st = document.getElementById('v_status');
         try {
             st.textContent = '🔄 正在连接AI服务...'; st.className = 'ai-status generating';
-            var allSceneNames = scenes.map(function(s){return s.scene;});
             var normal = scenes.filter(function(s){return !isJackpot(s.scene);});
             var jp = scenes.filter(function(s){return isJackpot(s.scene);});
             var all = [];
 
             if (normal.length > 0) {
-                st.textContent = '🔄 正在生成配音内容（'+normal.length+'个场景）...';
-                // 构建含角色分配的场景列表
+                st.textContent = '🔄 正在生成配音内容（'+normal.length+'条）...';
                 var scenesText = normal.map(function(s,i){
                     var c = chars[s.charIdx] || chars[0];
-                    return (i+1)+'. '+s.scene+' → 角色：'+c.character+'('+c.gender+')';
+                    return (i+1)+'. '+s.scene+' → '+c.character+'('+c.gender+')';
                 }).join('\n');
-                // 构建所有角色描述
                 var charsDesc = chars.map(function(c,i){ return '角色'+(i+1)+'：'+c.character+'（'+c.gender+'，'+c.toneDesc+'）'; }).join('\n');
 
                 var prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
                     '故事氛围为：'+atmo+'\n\n' +
                     '配音角色设定：\n'+charsDesc+'\n\n' +
-                    '节点及对应角色（仅表示播放时机，不是台词内容）：\n'+scenesText+'\n\n' +
-                    '【最重要的要求】每一句台词都必须包含与【'+theme+'】主题直接相关的意象、词汇或隐喻。绝不允许出现换一个主题也能通用的台词。\n\n' +
+                    '节点及对应角色：\n'+scenesText+'\n\n' +
+                    '【严格字数限制】英文配音必须控制在8个英文单词以内！这是硬性限制，超出则无法在游戏中播放完。\n\n' +
+                    '【主题相关性】每句台词都必须包含与【'+theme+'】主题直接相关的意象或词汇，禁止通用台词。\n\n' +
                     '具体规则：\n' +
-                    '1. 台词以对应角色的第一视角说出，要体现该角色独特的性格和说话方式\n' +
-                    '2. 每句台词中必须嵌入至少一个与主题相关的具体名词或动词\n' +
-                    '3. 英文是主要配音输出（自然口语短句），中文是对应意译\n' +
-                    '4. 不同角色的台词要有明显的性格差异\n\n' +
-                    '各节点的角色反应方向：\n' +
-                    '- 进入关卡：角色用主题特色方式招呼玩家\n' +
-                    '- 预告中奖：用主题相关的比喻暗示好运\n' +
-                    '- scatter/Bonus触发：角色的主题技能被触发\n' +
-                    '- free/Respin开始：宣布开启主题特殊事件\n' +
-                    '- free/Respin结算：用主题语言总结战果\n' +
-                    '- 收集区触发：得到主题关键物品\n' +
-                    '- 大赢动画：用主题最高级表达庆祝\n\n' +
-                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"配音角色","voiceTone":"音色描述","chinese":"中文台词","english":"English line"}]';
+                    '1. 台词以对应角色的第一视角说出\n' +
+                    '2. 英文严格限制在3-8个单词，是主要配音输出\n' +
+                    '3. 中文是英文的意译（不超过10个汉字）\n' +
+                    '4. 每句必须嵌入主题相关词汇\n\n' +
+                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"角色","voiceTone":"音色描述","chinese":"中文","english":"English(≤8词)"}]';
 
                 var raw = await callAI(prompt);
                 var result = null;
                 try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
                 normal.forEach(function(s) {
                     var c = chars[s.charIdx] || chars[0];
-                    var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
+                    var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene && (g.voiceCharacter||'').indexOf(c.character)!==-1;}) : null;
+                    if (!f) f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
                     all.push({scene:s.scene, voiceCharacter:c.character+'('+c.gender+')', voiceTone:c.toneDesc, chinese:f?f.chinese:'', english:f?f.english:''});
                 });
             }
             if (jp.length > 0) {
-                st.textContent = '🔄 正在翻译JACKPOT文本...';
-                var jpItems = jp.map(function(s){return getJackpotText(s.scene);});
-                var jpPrompt = '将以下JACKPOT文本翻译为英文：\n'+jpItems.map(function(t){return '- '+t;}).join('\n')+'\n\n严格返回JSON数组(不要markdown代码块)：[{"chinese":"原文","english":"翻译"}]';
-                var dc = chars[0] || {character:'旁白',gender:'',toneDesc:''};
-                try {
-                    var jpRaw = await callAI(jpPrompt); var jpR = null;
-                    try { jpR = JSON.parse(jpRaw); } catch(e) { var jm = jpRaw.match(/\[[\s\S]*?\]/); if(jm) jpR = JSON.parse(jm[0]); }
-                    jp.forEach(function(s) { var cn=getJackpotText(s.scene); var en=cn; var c=chars[s.charIdx]||dc; if(Array.isArray(jpR)){var f=jpR.find(function(j){return j.chinese===cn;}); if(f) en=f.english;} all.push({scene:s.scene,voiceCharacter:c.character+'('+c.gender+')',voiceTone:c.toneDesc,chinese:cn,english:en}); });
-                } catch(e) { jp.forEach(function(s){var t=getJackpotText(s.scene); var c=chars[s.charIdx]||dc; all.push({scene:s.scene,voiceCharacter:c.character+'('+c.gender+')',voiceTone:c.toneDesc,chinese:t,english:t});}); }
+                st.textContent = '🔄 正在处理JACKPOT...';
+                jp.forEach(function(s) {
+                    var c = chars[s.charIdx] || chars[0];
+                    var cn = getJackpotText(s.scene);
+                    all.push({scene:s.scene, voiceCharacter:c.character+'('+c.gender+')', voiceTone:c.toneDesc, chinese:cn, english:cn});
+                });
             }
-            var ordered = []; allSceneNames.forEach(function(sn){var e=all.find(function(x){return x.scene===sn;}); if(e) ordered.push(e);});
-            voiceEntries = ordered; voiceRenderTable();
+            // 按原始顺序排列
+            voiceEntries = all;
+            voiceRenderTable();
             st.textContent = '✅ 生成完成！可编辑内容后导出文档'; st.className = 'ai-status done';
             showToast('✨ AI 已生成配音内容');
         } catch (err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
