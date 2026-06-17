@@ -194,7 +194,7 @@
         <!-- ============ 配音面板 ============ -->
         <div class="tab-panel active" id="panel-voice">
             <div class="card">
-                <div class="info-tip">输入主题名称和故事氛围，选择音色和场景后点击「AI 智能生成」即可。首次使用会弹出授权窗口，点击允许即可（完全免费）。</div>
+                <div class="info-tip">输入主题名称和故事氛围，点击「AI 生成音色」匹配角色音色，再选择场景后点击「AI 智能生成」生成配音台词。</div>
                 <div class="card-title">📝 基本信息</div>
                 <div class="form-group">
                     <label for="v_theme">主题名称</label>
@@ -204,26 +204,12 @@
                     <label for="v_atmosphere">故事氛围描述</label>
                     <textarea id="v_atmosphere" maxlength="500" placeholder="请描述老虎机的故事氛围，用于指导AI生成符合主题的配音内容"></textarea>
                 </div>
-            </div>
-            <div class="card">
-                <div class="card-title">🎙️ 音色设置</div>
-                <div class="info-tip">手动选择音色或点击「AI生成音色」让AI根据故事氛围自由推荐（不受规则库限制），推荐结果必须包含男声/女声说明。</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="v_character">音色人物</label>
-                        <select id="v_character"><option value="">AI 自动判断</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="v_tone">音色描述</label>
-                        <select id="v_tone"><option value="">AI 自动判断</option></select>
-                    </div>
-                </div>
                 <button class="btn-ai" id="v_voiceAiBtn" type="button" onclick="voiceAiSuggest()">
                     <span class="btn-text">🎙️ AI 生成音色</span><span class="spinner"></span>
                 </button>
                 <div class="ai-status" id="v_voiceStatus"></div>
                 <div id="v_voiceResult" style="display:none; margin-top:14px; padding:16px; background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px;">
-                    <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-bottom:8px;">🎙️ AI 音色推荐</div>
+                    <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-bottom:8px;">🎙️ AI 音色匹配结果</div>
                     <div id="v_voiceResultText" style="font-size:0.85rem; color:#ccd6f6; line-height:1.7;"></div>
                 </div>
             </div>
@@ -382,16 +368,10 @@
     function getTonesFor(c) { return VOICE_CHARACTERS[c] || []; }
 
     function voiceInitSelects() {
-        var sel = document.getElementById('v_character'); sel.length = 1;
-        sel.options[0].text = 'AI 自动判断';
-        Object.keys(VOICE_CHARACTERS).forEach(function(c) { var o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+        // No longer needed - voice is set by AI
     }
     function voiceUpdateTone() {
-        var c = document.getElementById('v_character').value;
-        var ts = document.getElementById('v_tone'); ts.length = 1; ts.selectedIndex = 0;
-        ts.options[0].text = c ? '请选择音色描述' : 'AI 自动判断';
-        if (!c) return;
-        getTonesFor(c).forEach(function(t) { var o = document.createElement('option'); o.value=t; o.textContent=t; ts.appendChild(o); });
+        // No longer needed - voice is set by AI
     }
 
     function voiceAddCustomScene() {
@@ -416,23 +396,10 @@
         var tg = document.querySelector('#v_customList .custom-scene-tag[data-custom="'+desc+'"]'); if(tg) tg.remove();
     }
 
-    function voiceBuildCharSelect(val, idx) {
-        var h = '<select class="voice-select" data-index="'+idx+'" data-field="voiceCharacter" onchange="voiceCharChange(this)"><option value="">请选择</option>';
-        Object.keys(VOICE_CHARACTERS).forEach(function(c){ h+='<option value="'+c+'"'+(c===val?' selected':'')+'>'+c+'</option>'; });
-        return h + '</select>';
-    }
-    function voiceBuildToneSelect(char, val, idx) {
-        var tones = getTonesFor(char);
-        var h = '<select class="voice-select" data-index="'+idx+'" data-field="voiceTone" onchange="voiceToneChange(this)"><option value="">请选择</option>';
-        tones.forEach(function(t){ h+='<option value="'+t+'"'+(t===val?' selected':'')+'>'+t+'</option>'; });
-        return h + '</select>';
-    }
-    function voiceCharChange(el) {
-        var i = parseInt(el.dataset.index); var c = el.value;
-        if(voiceEntries[i]){voiceEntries[i].voiceCharacter=c; voiceEntries[i].voiceTone='';}
-        var row = el.closest('tr'); row.querySelectorAll('td')[5].innerHTML = voiceBuildToneSelect(c,'',i);
-    }
-    function voiceToneChange(el) { var i=parseInt(el.dataset.index); if(voiceEntries[i]) voiceEntries[i].voiceTone=el.value; }
+    function voiceBuildCharSelect(val, idx) { return ''; }
+    function voiceBuildToneSelect(char, val, idx) { return ''; }
+    function voiceCharChange(el) {}
+    function voiceToneChange(el) {}
 
     function voiceRenderTable() {
         var tbody = document.getElementById('v_tbody'); var card = document.getElementById('v_previewCard');
@@ -457,15 +424,15 @@
             tdEn.appendChild(inEn); tr.appendChild(tdEn);
             // 应用场景
             var tdScene = document.createElement('td'); tdScene.textContent = entry.scene; tr.appendChild(tdScene);
-            // 音色人物（下拉）
-            var tdChar = document.createElement('td'); tdChar.innerHTML = voiceBuildCharSelect(entry.voiceCharacter||'',i); tr.appendChild(tdChar);
-            // 音色描述（下拉）
-            var tdTone = document.createElement('td'); tdTone.innerHTML = voiceBuildToneSelect(entry.voiceCharacter||'',entry.voiceTone||'',i); tr.appendChild(tdTone);
+            // 音色人物
+            var tdChar = document.createElement('td'); tdChar.textContent = entry.voiceCharacter || ''; tr.appendChild(tdChar);
+            // 音色描述
+            var tdTone = document.createElement('td'); tdTone.textContent = entry.voiceTone || ''; tr.appendChild(tdTone);
             tbody.appendChild(tr);
         });
     }
 
-    // AI生成音色推荐（可跳出规则库，自由推荐）
+    // AI生成音色（根据故事氛围匹配人物、性别、音色描述）
     async function voiceAiSuggest() {
         var theme = document.getElementById('v_theme').value.trim();
         var atmo = document.getElementById('v_atmosphere').value.trim();
@@ -479,61 +446,38 @@
         resultBox.style.display = 'none';
 
         try {
-            st.textContent = '🔄 正在分析主题氛围，推荐最佳音色方案...'; st.className = 'ai-status generating';
-            var voiceLib = Object.keys(VOICE_CHARACTERS).map(function(c){ return c+'('+VOICE_CHARACTERS[c].join('/')+')'; }).join('、');
+            st.textContent = '🔄 正在根据故事氛围匹配音色...'; st.className = 'ai-status generating';
 
-            var prompt = '你是老虎机游戏配音策划专家。请根据以下主题和故事氛围，推荐最适合的配音音色方案。\n\n' +
+            var prompt = '你是老虎机游戏配音策划专家。请根据以下主题和故事氛围，推荐最适合的配音角色方案。\n\n' +
                 '主题名称：'+theme+'\n故事氛围：'+atmo+'\n\n' +
-                '参考音色库（可选择其中一个，也可以跳出此规则库给出更贴切的建议）：\n'+voiceLib+'\n\n' +
-                '要求：\n' +
-                '1. 必须明确说明推荐使用【男声】还是【女声】\n' +
-                '2. 给出具体的音色人物类型描述（如：成熟男性、神秘女性、怪物等）\n' +
-                '3. 给出音色特征描述（如：低沉浑厚、空灵飘渺等）\n' +
-                '4. 可以不局限于上面的规则库，根据故事氛围给出更有创意的音色建议\n' +
-                '5. 简要说明为什么这个音色搭配最适合此主题\n\n' +
-                '严格返回JSON(不要markdown代码块)：{"gender":"男声或女声","voiceCharacter":"音色人物类型","voiceTone":"音色特征描述","reason":"推荐理由（50字以内）"}';
+                '请给出：\n' +
+                '1. 配音人物：这个角色是谁？（如：邪恶小丑、古老法老、森林精灵女王、赛博机器人等，要具体到角色身份）\n' +
+                '2. 性别：男声 / 女声\n' +
+                '3. 音色描述：这个角色说话时的声音特征（如：沙哑带笑的诡异男声、空灵飘渺的女性低语、浑厚威严的帝王腔调等）\n' +
+                '4. 推荐理由：为什么这个角色和音色最适合此主题\n\n' +
+                '严格返回JSON(不要markdown代码块)：{"character":"配音人物身份","gender":"男声或女声","toneDesc":"音色描述","reason":"推荐理由"}';
 
             var raw = await callAI(prompt);
             var result = null;
             try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\{[\s\S]*?\}/); if(m) result = JSON.parse(m[0]); }
 
-            if (result && result.gender && result.voiceCharacter) {
-                // 尝试匹配到规则库中的选项
-                var matchedChar = '';
-                var matchedTone = '';
-                Object.keys(VOICE_CHARACTERS).forEach(function(c) {
-                    if (result.voiceCharacter.indexOf(c) !== -1 || c.indexOf(result.voiceCharacter) !== -1) matchedChar = c;
-                });
-                // 如果AI推荐的能匹配到规则库，自动设置下拉
-                if (matchedChar) {
-                    document.getElementById('v_character').value = matchedChar;
-                    voiceUpdateTone();
-                    var validTones = VOICE_CHARACTERS[matchedChar] || [];
-                    validTones.forEach(function(t) {
-                        if (result.voiceTone && (result.voiceTone.indexOf(t) !== -1 || t.indexOf(result.voiceTone) !== -1)) matchedTone = t;
-                    });
-                    if (matchedTone) document.getElementById('v_tone').value = matchedTone;
-                }
+            if (result && result.character && result.gender) {
+                // 存储AI推荐结果供后续生成使用
+                window._aiVoiceChar = result.character;
+                window._aiVoiceTone = result.toneDesc || '';
+                window._aiVoiceGender = result.gender;
+                window._aiVoiceReason = result.reason || '';
 
-                // 显示完整推荐结果
-                var displayHtml = '<div><strong>性别：</strong>' + result.gender + '</div>' +
-                    '<div><strong>音色人物：</strong>' + result.voiceCharacter + '</div>' +
-                    '<div><strong>音色描述：</strong>' + result.voiceTone + '</div>' +
-                    '<div><strong>推荐理由：</strong>' + (result.reason || '') + '</div>';
-                if (matchedChar) {
-                    displayHtml += '<div style="margin-top:8px; font-size:0.8rem; color:#27ae60;">✅ 已自动匹配到规则库：' + matchedChar + (matchedTone ? ' - '+matchedTone : '') + '</div>';
-                } else {
-                    displayHtml += '<div style="margin-top:8px; font-size:0.8rem; color:#f7971e;">💡 此推荐超出规则库范围，已记录为自定义音色，可直接用于生成</div>';
-                    // 存储AI推荐的自定义值用于后续生成
-                    window._aiVoiceChar = result.voiceCharacter;
-                    window._aiVoiceTone = result.voiceTone;
-                    window._aiVoiceGender = result.gender;
-                }
+                // 显示结果
+                var displayHtml = '<div><strong>🎭 配音人物：</strong>' + result.character + '</div>' +
+                    '<div><strong>👤 性别：</strong>' + result.gender + '</div>' +
+                    '<div><strong>🔊 音色描述：</strong>' + (result.toneDesc || '') + '</div>' +
+                    '<div><strong>💡 推荐理由：</strong>' + (result.reason || '') + '</div>';
                 resultText.innerHTML = displayHtml;
                 resultBox.style.display = 'block';
-                st.textContent = '✅ 音色推荐完成'; st.className = 'ai-status done';
+                st.textContent = '✅ 音色匹配完成：' + result.character + '（' + result.gender + '）'; st.className = 'ai-status done';
             } else {
-                st.textContent = '⚠️ AI未能返回有效推荐，请手动选择'; st.className = 'ai-status error';
+                st.textContent = '⚠️ AI未能返回有效结果，请重试'; st.className = 'ai-status error';
             }
         } catch(err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
         finally { btn.classList.remove('loading'); btn.disabled = false; }
@@ -542,17 +486,15 @@
     async function voiceGenerate() {
         var theme = document.getElementById('v_theme').value.trim();
         var atmo = document.getElementById('v_atmosphere').value.trim();
-        var char = document.getElementById('v_character').value;
-        var tone = document.getElementById('v_tone').value;
-        // 如果没有手动选择，使用AI推荐的自定义音色
+        // 使用AI生成的音色数据
         var aiChar = window._aiVoiceChar || '';
         var aiTone = window._aiVoiceTone || '';
         var aiGender = window._aiVoiceGender || '';
-        var effectiveChar = char || aiChar || '';
-        var effectiveTone = tone || aiTone || '';
+        var aiReason = window._aiVoiceReason || '';
         var scenes = Array.from(document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked')).map(function(cb){return cb.value;});
         if (!theme) { alert('请输入主题名称'); return; }
         if (!atmo) { alert('请输入故事氛围描述'); return; }
+        if (!aiChar) { alert('请先点击「AI 生成音色」匹配配音角色'); return; }
         if (scenes.length === 0) { alert('请至少选择一个应用场景'); return; }
 
         var btn = document.getElementById('v_genBtn'); btn.classList.add('loading'); btn.disabled = true;
@@ -562,30 +504,19 @@
             var normal = scenes.filter(function(s){return !isJackpot(s);}), jp = scenes.filter(function(s){return isJackpot(s);});
             var all = [];
 
-            // 构建音色人物库说明
-            var voiceLib = Object.keys(VOICE_CHARACTERS).map(function(c){ return c+'('+VOICE_CHARACTERS[c].join('/')+')'; }).join('、');
-
             if (normal.length > 0) {
                 st.textContent = '🔄 正在生成配音内容（'+normal.length+'个场景）...';
                 var scenesText = normal.map(function(s,i){return (i+1)+'. '+s;}).join('\n');
 
                 var prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
-                    '故事氛围为：'+atmo+'\n\n';
+                    '故事氛围为：'+atmo+'\n\n' +
+                    '配音角色设定：\n' +
+                    '- 人物：'+aiChar+'\n' +
+                    '- 性别：'+aiGender+'\n' +
+                    '- 音色：'+aiTone+'\n' +
+                    (aiReason ? '- 角色定位：'+aiReason+'\n' : '') + '\n';
 
-                // 如果有音色偏好（手动选择或AI推荐）
-                if (effectiveChar && effectiveTone) {
-                    prompt += '配音人物设定：'+effectiveChar+' - '+effectiveTone+(aiGender?' ('+aiGender+')':'')+'\n';
-                    var reasonEl = document.getElementById('v_voiceResultText');
-                    if (reasonEl && reasonEl.textContent) {
-                        prompt += '角色背景参考：'+reasonEl.textContent.replace(/[\n]/g,' ').substring(0,200)+'\n';
-                    }
-                    prompt += '\n';
-                } else if (aiGender) {
-                    prompt += '配音性别偏好：'+aiGender+'\n\n';
-                }
-
-                prompt += '可选音色人物库：'+voiceLib+'\n\n' +
-                    '节点如下（仅表示配音播放的时机，不是台词内容）：\n'+scenesText+'\n\n' +
+                prompt += '节点如下（仅表示配音播放的时机，不是台词内容）：\n'+scenesText+'\n\n' +
                     '【最重要的要求】每一句台词都必须包含与【'+theme+'】主题直接相关的意象、词汇或隐喻。绝不允许出现换一个主题也能通用的台词。\n\n' +
                     '具体规则：\n' +
                     '1. 台词以配音角色的第一视角说出，角色就是这个主题中的人物\n' +
@@ -615,22 +546,15 @@
                 try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
                 normal.forEach(function(sn) {
                     var f = Array.isArray(result) ? result.find(function(g){return g.scene===sn;}) : null;
-                    var vc = (f && f.voiceCharacter && VOICE_CHARACTERS[f.voiceCharacter]) ? f.voiceCharacter : (effectiveChar || '旁白解说');
-                    var vt = f && f.voiceTone ? f.voiceTone : (effectiveTone || '');
-                    // 校验voiceTone是否在对应人物的可选范围内
-                    var validTones = VOICE_CHARACTERS[vc] || [];
-                    if (validTones.length > 0 && validTones.indexOf(vt) === -1) vt = validTones[0];
-                    // 如果是自定义音色（不在规则库中），直接使用AI返回值
-                    if (!VOICE_CHARACTERS[vc] && f) { vc = f.voiceCharacter || effectiveChar; vt = f.voiceTone || effectiveTone; }
-                    all.push({scene:sn, voiceCharacter:vc, voiceTone:vt, chinese:f?f.chinese:'', english:f?f.english:''});
+                    all.push({scene:sn, voiceCharacter:aiChar, voiceTone:aiTone, chinese:f?f.chinese:'', english:f?f.english:''});
                 });
             }
             if (jp.length > 0) {
                 st.textContent = '🔄 正在翻译JACKPOT文本...';
                 var jpItems = jp.map(function(s){return getJackpotText(s);});
                 var jpPrompt = '将以下JACKPOT文本翻译为英文：\n'+jpItems.map(function(t){return '- '+t;}).join('\n')+'\n\n严格返回JSON数组(不要markdown代码块)：[{"chinese":"原文","english":"翻译"}]';
-                var defaultChar = effectiveChar || '旁白解说';
-                var defaultTone = effectiveTone || (VOICE_CHARACTERS[defaultChar] ? VOICE_CHARACTERS[defaultChar][0] : '');
+                var defaultChar = aiChar || '旁白解说';
+                var defaultTone = aiTone || '';
                 try {
                     var jpRaw = await callAI(jpPrompt); var jpR = null;
                     try { jpR = JSON.parse(jpRaw); } catch(e) { var jm = jpRaw.match(/\[[\s\S]*?\]/); if(jm) jpR = JSON.parse(jm[0]); }
@@ -781,8 +705,6 @@
     // 页面初始化
     // =============================================
     document.addEventListener('DOMContentLoaded', function() {
-        voiceInitSelects();
-        document.getElementById('v_character').addEventListener('change', voiceUpdateTone);
         document.getElementById('v_customInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault(); voiceAddCustomScene();} });
         musicUpdateSections();
         document.getElementById('m_count').addEventListener('change', musicUpdateSections);
