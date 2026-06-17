@@ -621,22 +621,32 @@
         if (!chars.length && window._aiVoiceChar) chars = [{character:window._aiVoiceChar, gender:window._aiVoiceGender||'', toneDesc:window._aiVoiceTone||'', reason:window._aiVoiceReason||''}];
 
         // 收集场景和角色分配
-        var scenes = []; // [{scene, charIdx}]
+        var rawScenes = []; // [{scene, charIdx}]
         if (chars.length > 1) {
             // 多角色：从每个角色面板收集
             chars.forEach(function(c, ci) {
                 var panel = document.getElementById('v_charPanel_'+ci);
                 if (!panel) return;
                 panel.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
-                    scenes.push({scene: cb.value, charIdx: ci});
+                    rawScenes.push({scene: cb.value, charIdx: ci});
                 });
             });
         } else {
             // 单角色：从默认面板收集
             document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked').forEach(function(cb) {
-                scenes.push({scene: cb.value, charIdx: 0});
+                rawScenes.push({scene: cb.value, charIdx: 0});
             });
         }
+
+        // 合并同一场景的多个角色：同一场景只输出一条，音色人物合并显示
+        var sceneMap = {};
+        rawScenes.forEach(function(s) {
+            if (!sceneMap[s.scene]) sceneMap[s.scene] = [];
+            if (sceneMap[s.scene].indexOf(s.charIdx) === -1) sceneMap[s.scene].push(s.charIdx);
+        });
+        var scenes = Object.keys(sceneMap).map(function(scene) {
+            return { scene: scene, charIdxList: sceneMap[scene] };
+        });
 
         if (!theme) { alert('请输入主题名称'); return; }
         if (!atmo) { alert('请输入故事氛围描述'); return; }
@@ -654,43 +664,47 @@
             if (normal.length > 0) {
                 st.textContent = '🔄 正在生成配音内容（'+normal.length+'条）...';
                 var scenesText = normal.map(function(s,i){
-                    var c = chars[s.charIdx] || chars[0];
-                    return (i+1)+'. '+s.scene+' → '+c.character+'('+c.gender+')';
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    return (i+1)+'. '+s.scene+' → '+charNames.join(' + ');
                 }).join('\n');
                 var charsDesc = chars.map(function(c,i){ return '角色'+(i+1)+'：'+c.character+'（'+c.gender+'，'+c.toneDesc+'）'; }).join('\n');
 
                 var prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
                     '故事氛围为：'+atmo+'\n\n' +
                     '配音角色设定：\n'+charsDesc+'\n\n' +
-                    '节点及对应角色：\n'+scenesText+'\n\n' +
+                    '节点及对应角色（如果一个节点标注了多个角色，表示该节点由多个角色一起说同一句台词）：\n'+scenesText+'\n\n' +
                     '【严格字数限制】英文配音必须控制在8个英文单词以内！这是硬性限制，超出则无法在游戏中播放完。\n\n' +
                     '【主题相关性】每句台词都必须包含与【'+theme+'】主题直接相关的意象或词汇，禁止通用台词。\n\n' +
+                    '【重要】每个节点只输出一条台词，即使有多个角色一起说也只输出一条。\n\n' +
                     '具体规则：\n' +
-                    '1. 台词以对应角色的第一视角说出\n' +
+                    '1. 台词以角色的第一视角说出\n' +
                     '2. 英文严格限制在3-8个单词，是主要配音输出\n' +
                     '3. 中文是英文的意译（不超过10个汉字）\n' +
                     '4. 每句必须嵌入主题相关词汇\n\n' +
-                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"角色","voiceTone":"音色描述","chinese":"中文","english":"English(≤8词)"}]';
+                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","chinese":"中文","english":"English(≤8词)"}]';
 
                 var raw = await callAI(prompt);
                 var result = null;
                 try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
                 normal.forEach(function(s) {
-                    var c = chars[s.charIdx] || chars[0];
-                    var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene && (g.voiceCharacter||'').indexOf(c.character)!==-1;}) : null;
-                    if (!f) f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
-                    all.push({scene:s.scene, voiceCharacter:c.character+'('+c.gender+')', voiceTone:c.toneDesc, chinese:f?f.chinese:'', english:f?f.english:''});
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    var toneDescs = s.charIdxList.map(function(ci){ return (chars[ci]||chars[0]).toneDesc; });
+                    var voiceCharStr = charNames.length > 1 ? charNames.join(' + ') + ' 一起说' : charNames[0];
+                    var voiceToneStr = toneDescs.length > 1 ? toneDescs.join(' / ') : toneDescs[0];
+                    var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
+                    all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:voiceToneStr, chinese:f?f.chinese:'', english:f?f.english:''});
                 });
             }
             if (jp.length > 0) {
                 st.textContent = '🔄 正在处理JACKPOT...';
                 jp.forEach(function(s) {
-                    var c = chars[s.charIdx] || chars[0];
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    var toneDescs = s.charIdxList.map(function(ci){ return (chars[ci]||chars[0]).toneDesc; });
+                    var voiceCharStr = charNames.length > 1 ? charNames.join(' + ') + ' 一起说' : charNames[0];
                     var cn = getJackpotText(s.scene);
-                    all.push({scene:s.scene, voiceCharacter:c.character+'('+c.gender+')', voiceTone:c.toneDesc, chinese:cn, english:cn});
+                    all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:toneDescs.join(' / '), chinese:cn, english:cn});
                 });
             }
-            // 按原始顺序排列
             voiceEntries = all;
             voiceRenderTable();
             st.textContent = '✅ 生成完成！可编辑内容后导出文档'; st.className = 'ai-status done';
