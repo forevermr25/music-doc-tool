@@ -9,492 +9,448 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:30px 16px;color:#e0e0e0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:28px 14px;color:#e0e0e0}
 .container{max-width:1000px;margin:0 auto}
-h1{text-align:center;font-size:1.8rem;margin-bottom:8px;background:linear-gradient(90deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.subtitle{text-align:center;color:#8892b0;margin-bottom:24px;font-size:0.9rem}
-.step-nav{display:flex;justify-content:center;gap:4px;margin-bottom:24px}
-.step-btn{padding:10px 20px;border:none;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,0.05);color:#8892b0;border:1px solid rgba(255,255,255,0.1);transition:all .3s;font-family:inherit}
+h1{text-align:center;font-size:1.7rem;margin-bottom:6px;background:linear-gradient(90deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:#8892b0;margin-bottom:22px;font-size:0.88rem}
+.step-nav{display:flex;justify-content:center;gap:3px;margin-bottom:22px;flex-wrap:wrap}
+.step-btn{padding:9px 16px;border:none;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,0.05);color:#8892b0;border:1px solid rgba(255,255,255,0.1);transition:all .3s;font-family:inherit}
 .step-btn:hover{color:#ccd6f6;border-color:rgba(247,151,30,0.3)}
 .step-btn.active{background:linear-gradient(135deg,#f7971e,#ffd200);color:#1a1a2e;border-color:transparent}
 .step-panel{display:none}.step-panel.active{display:block}
-.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:24px;margin-bottom:18px;backdrop-filter:blur(10px)}
-.card-title{font-size:1rem;font-weight:600;color:#ccd6f6;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.form-group{margin-bottom:16px}
-.form-row{display:flex;gap:12px}.form-row .form-group{flex:1}
-label{display:block;font-size:0.82rem;font-weight:600;margin-bottom:5px;color:#ccd6f6}
-input[type="text"],input[type="number"],input[type="url"],textarea,select{width:100%;padding:9px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:#e0e0e0;font-size:0.88rem;font-family:inherit;transition:border-color .3s}
-input:focus,textarea:focus,select:focus{outline:none;border-color:#f7971e;box-shadow:0 0 0 2px rgba(247,151,30,0.12)}
-textarea{min-height:70px;resize:vertical;line-height:1.5}
-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:0.95rem;font-weight:600;color:#ccd6f6;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.form-group{margin-bottom:14px}
+.form-row{display:flex;gap:10px}.form-row .form-group{flex:1}
+label{display:block;font-size:0.8rem;font-weight:600;margin-bottom:4px;color:#ccd6f6}
+input[type="text"],input[type="number"],input[type="url"],textarea,select{width:100%;padding:8px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:0.85rem;font-family:inherit;transition:border-color .3s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#f7971e;box-shadow:0 0 0 2px rgba(247,151,30,0.1)}
+textarea{min-height:60px;resize:vertical;line-height:1.4}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 select option{background:#1a1a2e;color:#e0e0e0}
-.tag-group{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
-.tag-item{padding:5px 12px;border-radius:16px;font-size:0.78rem;font-weight:500;cursor:pointer;transition:all .2s;user-select:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#8892b0}
+.tag-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag-item{padding:5px 11px;border-radius:14px;font-size:0.76rem;font-weight:500;cursor:pointer;transition:all .2s;user-select:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#8892b0}
 .tag-item:hover{border-color:rgba(247,151,30,0.4);color:#ccd6f6}
-.tag-item.selected{background:rgba(247,151,30,0.15);border-color:#f7971e;color:#ffd200}
-.info-tip{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:rgba(79,172,254,0.06);border:1px solid rgba(79,172,254,0.15);border-radius:7px;margin-bottom:12px;font-size:0.78rem;color:#8892b0;line-height:1.4}
+.tag-item.selected{background:rgba(247,151,30,0.12);border-color:#f7971e;color:#ffd200}
+.info-tip{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.12);border-radius:6px;margin-bottom:10px;font-size:0.75rem;color:#8892b0;line-height:1.4}
 .info-tip::before{content:'💡';flex-shrink:0}
-.btn-primary{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;color:#fff;font-size:0.88rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(102,126,234,0.3)}
+.btn-primary{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:7px;color:#fff;font-size:0.85rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,0.3)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-primary .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}
+.btn-primary .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}
 .btn-primary.loading .spinner{display:block}.btn-primary.loading .btn-text{display:none}
-.btn-add{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:rgba(247,151,30,0.08);border:1px solid rgba(247,151,30,0.25);border-radius:6px;color:#ffd200;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-add{padding:5px 10px;background:rgba(247,151,30,0.08);border:1px solid rgba(247,151,30,0.2);border-radius:5px;color:#ffd200;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit}
 .btn-add:hover{background:rgba(247,151,30,0.15)}
-.btn-danger{padding:3px 8px;background:rgba(245,87,108,0.08);border:1px solid rgba(245,87,108,0.25);border-radius:5px;color:#ff6b6b;font-size:0.72rem;cursor:pointer;font-family:inherit}
-.btn-danger:hover{background:rgba(245,87,108,0.15)}
-.btn-export{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;border-radius:10px;color:#1a1a2e;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s}
-.btn-export:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(247,151,30,0.3)}
+.btn-danger{padding:2px 7px;background:rgba(245,87,108,0.08);border:1px solid rgba(245,87,108,0.2);border-radius:4px;color:#ff6b6b;font-size:0.7rem;cursor:pointer;font-family:inherit}
+.btn-export{display:block;width:100%;padding:13px;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;border-radius:9px;color:#1a1a2e;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s}
+.btn-export:hover{transform:translateY(-2px);box-shadow:0 5px 18px rgba(247,151,30,0.3)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ai-status{font-size:0.78rem;color:#8892b0;margin-top:6px;min-height:1em}
-.ai-status.generating{color:#a78bfa}.ai-status.error{color:#ff6b6b}.ai-status.done{color:#27ae60}
-.success-toast{position:fixed;top:20px;right:20px;padding:14px 20px;background:rgba(39,174,96,0.95);color:#fff;border-radius:8px;font-weight:600;transform:translateX(120%);transition:transform .4s ease;z-index:1000;font-size:0.88rem}
+.ai-status{font-size:0.75rem;color:#8892b0;margin-top:5px}.ai-status.generating{color:#a78bfa}.ai-status.error{color:#ff6b6b}.ai-status.done{color:#27ae60}
+.success-toast{position:fixed;top:16px;right:16px;padding:12px 18px;background:rgba(39,174,96,0.95);color:#fff;border-radius:7px;font-weight:600;transform:translateX(120%);transition:transform .4s ease;z-index:1000;font-size:0.85rem}
 .success-toast.show{transform:translateX(0)}
-.icon-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px}
-.icon-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center;position:relative}
-.icon-item .name{font-size:0.8rem;font-weight:600;color:#ffd200;margin-bottom:4px}
-.icon-item input,.icon-item textarea{font-size:0.75rem;padding:4px 6px;margin-top:3px}
-.icon-item textarea{min-height:36px}
-.gameplay-block{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px;margin-bottom:12px}
-.gameplay-block-title{font-weight:600;color:#ccd6f6;font-size:0.9rem;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.gameplay-block-title .badge{font-size:0.7rem;padding:2px 8px;border-radius:10px;background:rgba(102,126,234,0.2);color:#a78bfa}
-.limit-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.78rem;color:#ccd6f6}
-.limit-item input[type="checkbox"]{width:13px;height:13px;accent-color:#f7971e}
-.flowchart-container{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px;min-height:120px;overflow-x:auto;margin-top:8px}
-.flowchart-editor textarea{min-height:100px;font-family:'Consolas','Monaco',monospace;font-size:0.78rem}
-@media(max-width:768px){body{padding:16px 10px}.card{padding:16px}.form-row{flex-direction:column;gap:0}.step-btn{padding:8px 12px;font-size:0.75rem}h1{font-size:1.4rem}.icon-row{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}}
-    </style>
+.icon-block{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px;margin-bottom:10px}
+.icon-block .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.icon-block .hdr .nm{font-size:0.82rem;font-weight:600;color:#ffd200}
+.img-upload{width:100%;height:50px;border:1px dashed rgba(255,255,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#8892b0;cursor:pointer;position:relative;overflow:hidden;margin-top:4px}
+.img-upload:hover{border-color:rgba(247,151,30,0.3)}
+.img-upload img{max-width:100%;max-height:48px;object-fit:contain}
+.img-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.gp-block{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:9px;padding:14px;margin-bottom:10px}
+.gp-block .title{font-weight:600;color:#ccd6f6;font-size:0.88rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.limit-item{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:0.75rem;color:#ccd6f6}
+.limit-item input[type="checkbox"]{width:12px;height:12px;accent-color:#f7971e}
+.collect-row{background:rgba(247,151,30,0.04);border:1px solid rgba(247,151,30,0.12);border-radius:7px;padding:10px;margin-bottom:8px}
+.flowchart-container{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:7px;padding:12px;min-height:100px;overflow-x:auto;margin-top:6px}
+.flowchart-editor textarea{min-height:80px;font-family:'Consolas','Monaco',monospace;font-size:0.75rem}
+@media(max-width:768px){body{padding:14px 8px}.card{padding:14px}.form-row{flex-direction:column;gap:0}.step-btn{padding:7px 10px;font-size:0.73rem}h1{font-size:1.3rem}}
+</style>
 </head>
 <body>
 <div class="container">
-    <h1>🎰 老虎机玩法文档生成器</h1>
-    <p class="subtitle">简洁输入 · AI 辅助 · 精准输出 xlsx</p>
-    <div class="step-nav">
-        <button class="step-btn active" onclick="go(1)">① 基础 + 架构</button>
-        <button class="step-btn" onclick="go(2)">② 图标配置</button>
-        <button class="step-btn" onclick="go(3)">③ 玩法内容</button>
-        <button class="step-btn" onclick="go(4)">④ 美术 + 导出</button>
-    </div>
+<h1>🎰 老虎机玩法文档生成器</h1>
+<p class="subtitle">简洁输入 · AI 辅助 · 精准输出</p>
+<div class="step-nav">
+    <button class="step-btn active" onclick="go(1)">① 基础+架构</button>
+    <button class="step-btn" onclick="go(2)">② 图标配置</button>
+    <button class="step-btn" onclick="go(3)">③ 玩法内容</button>
+    <button class="step-btn" onclick="go(4)">④ 美术+导出</button>
+</div>
 
-    <!-- ===== Step 1 ===== -->
-    <div class="step-panel active" id="s1">
-        <div class="card">
-            <div class="card-title">📝 基础信息</div>
-            <div class="form-row">
-                <div class="form-group"><label>品牌</label><select id="brand"><option>CTS</option><option>JMS</option><option>JFS</option></select></div>
-                <div class="form-group"><label>关卡名字</label><input type="text" id="name" placeholder="如：金蟾蜍"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>棋盘排列</label><input type="text" id="board" placeholder="如：3X5 或 base3*5;respin5*5"></div>
-                <div class="form-group"><label>板式</label><select id="orient"><option value="竖版">竖版</option><option value="横版">横版</option></select></div>
-                <div class="form-group"><label>线数</label><input type="text" id="lines" placeholder="如：50"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>策划</label><input type="text" id="planner"></div>
-                <div class="form-group"><label>玩法来源</label><input type="text" id="source" placeholder="如：AGS - LONG BAO BAO"></div>
-            </div>
-            <div class="form-group"><label>玩法链接</label><input type="url" id="link" placeholder="YouTube链接"></div>
+<!-- ===== Step 1 ===== -->
+<div class="step-panel active" id="s1">
+    <div class="card">
+        <div class="card-title">📝 基础信息</div>
+        <div class="form-row">
+            <div class="form-group"><label>品牌</label><select id="f_brand"><option>CTS</option><option>JMS</option><option>JFS</option></select></div>
+            <div class="form-group"><label>关卡名字</label><input type="text" id="f_name" placeholder="如：金蟾蜍"></div>
         </div>
-        <div class="card">
-            <div class="card-title">🏗️ 玩法架构（Base + 多选）</div>
-            <div class="info-tip">所有关卡以 Base 为基础，选择叠加的玩法模块。</div>
-            <div class="tag-group" id="archTags">
-                <span class="tag-item" data-v="free" onclick="tog(this)">Free Games</span>
-                <span class="tag-item" data-v="respin" onclick="tog(this)">Respin/Link</span>
-                <span class="tag-item" data-v="eliminate" onclick="tog(this)">消除</span>
-                <span class="tag-item" data-v="shop" onclick="tog(this)">商店</span>
-                <span class="tag-item" data-v="build" onclick="tog(this)">建造</span>
-                <span class="tag-item" data-v="super_progress" onclick="tog(this)">Super进度条</span>
-                <span class="tag-item" data-v="super_node" onclick="tog(this)">Super节点</span>
-                <span class="tag-item" data-v="wheel" onclick="tog(this)">转盘</span>
-                <span class="tag-item" data-v="pick" onclick="tog(this)">Pick</span>
-                <span class="tag-item" data-v="series" onclick="tog(this)">系列关卡</span>
-            </div>
+        <div class="form-row">
+            <div class="form-group"><label>棋盘排列</label><input type="text" id="f_board" placeholder="如：3X5 或 base3*5;respin5*5"></div>
+            <div class="form-group"><label>板式</label><select id="f_orient"><option>竖版</option><option>横版</option></select></div>
+            <div class="form-group"><label>线数</label><input type="text" id="f_lines" placeholder="50"></div>
         </div>
-        <div style="text-align:right;margin-top:12px"><button class="btn-primary" onclick="applyAndGo2()"><span class="btn-text">下一步 →</span></button></div>
+        <div class="form-row">
+            <div class="form-group"><label>策划</label><input type="text" id="f_planner"></div>
+            <div class="form-group"><label>玩法来源</label><input type="text" id="f_source"></div>
+        </div>
+        <div class="form-group"><label>玩法链接</label><input type="url" id="f_link" placeholder="YouTube链接"></div>
     </div>
+    <div class="card">
+        <div class="card-title">🏗️ 玩法架构（Base + 多选）</div>
+        <div class="tag-group" id="archTags">
+            <span class="tag-item" data-v="free" onclick="tog(this)">Free Games</span>
+            <span class="tag-item" data-v="respin" onclick="tog(this)">Respin/Link</span>
+            <span class="tag-item" data-v="eliminate" onclick="tog(this)">消除</span>
+            <span class="tag-item" data-v="shop" onclick="tog(this)">商店</span>
+            <span class="tag-item" data-v="build" onclick="tog(this)">建造</span>
+            <span class="tag-item" data-v="super_progress" onclick="tog(this)">Super进度条</span>
+            <span class="tag-item" data-v="super_node" onclick="tog(this)">Super节点</span>
+            <span class="tag-item" data-v="wheel" onclick="tog(this)">转盘</span>
+            <span class="tag-item" data-v="pick" onclick="tog(this)">Pick</span>
+            <span class="tag-item" data-v="series" onclick="tog(this)">系列关卡</span>
+        </div>
+    </div>
+    <div style="text-align:right"><button class="btn-primary" onclick="applyGo2()"><span class="btn-text">下一步 →</span></button></div>
+</div>
 
-    <!-- ===== Step 2: 图标 ===== -->
-    <div class="step-panel" id="s2">
-        <div class="card">
-            <div class="card-title">📥 收集机制</div>
-            <div class="info-tip">配置收集区数量及对应图标，触发方式在玩法内容页设置。</div>
-            <div class="form-row">
-                <div class="form-group"><label>收集区数量</label><select id="collectN" onchange="buildCollect()"><option value="0">无收集区</option><option value="1">1个</option><option value="2">2个</option><option value="3">3个</option><option value="4">4个</option><option value="5">5个</option></select></div>
-                <div class="form-group"><label>收集触发方式</label><select id="collectMode"><option value="prob_free">收集图标有概率触发Free</option><option value="prob_respin">收集图标有概率触发Respin</option><option value="certain_free">收集图标确定触发Free</option><option value="certain_respin">收集图标确定触发Respin</option></select></div>
-            </div>
-            <div id="collectList"></div>
-        </div>
-        <div class="card">
-            <div class="card-title">⭐ 特殊图标（wild / scatter / bonus）</div>
-            <div class="info-tip">除 wild 和 scatter 外，其余特殊图标统一命名为 bonus1, bonus2... 如有特殊名称则用 bonus_xxx 格式。</div>
-            <div id="specialIcons"></div>
-            <div style="margin-top:10px;display:flex;gap:8px">
-                <button class="btn-add" onclick="addSpecial('bonus')">+ Bonus</button>
-                <button class="btn-add" onclick="addSpecial('wild')">+ Wild</button>
-                <button class="btn-add" onclick="addSpecial('scatter')">+ Scatter</button>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-title">🎨 普通图标</div>
-            <div class="form-row">
-                <div class="form-group"><label>H（高分）数量</label><input type="number" id="hN" value="5" min="1" max="8" onchange="renderNormal()"></div>
-                <div class="form-group"><label>L（低分）数量</label><input type="number" id="lN" value="6" min="1" max="8" onchange="renderNormal()"></div>
-            </div>
-            <div id="normalIcons"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:12px">
-            <button class="btn-primary" onclick="go(1)" style="background:rgba(255,255,255,0.1)"><span class="btn-text">← 上一步</span></button>
-            <button class="btn-primary" onclick="go(3)"><span class="btn-text">下一步 →</span></button>
+<!-- ===== Step 2: 图标 ===== -->
+<div class="step-panel" id="s2">
+    <div class="card">
+        <div class="card-title">📥 收集机制</div>
+        <div class="info-tip">配置收集区数量，每个收集区单独设定对应图标和触发方式。填写后特殊图标自动适配。</div>
+        <div class="form-group"><label>收集区数量</label><select id="f_collectN" onchange="buildCollect()"><option value="0">无收集区</option><option value="1">1个</option><option value="2">2个</option><option value="3">3个</option><option value="4">4个</option><option value="5">5个</option></select></div>
+        <div id="collectCfg"></div>
+    </div>
+    <div class="card">
+        <div class="card-title">⭐ 特殊图标</div>
+        <div class="info-tip">除 wild/scatter 外统一用 bonus1, bonus2... 命名。含：实体机/竞品图标(图片)、设计要点、参考图标(图片)、分值。功能由玩法内容自动补齐。</div>
+        <div id="specialList"></div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+            <button class="btn-add" onclick="addSp('bonus')">+ Bonus</button>
+            <button class="btn-add" onclick="addSp('wild')">+ Wild</button>
+            <button class="btn-add" onclick="addSp('scatter')">+ Scatter</button>
         </div>
     </div>
+    <div class="card">
+        <div class="card-title">🎨 普通图标</div>
+        <div class="form-row">
+            <div class="form-group"><label>H（高分）数量</label><input type="number" id="f_hN" value="5" min="1" max="8" onchange="renderNorm()"></div>
+            <div class="form-group"><label>L（低分）数量</label><input type="number" id="f_lN" value="6" min="1" max="8" onchange="renderNorm()"></div>
+        </div>
+        <div id="normList"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+        <button class="btn-primary" onclick="go(1)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button>
+        <button class="btn-primary" onclick="go(3)"><span class="btn-text">下一步 →</span></button>
+    </div>
+</div>
 
-    <!-- ===== Step 3: 玩法内容 ===== -->
-    <div class="step-panel" id="s3">
-        <div class="card">
-            <div class="card-title">🎮 玩法内容</div>
-            <div class="info-tip">每段玩法只需填写核心描述，AI 可自动扩充为完整的触发条件 + 玩法说明 + 极限情况。</div>
-            <button class="btn-primary" id="aiBtn" onclick="aiGen()" style="margin-bottom:12px"><span class="btn-text">🤖 AI 智能补全所有段落</span><span class="spinner"></span></button>
-            <div class="ai-status" id="aiSt"></div>
-            <div id="gameplayList"></div>
-            <button class="btn-add" onclick="addSection()" style="margin-top:10px">+ 添加玩法段落</button>
+<!-- ===== Step 3: 玩法内容 ===== -->
+<div class="step-panel" id="s3">
+    <div class="card">
+        <div class="card-title">🎮 Base 配置</div>
+        <div class="form-row">
+            <div class="form-group"><label>Jackpot 档位</label><select id="f_jp"><option value="">无</option><option value="4">四档(GRAND,MAJOR,MINOR,MINI)</option><option value="5">五档(GRAND,MEGA,MAJOR,MINOR,MINI)</option><option value="6">六档(GRAND,MEGA,MAJOR,MAXI,MINOR,MINI)</option><option value="custom">自定义</option></select></div>
+            <div class="form-group"><label>Wild 出现列</label><select id="f_wildCol"><option value="any">任意列</option><option value="2345">2,3,4,5列</option><option value="234">2,3,4列</option><option value="custom">自定义</option></select></div>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:12px">
-            <button class="btn-primary" onclick="go(2)" style="background:rgba(255,255,255,0.1)"><span class="btn-text">← 上一步</span></button>
-            <button class="btn-primary" onclick="syncFuncs();go(4)"><span class="btn-text">同步图标功能 → 下一步</span></button>
+        <div class="form-group" id="jpCustom" style="display:none"><label>自定义Jackpot档位</label><input type="text" id="f_jpCustom" placeholder="逗号分隔，如：ULTRA,GRAND,MEGA,MAJOR,MINOR,MINI"></div>
+        <div class="form-group" id="wcCustom" style="display:none"><label>自定义Wild列</label><input type="text" id="f_wcCustom" placeholder="如：1,3,5"></div>
+        <div class="form-row">
+            <div class="form-group"><label>高低Bet</label><select id="f_bet" onchange="buildBet()"><option value="0">无</option><option value="2">2档</option><option value="3">3档</option><option value="4">4档</option></select></div>
         </div>
+        <div id="betCfg"></div>
     </div>
+    <div class="card">
+        <div class="card-title">📄 玩法段落</div>
+        <div class="info-tip">每段只需填核心描述，AI 可补全触发条件、完整说明和极限情况。</div>
+        <button class="btn-primary" id="aiBtn" onclick="aiGen()" style="margin-bottom:10px"><span class="btn-text">🤖 AI 补全所有段落</span><span class="spinner"></span></button>
+        <div class="ai-status" id="aiSt"></div>
+        <div id="gpList"></div>
+        <button class="btn-add" onclick="addGp()" style="margin-top:8px">+ 添加段落</button>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+        <button class="btn-primary" onclick="go(2)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button>
+        <button class="btn-primary" onclick="syncFunc();go(4)"><span class="btn-text">同步图标功能 → 下一步</span></button>
+    </div>
+</div>
 
-    <!-- ===== Step 4: 美术 + 导出 ===== -->
-    <div class="step-panel" id="s4">
-        <div class="card">
-            <div class="card-title">🎨 美术设计重点</div>
-            <div id="artList"></div>
-            <button class="btn-add" onclick="addArt()">+ 添加设计重点</button>
-        </div>
-        <div class="card">
-            <div class="card-title">✨ 动效设计重点</div>
-            <textarea id="animDesc" placeholder="描述关键动效流程"></textarea>
-        </div>
-        <div class="card">
-            <div class="card-title">📐 流程图（可选）</div>
-            <div class="form-row">
-                <div class="form-group"><label>Base流程</label><select onchange="loadTpl('base',this.value)"><option value="">选择模板...</option><option value="collect">收集触发型</option><option value="scatter">Scatter触发型</option><option value="respin">Respin型</option></select></div>
-                <div class="form-group"><label>玩法流程</label><select onchange="loadTpl('play',this.value)"><option value="">选择模板...</option><option value="free">Free Games</option><option value="buff">Free+Buff</option><option value="link">Respin/Link</option></select></div>
-            </div>
-            <div class="flowchart-editor"><textarea id="flowCode" placeholder="Mermaid 流程图代码" oninput="renderFlow()"></textarea></div>
-            <div class="flowchart-container" id="flowPreview"></div>
-        </div>
-        <button class="btn-export" onclick="exportXlsx()">📥 导出玩法文档 (.xlsx)</button>
-        <div style="margin-top:12px"><button class="btn-primary" onclick="go(3)" style="background:rgba(255,255,255,0.1)"><span class="btn-text">← 上一步</span></button></div>
+<!-- ===== Step 4: 美术+导出 ===== -->
+<div class="step-panel" id="s4">
+    <div class="card">
+        <div class="card-title">🎨 美术设计重点</div>
+        <div id="artList"></div>
+        <button class="btn-add" onclick="addArt()">+ 添加</button>
     </div>
+    <div class="card">
+        <div class="card-title">✨ 动效设计重点</div>
+        <textarea id="f_anim" placeholder="关键动效流程描述"></textarea>
+    </div>
+    <div class="card">
+        <div class="card-title">📐 流程图（可选）</div>
+        <div class="form-group"><label>模板</label><select onchange="loadTpl(this.value)"><option value="">选择...</option><option value="collect">收集触发</option><option value="scatter">Scatter触发</option><option value="respin">Respin</option><option value="free">Free Games</option></select></div>
+        <div class="flowchart-editor"><textarea id="flowCode" placeholder="Mermaid代码" oninput="renderFlow()"></textarea></div>
+        <div class="flowchart-container" id="flowPv"></div>
+    </div>
+    <button class="btn-export" onclick="exportXlsx()">📥 导出玩法文档 (.xlsx)</button>
+    <div style="margin-top:10px"><button class="btn-primary" onclick="go(3)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button></div>
+</div>
 </div>
 <div class="success-toast" id="toast"></div>
 <script>
-var D = { specials:[], normals:[], sections:[], arts:[], archTags:[], collectIcons:[] };
+var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[]};
+function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp();document.getElementById('f_jp').onchange=()=>{document.getElementById('jpCustom').style.display=document.getElementById('f_jp').value==='custom'?'':'none'};document.getElementById('f_wildCol').onchange=()=>{document.getElementById('wcCustom').style.display=document.getElementById('f_wildCol').value==='custom'?'':'none'}}if(n===4)renderArts();window.scrollTo(0,0)}
+function tog(el){el.classList.toggle('selected');D.archTags=[...document.querySelectorAll('#archTags .tag-item.selected')].map(t=>t.dataset.v)}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
-function go(n) {
-    document.querySelectorAll('.step-panel').forEach(function(p){p.classList.remove('active')});
-    document.querySelectorAll('.step-btn').forEach(function(b,i){b.classList.remove('active');if(i+1===n)b.classList.add('active')});
-    document.getElementById('s'+n).classList.add('active');
-    if(n===2){renderSpecials();renderNormal()}
-    if(n===3)renderSections();
-    if(n===4)renderArts();
-    window.scrollTo(0,0);
-}
-function tog(el){el.classList.toggle('selected');D.archTags=Array.from(document.querySelectorAll('#archTags .tag-item.selected')).map(function(t){return t.dataset.v})}
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
-
-/* ===== 收集区 ===== */
+/* ===== 收集区（每个区独立配置触发方式）===== */
 function buildCollect(){
-    var n=parseInt(document.getElementById('collectN').value)||0;
-    var c=document.getElementById('collectList');c.innerHTML='';
-    D.collectIcons=[];
+    var n=+document.getElementById('f_collectN').value;
+    var c=document.getElementById('collectCfg');c.innerHTML='';D.collects=[];
     for(var i=0;i<n;i++){
-        D.collectIcons.push({type:'bonus',name:'bonus'+(i+1)});
-        c.innerHTML+='<div class="form-row" style="margin-top:6px"><div class="form-group"><label>收集区'+(i+1)+' 对应图标类型</label><select data-i="'+i+'" onchange="D.collectIcons['+i+'].type=this.value;autoName('+i+')"><option value="bonus">Bonus</option><option value="wild">Wild</option><option value="scatter">Scatter</option></select></div><div class="form-group"><label>图标名称</label><input type="text" id="ci_'+i+'" value="bonus'+(i+1)+'" onchange="D.collectIcons['+i+'].name=this.value"></div></div>';
+        D.collects.push({type:'bonus',name:'bonus'+(i+1),triggerMode:'prob_free'});
+        c.innerHTML+='<div class="collect-row"><strong style="font-size:0.8rem;color:#ffd200">收集区'+(i+1)+'</strong><div class="form-row" style="margin-top:6px"><div class="form-group"><label>图标类型</label><select data-i="'+i+'" onchange="D.collects['+i+'].type=this.value;autoN('+i+')"><option value="bonus">Bonus</option><option value="wild">Wild</option><option value="scatter">Scatter</option></select></div><div class="form-group"><label>图标名称</label><input type="text" id="cn_'+i+'" value="bonus'+(i+1)+'" onchange="D.collects['+i+'].name=this.value"></div><div class="form-group"><label>触发方式</label><select onchange="D.collects['+i+'].triggerMode=this.value"><option value="prob_free">有概率触发Free</option><option value="prob_respin">有概率触发Respin</option><option value="certain_free">确定触发Free</option><option value="certain_respin">确定触发Respin</option></select></div></div></div>';
     }
 }
-function autoName(i){var t=D.collectIcons[i].type;document.getElementById('ci_'+i).value=t+(i+1);D.collectIcons[i].name=t+(i+1)}
+function autoN(i){var t=D.collects[i].type;var el=document.getElementById('cn_'+i);el.value=t+(i+1);D.collects[i].name=t+(i+1)}
 
 /* ===== 应用骨架 ===== */
-function applyAndGo2(){
+function applyGo2(){
     D.specials=[];
-    var bonusIdx=1;
-    D.collectIcons.forEach(function(ci){D.specials.push({name:ci.name,type:ci.type,design:'',func:'',score:'',ref:''})});
+    // 从收集区生成对应特殊图标
+    D.collects.forEach(ci=>D.specials.push({name:ci.name,type:ci.type,design:'',func:'',score:'',refImg:'',compImg:''}));
     var at=D.archTags;
-    if(at.includes('free')&&D.collectIcons.length===0) D.specials.push({name:'scatter',type:'scatter',design:'超框，带scatter文案',func:'',score:'',ref:''});
-    if(at.includes('free')||at.includes('respin')) D.specials.push({name:'wild',type:'wild',design:'',func:'',score:'',ref:''});
-    if(at.includes('respin')){bonusIdx=D.specials.filter(function(s){return s.type==='bonus'}).length+1;D.specials.push({name:'bonus'+bonusIdx,type:'bonus',design:'带金额',func:'',score:'',ref:''})}
-    /* 去重 */
-    var seen={};D.specials=D.specials.filter(function(s){if(seen[s.name])return false;seen[s.name]=true;return true});
-    /* 玩法段落 */
+    if(at.includes('free')&&D.collects.length===0)D.specials.push({name:'scatter',type:'scatter',design:'超框',func:'',score:'',refImg:'',compImg:''});
+    if(at.includes('free')||at.includes('respin'))D.specials.push({name:'wild',type:'wild',design:'',func:'',score:'',refImg:'',compImg:''});
+    if(at.includes('respin')){var bn=D.specials.filter(s=>s.name.startsWith('bonus')).length+1;D.specials.push({name:'bonus'+bn,type:'bonus',design:'带金额',func:'',score:'',refImg:'',compImg:''})}
+    // 去重
+    var seen={};D.specials=D.specials.filter(s=>{if(seen[s.name])return false;seen[s.name]=true;return true});
+    // 玩法段落
     D.sections=[];
-    D.sections.push({title:'Base 玩法',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('free'))D.sections.push({title:'Free Games',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('respin'))D.sections.push({title:'Respin / Link',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('eliminate'))D.sections.push({title:'消除玩法',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('shop'))D.sections.push({title:'商店系统',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('build'))D.sections.push({title:'建造系统',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('super_progress'))D.sections.push({title:'Super进度条',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('super_node'))D.sections.push({title:'Super节点',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('wheel'))D.sections.push({title:'转盘玩法',core:'',trigger:'',desc:'',limits:[]});
-    if(at.includes('pick'))D.sections.push({title:'Pick Game',core:'',trigger:'',desc:'',limits:[]});
+    D.sections.push({title:'Base 玩法',core:'',trigger:'',desc:'',limits:[{text:'断线重连后直接进入对应界面',on:true}]});
+    if(at.includes('free'))D.sections.push({title:'Free Games',core:'',trigger:'',desc:'',limits:[{text:'进入时bet为触发时当前bet',on:true},{text:'结算框显示累计奖励',on:true},{text:'断线重连进入FG界面',on:true}]});
+    if(at.includes('respin'))D.sections.push({title:'Respin / Link',core:'',trigger:'',desc:'',limits:[{text:'Bonus必须完整出现在棋盘上',on:true},{text:'新Bonus落地重置次数',on:true},{text:'断线重连进入Respin界面',on:true}]});
+    if(at.includes('eliminate'))D.sections.push({title:'消除玩法',core:'',trigger:'',desc:'',limits:[{text:'掉落填充直到无可消除',on:true}]});
+    if(at.includes('shop'))D.sections.push({title:'商店系统',core:'',trigger:'',desc:'',limits:[{text:'代币跨session保留',on:true}]});
+    if(at.includes('build'))D.sections.push({title:'建造系统',core:'',trigger:'',desc:'',limits:[{text:'进度跨session保留',on:true}]});
+    if(at.includes('super_progress'))D.sections.push({title:'Super进度条',core:'',trigger:'',desc:'',limits:[{text:'进度跨session保留',on:true}]});
+    if(at.includes('super_node'))D.sections.push({title:'Super节点',core:'',trigger:'',desc:'',limits:[{text:'已解锁节点不可重置',on:true}]});
+    if(at.includes('wheel'))D.sections.push({title:'转盘玩法',core:'',trigger:'',desc:'',limits:[{text:'转盘结果不可撤回',on:true}]});
+    if(at.includes('pick'))D.sections.push({title:'Pick Game',core:'',trigger:'',desc:'',limits:[{text:'选择后不可撤回',on:true}]});
     if(at.includes('series'))D.sections.push({title:'系列关卡',core:'',trigger:'',desc:'',limits:[]});
-    /* 收集区触发描述自动填入 */
-    if(D.collectIcons.length>0){
-        var mode=document.getElementById('collectMode').value;
-        var modeText=mode.includes('prob')?'有概率触发':'确定触发';
-        var playType=mode.includes('free')?'Free Games':'Respin';
-        var triggerDesc='收集'+D.collectIcons.map(function(c){return c.name}).join('/')+'到对应收集区，'+modeText+'对应'+playType+'玩法';
-        var baseSec=D.sections.find(function(s){return s.title==='Base 玩法'});
-        if(baseSec)baseSec.trigger=triggerDesc;
+    // 收集触发描述写入Base
+    if(D.collects.length){
+        var base=D.sections[0];
+        var desc=D.collects.map((c,i)=>'收集'+c.name+'到收集区'+(i+1)+'，'+(c.triggerMode.includes('prob')?'有概率':'确定')+'触发'+(c.triggerMode.includes('free')?'Free':'Respin')).join('；');
+        base.trigger=(base.trigger?base.trigger+'；':'')+desc;
     }
-    /* 默认极限 */
-    D.sections.forEach(function(sec){
-        sec.limits=[{text:'断线重连后直接进入对应界面',on:true}];
-        if(sec.title.includes('Free'))sec.limits.push({text:'进入时bet为触发时当前bet',on:true},{text:'结算框显示累计奖励',on:true});
-        if(sec.title.includes('Respin'))sec.limits.push({text:'Bonus必须完整出现在棋盘上',on:true},{text:'新Bonus落地重置次数',on:true});
-    });
     toast('✅ 骨架已生成');go(2);
 }
 
-/* ===== Step 2: 图标 ===== */
-function renderSpecials(){
-    var c=document.getElementById('specialIcons');c.innerHTML='';
-    D.specials.forEach(function(ic,i){
-        c.innerHTML+='<div class="icon-item" style="margin-bottom:8px;padding:12px;text-align:left"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="name">'+ic.name+' ('+ic.type+')</span><button class="btn-danger" onclick="D.specials.splice('+i+',1);renderSpecials()">×</button></div>'+
-        '<div class="form-group" style="margin-bottom:6px"><label>名称</label><input type="text" value="'+ic.name+'" onchange="D.specials['+i+'].name=this.value;renderSpecials()"></div>'+
-        '<div class="form-group" style="margin-bottom:6px"><label>设计要点</label><input type="text" value="'+(ic.design||'')+'" onchange="D.specials['+i+'].design=this.value" placeholder="如：满框，带金额"></div>'+
-        '<div class="form-group" style="margin-bottom:6px"><label>分值</label><input type="text" value="'+(ic.score||'')+'" onchange="D.specials['+i+'].score=this.value" placeholder="如：5-200 4-80 3-20"></div>'+
-        '<div class="form-group" style="margin-bottom:0"><label>功能（玩法填写后自动补齐）</label><textarea onchange="D.specials['+i+'].func=this.value" placeholder="⏳ 自动同步">'+(ic.func||'')+'</textarea></div></div>';
+/* ===== Step 2: 图标渲染（含实体机图标+参考图标图片上传）===== */
+function renderSp(){
+    var c=document.getElementById('specialList');c.innerHTML='';
+    D.specials.forEach((ic,i)=>{
+        c.innerHTML+='<div class="icon-block"><div class="hdr"><span class="nm">'+ic.name+' ('+ic.type+')</span><button class="btn-danger" onclick="D.specials.splice('+i+',1);renderSp()">×</button></div>'+
+        '<div class="form-row"><div class="form-group"><label>名称</label><input type="text" value="'+ic.name+'" onchange="D.specials['+i+'].name=this.value;renderSp()"></div><div class="form-group"><label>设计要点</label><input type="text" value="'+(ic.design||'')+'" onchange="D.specials['+i+'].design=this.value"></div></div>'+
+        '<div class="form-row"><div class="form-group"><label>分值</label><input type="text" value="'+(ic.score||'')+'" onchange="D.specials['+i+'].score=this.value" placeholder="5-200 4-80 3-20"></div><div class="form-group"><label>功能（自动补齐）</label><input type="text" value="'+(ic.func||'')+'" onchange="D.specials['+i+'].func=this.value" placeholder="⏳"></div></div>'+
+        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" id="comp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>点击上传</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'comp\')"></div></div>'+
+        '<div class="form-group"><label>参考图标</label><div class="img-upload" id="ref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>点击上传</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'ref\')"></div></div></div></div>';
     });
 }
-function addSpecial(type){
-    var count=D.specials.filter(function(s){return s.type===type}).length;
-    var name=type==='wild'?'wild'+(count>0?count+1:''):type==='scatter'?'scatter':type+(D.specials.filter(function(s){return s.name.startsWith('bonus')}).length+1);
-    D.specials.push({name:name,type:type,design:'',func:'',score:'',ref:''});
-    renderSpecials();
+function addSp(type){
+    var count=D.specials.filter(s=>s.name.startsWith('bonus')).length;
+    var name=type==='wild'?'wild':type==='scatter'?'scatter':'bonus'+(count+1);
+    if(type==='wild'&&D.specials.some(s=>s.name==='wild'))name='wild'+(D.specials.filter(s=>s.type==='wild').length+1);
+    D.specials.push({name,type,design:'',func:'',score:'',refImg:'',compImg:''});renderSp();
 }
-function renderNormal(){
-    var h=parseInt(document.getElementById('hN').value)||5;
-    var l=parseInt(document.getElementById('lN').value)||6;
+function upImg(input,i,field){
+    var file=input.files[0];if(!file)return;
+    var r=new FileReader();r.onload=e=>{
+        if(field==='comp')D.specials[i].compImg=e.target.result;
+        else D.specials[i].refImg=e.target.result;
+        renderSp();
+    };r.readAsDataURL(file);
+}
+function renderNorm(){
+    var h=+document.getElementById('f_hN').value||5,l=+document.getElementById('f_lN').value||6;
     D.normals=[];
-    for(var i=0;i<h;i++)D.normals.push({name:'H'+(i+1),design:'',score:''});
-    for(var j=0;j<l;j++)D.normals.push({name:'L'+(j+1),design:'',score:''});
-    var c=document.getElementById('normalIcons');c.innerHTML='<div class="icon-row">';
-    D.normals.forEach(function(ic,i){
-        c.innerHTML+='<div class="icon-item"><div class="name">'+ic.name+'</div><input type="text" value="'+(ic.design||'')+'" placeholder="设计要点" onchange="D.normals['+i+'].design=this.value"><input type="text" value="'+(ic.score||'')+'" placeholder="分值" onchange="D.normals['+i+'].score=this.value" style="margin-top:3px"></div>';
+    for(var i=0;i<h;i++)D.normals.push({name:'H'+(i+1),design:'',score:'',compImg:'',refImg:''});
+    for(var j=0;j<l;j++)D.normals.push({name:'L'+(j+1),design:'',score:'',compImg:'',refImg:''});
+    var c=document.getElementById('normList');c.innerHTML='';
+    D.normals.forEach((ic,i)=>{
+        c.innerHTML+='<div class="icon-block" style="padding:8px"><div class="hdr"><span class="nm">'+ic.name+'</span></div>'+
+        '<div class="form-row"><div class="form-group"><label>设计要点</label><input type="text" value="'+(ic.design||'')+'" onchange="D.normals['+i+'].design=this.value" placeholder="如：满框，糖果质感"></div><div class="form-group"><label>分值</label><input type="text" value="'+(ic.score||'')+'" onchange="D.normals['+i+'].score=this.value" placeholder="5-150 4-50 3-10"></div></div>'+
+        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" id="ncomp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>上传</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'comp\')"></div></div>'+
+        '<div class="form-group"><label>参考图标</label><div class="img-upload" id="nref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>上传</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'ref\')"></div></div></div></div>';
     });
-    c.innerHTML+='</div>';
+}
+function upNImg(input,i,field){
+    var file=input.files[0];if(!file)return;
+    var r=new FileReader();r.onload=e=>{if(field==='comp')D.normals[i].compImg=e.target.result;else D.normals[i].refImg=e.target.result;renderNorm()};r.readAsDataURL(file);
 }
 
 /* ===== Step 3: 玩法内容 ===== */
-function renderSections(){
-    var c=document.getElementById('gameplayList');c.innerHTML='';
-    D.sections.forEach(function(sec,i){
-        var limHtml='';
-        sec.limits.forEach(function(lm,li){
-            limHtml+='<div class="limit-item"><input type="checkbox"'+(lm.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+lm.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderSections()">×</button></div>';
-        });
-        c.innerHTML+='<div class="gameplay-block"><div class="gameplay-block-title">'+sec.title+'<span class="badge">'+(i+1)+'</span><button class="btn-danger" style="margin-left:auto" onclick="D.sections.splice('+i+',1);renderSections()">删除</button></div>'+
-        '<div class="form-group"><label>核心玩法描述（简要输入）</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则，AI会自动扩充">'+(sec.core||'')+'</textarea></div>'+
-        '<div class="form-group"><label>触发条件</label><input type="text" value="'+(sec.trigger||'')+'" onchange="D.sections['+i+'].trigger=this.value" placeholder="如：3个scatter触发 / 收集区满触发"></div>'+
-        '<div class="form-group"><label>玩法说明（详细，可AI生成）</label><textarea rows="4" onchange="D.sections['+i+'].desc=this.value" placeholder="完整的玩法规则描述">'+(sec.desc||'')+'</textarea></div>'+
-        '<div style="margin-top:8px"><label style="font-size:0.78rem;color:#ff6b6b">⚠️ 极限情况</label>'+limHtml+
-        '<div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="limIn_'+i+'" placeholder="添加极限情况" style="flex:1;font-size:0.75rem;padding:5px 8px"><button class="btn-add" style="font-size:0.7rem" onclick="addLim('+i+')">+</button></div></div></div>';
+function buildBet(){
+    var n=+document.getElementById('f_bet').value;
+    var c=document.getElementById('betCfg');c.innerHTML='';
+    if(!n)return;
+    for(var i=0;i<n;i++){
+        c.innerHTML+='<div class="collect-row"><strong style="font-size:0.78rem;color:#ccd6f6">Bet '+(i+1)+(i===0?' (默认)':'')+'</strong><div class="form-group" style="margin-top:4px"><label>该档锁定/解锁内容</label><input type="text" id="bet_'+i+'" placeholder="如：解锁Grand / 解锁大收集区"></div></div>';
+    }
+}
+function renderGp(){
+    var c=document.getElementById('gpList');c.innerHTML='';
+    D.sections.forEach((sec,i)=>{
+        var limH=sec.limits.map((l,li)=>'<div class="limit-item"><input type="checkbox"'+(l.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+l.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderGp()">×</button></div>').join('');
+        c.innerHTML+='<div class="gp-block"><div class="title">'+sec.title+'<button class="btn-danger" style="margin-left:auto" onclick="D.sections.splice('+i+',1);renderGp()">删除</button></div>'+
+        '<div class="form-group"><label>核心描述（简要）</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需核心规则">'+(sec.core||'')+'</textarea></div>'+
+        '<div class="form-group"><label>触发条件</label><input type="text" value="'+(sec.trigger||'')+'" onchange="D.sections['+i+'].trigger=this.value"></div>'+
+        '<div class="form-group"><label>玩法说明（可AI生成）</label><textarea rows="3" onchange="D.sections['+i+'].desc=this.value">'+(sec.desc||'')+'</textarea></div>'+
+        '<div style="margin-top:6px"><label style="font-size:0.75rem;color:#ff6b6b">⚠️ 极限情况</label>'+limH+
+        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div></div>';
     });
 }
-function addSection(){D.sections.push({title:'新玩法段落',core:'',trigger:'',desc:'',limits:[]});renderSections()}
-function addLim(i){var input=document.getElementById('limIn_'+i);if(!input||!input.value.trim())return;D.sections[i].limits.push({text:input.value.trim(),on:true});input.value='';renderSections()}
-
-/* 同步图标功能 */
-function syncFuncs(){
-    var allText=D.sections.map(function(s){return s.core+'\n'+s.desc+'\n'+s.trigger}).join('\n');
-    D.specials.forEach(function(ic){
-        if(ic.func&&ic.func.trim())return;
-        var lines=allText.split('\n').filter(function(l){return l.includes(ic.name)});
-        if(lines.length)ic.func=lines.slice(0,3).join('；');
-    });
+function addGp(){D.sections.push({title:'新段落',core:'',trigger:'',desc:'',limits:[]});renderGp()}
+function addLim(i){var el=document.getElementById('lm_'+i);if(!el||!el.value.trim())return;D.sections[i].limits.push({text:el.value.trim(),on:true});el.value='';renderGp()}
+function syncFunc(){
+    var all=D.sections.map(s=>s.core+'\n'+s.desc+'\n'+s.trigger).join('\n');
+    D.specials.forEach(ic=>{if(ic.func&&ic.func.trim())return;var lines=all.split('\n').filter(l=>l.includes(ic.name));if(lines.length)ic.func=lines.slice(0,3).join('；')});
     toast('✅ 图标功能已同步');
 }
 
 /* ===== AI ===== */
 var aiReady=false,puterLoading=false;
-function loadPuter(){return new Promise(function(ok,no){if(aiReady){ok();return}if(puterLoading){var w=setInterval(function(){if(aiReady){clearInterval(w);ok()}},300);setTimeout(function(){clearInterval(w);no(new Error('超时'))},30000);return}puterLoading=true;var s=document.createElement('script');s.src='https://js.puter.com/v2/';s.onload=function(){var e=0,t=setInterval(function(){e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);ok()}if(e>=30000){clearInterval(t);no(new Error('初始化超时'))}},500)};s.onerror=function(){puterLoading=false;no(new Error('加载失败'))};document.head.appendChild(s)})}
-async function callAI(p){await loadPuter();var r=await puter.ai.chat(p,{model:'gpt-4o-mini',temperature:0.7});if(typeof r==='string')return r;if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(function(x){return x.text||x}).join('');return c}return String(r)}
-
+function loadPuter(){return new Promise((ok,no)=>{if(aiReady){ok();return}if(puterLoading){var w=setInterval(()=>{if(aiReady){clearInterval(w);ok()}},300);setTimeout(()=>{clearInterval(w);no(new Error('超时'))},30000);return}puterLoading=true;var s=document.createElement('script');s.src='https://js.puter.com/v2/';s.onload=()=>{var e=0,t=setInterval(()=>{e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);ok()}if(e>=30000){clearInterval(t);no(new Error('超时'))}},500)};s.onerror=()=>{puterLoading=false;no(new Error('加载失败'))};document.head.appendChild(s)})}
+async function callAI(p){await loadPuter();var r=await puter.ai.chat(p,{model:'gpt-4o-mini',temperature:0.7});if(typeof r==='string')return r;if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(x=>x.text||x).join('');return c}return String(r)}
 async function aiGen(){
     var btn=document.getElementById('aiBtn'),st=document.getElementById('aiSt');
-    btn.classList.add('loading');btn.disabled=true;
-    st.textContent='🔄 正在生成...';st.className='ai-status generating';
+    btn.classList.add('loading');btn.disabled=true;st.textContent='🔄 生成中...';st.className='ai-status generating';
     try{
-        var name=document.getElementById('name').value||'未命名';
-        var arch=D.archTags.join('+');
-        var icons=D.specials.map(function(s){return s.name+'('+s.type+')'}).join(',');
-        var sectionsInfo=D.sections.map(function(s,i){return (i+1)+'.'+s.title+(s.core?'[核心:'+s.core+']':'')+(s.trigger?'[触发:'+s.trigger+']':'')}).join('; ');
-        var p='你是老虎机游戏策划。关卡"'+name+'"，架构:Base+'+arch+'，图标:'+icons+'。\n现有段落:'+sectionsInfo+'\n\n请为每个段落生成：trigger(触发条件)、desc(详细玩法说明150-250字)、limits(极限情况3-5条数组)。\n已有core和trigger的段落请基于此扩充，没有的请根据架构合理生成。\n返回JSON数组(不要代码块)：[{"title":"","trigger":"","desc":"","limits":["",""]}]';
-        var raw=await callAI(p);
-        var data;try{data=JSON.parse(raw)}catch(e){var m=raw.match(/\[[\s\S]*\]/);if(m)data=JSON.parse(m[0])}
-        if(Array.isArray(data)){
-            data.forEach(function(d,i){
-                if(D.sections[i]){
-                    if(d.trigger)D.sections[i].trigger=d.trigger;
-                    if(d.desc)D.sections[i].desc=d.desc;
-                    if(d.limits&&d.limits.length)D.sections[i].limits=d.limits.map(function(l){return{text:l,on:true}});
-                }
-            });
-            renderSections();st.textContent='✅ 完成';st.className='ai-status done';
-        }else{st.textContent='❌ 解析失败';st.className='ai-status error'}
+        var name=document.getElementById('f_name').value||'未命名';
+        var info=D.sections.map((s,i)=>(i+1)+'.'+s.title+(s.core?'[核心:'+s.core+']':'')+(s.trigger?'[触发:'+s.trigger+']':'')).join('; ');
+        var p='你是老虎机策划。关卡"'+name+'"，架构Base+'+D.archTags.join('+')+',图标:'+D.specials.map(s=>s.name).join(',')+'\n段落:'+info+'\n为每段生成trigger,desc(150-250字),limits(3-5条)。已有内容请扩充。返回JSON数组(无代码块):[{"title":"","trigger":"","desc":"","limits":["",""]}]';
+        var raw=await callAI(p);var data;try{data=JSON.parse(raw)}catch(e){var m=raw.match(/\[[\s\S]*\]/);if(m)data=JSON.parse(m[0])}
+        if(Array.isArray(data)){data.forEach((d,i)=>{if(D.sections[i]){if(d.trigger)D.sections[i].trigger=d.trigger;if(d.desc)D.sections[i].desc=d.desc;if(d.limits)D.sections[i].limits=d.limits.map(l=>({text:l,on:true}))}});renderGp();st.textContent='✅ 完成';st.className='ai-status done'}
+        else{st.textContent='❌ 解析失败';st.className='ai-status error'}
     }catch(e){st.textContent='❌ '+e.message;st.className='ai-status error'}
     finally{btn.classList.remove('loading');btn.disabled=false}
 }
 
 /* ===== Step 4: 美术 + 流程图 ===== */
-function renderArts(){
-    var c=document.getElementById('artList');c.innerHTML='';
-    D.arts.forEach(function(a,i){
-        c.innerHTML+='<div class="gameplay-block"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="color:#ccd6f6;font-size:0.85rem">设计重点'+(i+1)+'</strong><button class="btn-danger" onclick="D.arts.splice('+i+',1);renderArts()">×</button></div><div class="form-group" style="margin-bottom:6px"><input type="text" value="'+(a.title||'')+'" onchange="D.arts['+i+'].title=this.value" placeholder="标题"></div><div class="form-group" style="margin-bottom:0"><textarea onchange="D.arts['+i+'].desc=this.value" placeholder="描述">'+(a.desc||'')+'</textarea></div></div>';
-    });
-}
+function renderArts(){var c=document.getElementById('artList');c.innerHTML='';D.arts.forEach((a,i)=>{c.innerHTML+='<div class="gp-block"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:0.82rem;color:#ccd6f6">设计重点'+(i+1)+'</strong><button class="btn-danger" onclick="D.arts.splice('+i+',1);renderArts()">×</button></div><div class="form-group" style="margin-bottom:4px"><input type="text" value="'+(a.title||'')+'" onchange="D.arts['+i+'].title=this.value" placeholder="标题"></div><div class="form-group" style="margin-bottom:0"><textarea onchange="D.arts['+i+'].desc=this.value" placeholder="描述">'+(a.desc||'')+'</textarea></div></div>'})}
 function addArt(){D.arts.push({title:'',desc:''});renderArts()}
+var FTPL={collect:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{收集图标?}\n  C-->|是|D[收集动画]\n  D-->E{收集区触发?}\n  E-->|是|F[触发弹板]\n  E-->|否|G[结算]\n  C-->|否|G\n  G-->A',scatter:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{Scatter>=3?}\n  C-->|是|D[触发FG]\n  C-->|否|E[结算]\n  E-->A',respin:'graph TD\n  A[Spin]-->B{Bonus>=5?}\n  B-->|是|C[Respin]\n  C-->D{新Bonus?}\n  D-->|是|E[锁定+重置]\n  E-->C\n  D-->|否|F{次数完?}\n  F-->|否|C\n  F-->|是|G[结算]',free:'graph TD\n  A[触发FG]-->B[开始弹板]\n  B-->C[Free Spin]\n  C-->D{次数完?}\n  D-->|否|C\n  D-->|是|E[结算]'};
+function loadTpl(v){if(!v)return;document.getElementById('flowCode').value=FTPL[v]||'';renderFlow()}
+function renderFlow(){var code=document.getElementById('flowCode').value;var c=document.getElementById('flowPv');if(!code.trim()){c.innerHTML='';return}c.innerHTML='<div class="mermaid">'+code+'</div>';try{mermaid.run({nodes:c.querySelectorAll('.mermaid')})}catch(e){}}
 
-var FLOW_TPL={
-    collect:'graph TD\n  A[Spin] --> B[停轮]\n  B --> C{收集图标落地?}\n  C -->|是| D[收集动画]\n  D --> E{收集区满?}\n  E -->|是| F[触发玩法弹板]\n  E -->|否| G[结算]\n  C -->|否| G\n  G --> A',
-    scatter:'graph TD\n  A[Spin] --> B[停轮]\n  B --> C{Scatter>=3?}\n  C -->|是| D[触发Free Games]\n  C -->|否| E[结算]\n  E --> A',
-    respin:'graph TD\n  A[Spin] --> B[停轮]\n  B --> C{Bonus>=5?}\n  C -->|是| D[进入Respin]\n  D --> E[锁定Bonus]\n  E --> F{新Bonus?}\n  F -->|是| E\n  F -->|否| G{次数完?}\n  G -->|否| D\n  G -->|是| H[结算]\n  C -->|否| I[普通结算]\n  I --> A',
-    free:'graph TD\n  A[触发FG] --> B[开始弹板]\n  B --> C[Free Spin]\n  C --> D[停轮结算]\n  D --> E{次数完?}\n  E -->|否| C\n  E -->|是| F[FG结算]\n  F --> G[返回Base]',
-    buff:'graph TD\n  A[触发FG+Buff] --> B[开始弹板]\n  B --> C[Free Spin]\n  C --> D{收集特殊Wild?}\n  D -->|是| E[Buff增强]\n  D -->|否| F[普通结算]\n  E --> F\n  F --> G{次数完?}\n  G -->|否| C\n  G -->|是| H[结算]',
-    link:'graph TD\n  A[触发Link] --> B[锁定Bonus]\n  B --> C[Respin]\n  C --> D{新Bonus?}\n  D -->|是| E[锁定+重置]\n  E --> C\n  D -->|否| F{次数完?}\n  F -->|否| C\n  F -->|是| G[结算全部Bonus]'
-};
-function loadTpl(type,val){if(!val)return;var code=FLOW_TPL[val]||'';document.getElementById('flowCode').value=code;renderFlow()}
-function renderFlow(){var code=document.getElementById('flowCode').value;var c=document.getElementById('flowPreview');if(!code.trim()){c.innerHTML='';return}c.innerHTML='<div class="mermaid">'+code+'</div>';try{mermaid.run({nodes:c.querySelectorAll('.mermaid')})}catch(e){}}
-
-/* ===== Excel 导出（严格对齐实际文档格式）===== */
+/* ===== Excel导出（严格对齐文档格式：每字段独立行）===== */
 async function exportXlsx(){
-    var brand=document.getElementById('brand').value;
-    var name=document.getElementById('name').value.trim();
+    var brand=document.getElementById('f_brand').value,name=document.getElementById('f_name').value.trim();
     if(!name){alert('请填写关卡名字');return}
     var wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('玩法文档');
-    ws.columns=[{width:14},{width:22},{width:22},{width:22},{width:22},{width:22},{width:22},{width:22},{width:22}];
-    var bf={name:'Microsoft YaHei',size:14,bold:true};
-    var nf={name:'Microsoft YaHei',size:14};
-    var al={vertical:'middle',horizontal:'left',wrapText:true};
+    ws.columns=[{width:16},{width:24},{width:24},{width:24},{width:24},{width:24},{width:24},{width:24},{width:24}];
+    var bf={name:'Microsoft YaHei',size:14,bold:true},nf={name:'Microsoft YaHei',size:14},al={vertical:'middle',horizontal:'left',wrapText:true};
     var r=1;
     function hdr(a,b){ws.getRow(r).height=26;ws.getCell('A'+r).value=a;ws.getCell('A'+r).font=bf;ws.getCell('A'+r).alignment=al;ws.getCell('B'+r).value=b;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
 
-    /* 基础信息（每行一个字段）*/
+    // 基础信息
     hdr('关卡名字：',name);
-    hdr('玩法组合：','Base+'+D.archTags.join('+')+(D.collectIcons.length?'+'+D.collectIcons.length+'收集':''));
-    hdr('棋盘排列：',document.getElementById('board').value);
-    hdr('板式：',document.getElementById('orient').value);
-    hdr('线数：',document.getElementById('lines').value);
-    hdr('策划：',document.getElementById('planner').value);
-    hdr('玩法来源：',document.getElementById('source').value);
-    hdr('玩法链接：',document.getElementById('link').value);
+    hdr('玩法组合：','Base+'+D.archTags.join('+')+(D.collects.length?'+'+D.collects.length+'收集':''));
+    hdr('棋盘排列：',document.getElementById('f_board').value);
+    hdr('板式：',document.getElementById('f_orient').value);
+    hdr('线数：',document.getElementById('f_lines').value);
+    hdr('策划：',document.getElementById('f_planner').value);
+    hdr('玩法来源：',document.getElementById('f_source').value);
+    hdr('玩法链接：',document.getElementById('f_link').value);
     r++;
 
-    /* 特殊图标列表 */
-    ws.getCell('A'+r).value='特殊图标列表：';ws.getCell('A'+r).font=bf;r++;
-    /* 名称行 */
-    D.specials.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.name;ws.getCell(col+r).font=bf;ws.getCell(col+r).alignment=al});r++;
-    /* 实体机/竞品图标行（参考） */
-    ws.getCell('A'+r).value='实体机/竞品图标';ws.getCell('A'+r).font=bf;ws.getRow(r).height=60;r++;
-    /* 设计要点行 */
-    ws.getCell('A'+r).value='设计要点';ws.getCell('A'+r).font=bf;
-    D.specials.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.design;ws.getCell(col+r).font=nf;ws.getCell(col+r).alignment=al});
+    // 重点图标
+    var importants=D.specials.filter(s=>s.type!=='wild'||s.name!=='wild').map(s=>s.name).join('、');
+    if(importants){ws.getCell('A'+r).value='重点图标：';ws.getCell('A'+r).font=bf;ws.getCell('B'+r).value=importants;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+
+    // 图标等级
+    ws.getCell('A'+r).value='图标等级:';ws.getCell('A'+r).font=bf;
+    var wilds=D.specials.filter(s=>s.type==='wild'||s.type==='scatter').map(s=>s.name);
+    var bonuses=D.specials.filter(s=>s.type==='bonus').map(s=>s.name);
+    var hs=D.normals.filter(n=>n.name.startsWith('H')).map(n=>n.name);
+    var ls=D.normals.filter(n=>n.name.startsWith('L')).map(n=>n.name);
+    ws.getCell('B'+r).value='等级1';ws.getCell('C'+r).value=wilds.join(',');ws.getCell('C'+r).font=nf;r++;
+    if(bonuses.length){ws.getCell('B'+r).value='等级2';ws.getCell('C'+r).value=bonuses.join(',');ws.getCell('C'+r).font=nf;r++}
+    ws.getCell('B'+r).value='等级'+(bonuses.length?3:2);ws.getCell('C'+r).value=hs.join('-');ws.getCell('C'+r).font=nf;r++;
+    ws.getCell('B'+r).value='等级'+(bonuses.length?4:3);ws.getCell('C'+r).value=ls.join('-');ws.getCell('C'+r).font=nf;r++;
+    r++;
+
+    // 特殊图标列表
+    ws.getCell('A'+r).value='图标设计：';ws.getCell('A'+r).font=bf;r++;
+    ws.getCell('B'+r).value='特殊图标列表：';ws.getCell('B'+r).font=bf;r++;
+    // 名称行
+    D.specials.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.name;ws.getCell(String.fromCharCode(67+i)+r).font=bf});r++;
+    // 实体机/竞品图标行
+    ws.getCell('B'+r).value='实体机/竞品图标';ws.getCell('B'+r).font=bf;ws.getRow(r).height=60;r++;
+    // 设计要点行
+    ws.getCell('B'+r).value='设计要点';ws.getCell('B'+r).font=bf;
+    D.specials.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.design;ws.getCell(String.fromCharCode(67+i)+r).font=nf;ws.getCell(String.fromCharCode(67+i)+r).alignment=al});
     ws.getRow(r).height=60;r++;
-    /* 功能行 */
-    ws.getCell('A'+r).value='功能';ws.getCell('A'+r).font=bf;
-    D.specials.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.func;ws.getCell(col+r).font=nf;ws.getCell(col+r).alignment=al});
-    ws.getRow(r).height=80;r++;
-    /* 参考设计行 */
-    ws.getCell('A'+r).value='参考设计';ws.getCell('A'+r).font=bf;ws.getRow(r).height=60;r++;
-    /* 分值行 */
-    ws.getCell('A'+r).value='分值';ws.getCell('A'+r).font=bf;
-    D.specials.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.score;ws.getCell(col+r).font=nf;ws.getCell(col+r).alignment=al});r++;
+    // 参考图标行
+    ws.getCell('B'+r).value='参考图标';ws.getCell('B'+r).font=bf;ws.getRow(r).height=60;r++;
+    // 分值行
+    ws.getCell('B'+r).value='分值';ws.getCell('B'+r).font=bf;
+    D.specials.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.score;ws.getCell(String.fromCharCode(67+i)+r).font=nf;ws.getCell(String.fromCharCode(67+i)+r).alignment=al});r++;
     r++;
 
-    /* 普通图标列表 */
-    ws.getCell('A'+r).value='普通图标列表：';ws.getCell('A'+r).font=bf;r++;
-    D.normals.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.name;ws.getCell(col+r).font=bf});r++;
-    ws.getCell('A'+r).value='实体机/竞品图标';ws.getCell('A'+r).font=bf;ws.getRow(r).height=60;r++;
-    ws.getCell('A'+r).value='设计要点';ws.getCell('A'+r).font=bf;
-    D.normals.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.design;ws.getCell(col+r).font=nf;ws.getCell(col+r).alignment=al});r++;
-    ws.getCell('A'+r).value='参考设计';ws.getCell('A'+r).font=bf;ws.getRow(r).height=60;r++;
-    ws.getCell('A'+r).value='分值';ws.getCell('A'+r).font=bf;
-    D.normals.forEach(function(ic,i){var col=String.fromCharCode(66+i);ws.getCell(col+r).value=ic.score;ws.getCell(col+r).font=nf;ws.getCell(col+r).alignment=al});r++;
+    // 普通图标
+    ws.getCell('A'+r).value='图标设计：';ws.getCell('A'+r).font=bf;ws.getCell('B'+r).value='普通图标列表：';ws.getCell('B'+r).font=bf;r++;
+    D.normals.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.name;ws.getCell(String.fromCharCode(67+i)+r).font=bf});r++;
+    ws.getCell('B'+r).value='实体机/竞品图标';ws.getCell('B'+r).font=bf;ws.getRow(r).height=60;r++;
+    ws.getCell('B'+r).value='设计要点';ws.getCell('B'+r).font=bf;
+    D.normals.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.design;ws.getCell(String.fromCharCode(67+i)+r).font=nf;ws.getCell(String.fromCharCode(67+i)+r).alignment=al});r++;
+    ws.getCell('B'+r).value='参考图标';ws.getCell('B'+r).font=bf;
+    D.normals.forEach((ic,i)=>{var v=ic.name.startsWith('L')?'常规'+ic.name:'';ws.getCell(String.fromCharCode(67+i)+r).value=v;ws.getCell(String.fromCharCode(67+i)+r).font=nf});ws.getRow(r).height=60;r++;
+    ws.getCell('B'+r).value='分值';ws.getCell('B'+r).font=bf;
+    D.normals.forEach((ic,i)=>{ws.getCell(String.fromCharCode(67+i)+r).value=ic.score;ws.getCell(String.fromCharCode(67+i)+r).font=nf;ws.getCell(String.fromCharCode(67+i)+r).alignment=al});r++;
     r++;
 
-    /* 图标等级排序 */
-    ws.getCell('A'+r).value='图标等级排序：';ws.getCell('A'+r).font=bf;
-    var wilds=D.specials.filter(function(s){return s.type==='wild'||s.type==='scatter'}).map(function(s){return s.name});
-    var bonuses=D.specials.filter(function(s){return s.type==='bonus'}).map(function(s){return s.name});
-    var hs=D.normals.filter(function(n){return n.name.startsWith('H')}).map(function(n){return n.name});
-    var ls=D.normals.filter(function(n){return n.name.startsWith('L')}).map(function(n){return n.name});
-    ws.getCell('B'+r).value='等级一';ws.getCell('C'+r).value=wilds.join(',');r++;
-    ws.getCell('B'+r).value='等级二';ws.getCell('C'+r).value=bonuses.join(',');r++;
-    ws.getCell('B'+r).value='等级三';ws.getCell('C'+r).value=hs.join('-');r++;
-    ws.getCell('B'+r).value='等级四';ws.getCell('C'+r).value=ls.join('-');r++;
-    r++;
-
-    /* 玩法内容（每段独立：标题行 + 触发条件行 + 玩法说明行 + 极限情况行）*/
-    D.sections.forEach(function(sec){
-        ws.getCell('A'+r).value=sec.title+'：';ws.getCell('A'+r).font=bf;ws.getCell('A'+r).alignment=al;r++;
-        if(sec.trigger){ws.getCell('B'+r).value='触发条件：';ws.getCell('B'+r).font=bf;ws.getCell('C'+r).value=sec.trigger;ws.getCell('C'+r).font=nf;ws.getCell('C'+r).alignment=al;r++}
-        ws.getCell('B'+r).value='玩法说明：';ws.getCell('B'+r).font=bf;r++;
-        if(sec.desc){
-            var descLines=sec.desc.split('\n');
-            descLines.forEach(function(line){
-                if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
-            });
-        }
+    // 高低Bet
+    var betN=+document.getElementById('f_bet').value;
+    if(betN){
+        ws.getCell('A'+r).value='高低Bet玩法：';ws.getCell('A'+r).font=bf;r++;
+        ws.getCell('A'+r).value='玩法说明：';ws.getCell('A'+r).font=bf;r++;
+        for(var bi=0;bi<betN;bi++){var el=document.getElementById('bet_'+bi);var txt=el?el.value:'';ws.getCell('B'+r).value=(bi+1)+'：'+(txt||'Bet'+(bi+1));ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
         r++;
-        var lims=sec.limits.filter(function(l){return l.on});
+    }
+
+    // 玩法内容
+    D.sections.forEach(sec=>{
+        ws.getCell('A'+r).value=sec.title+'：';ws.getCell('A'+r).font=bf;ws.getCell('A'+r).alignment=al;r++;
+        if(sec.trigger){ws.getCell('B'+r).value='触发条件：'+sec.trigger;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+        if(sec.desc){
+            ws.getCell('A'+r).value='玩法说明：';ws.getCell('A'+r).font=bf;r++;
+            sec.desc.split('\n').forEach(line=>{if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});
+        }
+        var lims=sec.limits.filter(l=>l.on);
         if(lims.length){
-            ws.getCell('B'+r).value='极限情况（含断线重连）：';ws.getCell('B'+r).font=bf;r++;
-            lims.forEach(function(l,li){ws.getCell('B'+r).value=(li+1)+'.'+l.text;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++});
+            r++;ws.getCell('B'+r).value='极限情况（含断线重连）：';ws.getCell('B'+r).font=bf;r++;
+            lims.forEach((l,li)=>{ws.getCell('B'+r).value=(li+1)+'.'+l.text;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++});
         }
         r++;
     });
 
-    /* 美术设计重点 */
+    // 美术
     if(D.arts.length){
         ws.getCell('A'+r).value='美术设计重点：';ws.getCell('A'+r).font=bf;r++;
-        D.arts.forEach(function(a,i){
-            ws.getCell('B'+r).value='美术重点设计'+(i+1)+'：'+a.title;ws.getCell('B'+r).font=bf;r++;
-            if(a.desc){
-                a.desc.split('\n').forEach(function(line){if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});
-            }
-            r++;
-        });
+        D.arts.forEach((a,i)=>{ws.getCell('B'+r).value='美术重点设计'+(i+1)+'：'+a.title;ws.getCell('B'+r).font=bf;r++;if(a.desc){a.desc.split('\n').forEach(l=>{if(l.trim()){ws.getCell('B'+r).value=l.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});r++}});
     }
-
-    /* 动效 */
-    var anim=document.getElementById('animDesc').value.trim();
-    if(anim){
-        ws.getCell('A'+r).value='动效设计重点：';ws.getCell('A'+r).font=bf;r++;
-        anim.split('\n').forEach(function(line){if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});
-        r++;
-    }
-
-    /* 流程图 */
+    var anim=document.getElementById('f_anim').value.trim();
+    if(anim){ws.getCell('A'+r).value='动效设计重点：';ws.getCell('A'+r).font=bf;r++;anim.split('\n').forEach(l=>{if(l.trim()){ws.getCell('B'+r).value=l.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});r++}
     var flow=document.getElementById('flowCode').value.trim();
-    if(flow){
-        ws.getCell('A'+r).value='流程图：';ws.getCell('A'+r).font=bf;r++;
-        ws.getCell('B'+r).value=flow;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;
-        ws.mergeCells('B'+r+':H'+r);ws.getRow(r).height=200;r++;
-    }
+    if(flow){ws.getCell('A'+r).value='流程图：';ws.getCell('A'+r).font=bf;r++;ws.getCell('B'+r).value=flow;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;ws.mergeCells('B'+r+':H'+r);ws.getRow(r).height=180;r++}
 
     var buf=await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),brand+name+'：玩法文档.xlsx');
     toast('✅ 文档已下载');
 }
 
-/* ===== 初始化 ===== */
-document.addEventListener('DOMContentLoaded',function(){
-    mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{primaryColor:'#f7971e',primaryTextColor:'#1a1a2e',lineColor:'#8892b0'}});
-});
+document.addEventListener('DOMContentLoaded',()=>{mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{primaryColor:'#f7971e',primaryTextColor:'#1a1a2e',lineColor:'#8892b0'}})});
 </script>
 </body>
 </html>
