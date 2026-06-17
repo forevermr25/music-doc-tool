@@ -222,7 +222,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
 <div class="success-toast" id="toast"></div>
 <script>
 var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[],flows:[],combos:[]};
-function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp();renderCombos()}if(n===4){renderArts();renderFlows()};window.scrollTo(0,0)}
+function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp();renderCombos()}if(n===4){autoGenFlows();renderArts();renderFlows()};window.scrollTo(0,0)}
 function tog(el){el.classList.toggle('selected');D.archTags=[...document.querySelectorAll('#archTags .tag-item.selected')].map(t=>t.dataset.v)}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
@@ -348,12 +348,17 @@ function renderGp(){
     var ct=document.getElementById('gpContent');
     sb.innerHTML='';ct.innerHTML='';
     D.sections.forEach((sec,i)=>{
+        if(!sec.icons)sec.icons=[];
+        if(!sec.endCondition)sec.endCondition='';
         sb.innerHTML+='<div class="nav-item'+(i===gpActive?' active':'')+'" onclick="switchGp('+i+')"><input type="text" value="'+sec.title+'" onclick="event.stopPropagation()" onchange="D.sections['+i+'].title=this.value" style="background:transparent;border:none;color:inherit;font-size:inherit;font-weight:inherit;width:100%;padding:0;outline:none"></div>';
         var limH=sec.limits.map((l,li)=>'<div class="limit-item"><input type="checkbox"'+(l.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+l.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderGp()">×</button></div>').join('');
         var trigLines=(sec.trigger||'').split('\n').filter(l=>l.trim());
         var trigH=trigLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updTrigLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmTrigLine('+i+','+li+')">×</button></div>').join('');
         var descLines=(sec.desc||'').split('\n').filter(l=>l.trim());
         var descH=descLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updDescLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmDescLine('+i+','+li+')">×</button></div>').join('');
+        var endLines=(sec.endCondition||'').split('\n').filter(l=>l.trim());
+        var endH=endLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updEndLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmEndLine('+i+','+li+')">×</button></div>').join('');
+        var iconChecks=D.specials.map((sp,si)=>{var checked=sec.icons.includes(sp.name);return '<label style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;font-size:0.73rem;color:#ccd6f6;cursor:pointer"><input type="checkbox"'+(checked?' checked':'')+' onchange="togSecIcon('+i+',\''+sp.name+'\',this.checked)" style="width:11px;height:11px;accent-color:#f7971e">'+sp.name+'</label>'}).join('');
         // Base段落额外显示 Jackpot/Wild/Bet 配置
         var baseExtra='';
         if(sec.title==='Base 玩法'){
@@ -366,9 +371,11 @@ function renderGp(){
         ct.innerHTML+='<div class="section-area'+(i===gpActive?' active':'')+'" id="gpa_'+i+'">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="if(confirm(\'确定删除该段落?\')){D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()}">删除</button></div>'+
         baseExtra+
-        '<div class="form-group"><label>核心玩法描述</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则，AI会自动扩充">'+(sec.core||'')+'</textarea></div>'+
-        '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加触发条件" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
-        '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加说明" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#a78bfa">🔗 关联图标</label><div style="margin-top:3px">'+iconChecks+'</div></div>'+
+        '<div class="form-group"><label>核心玩法描述</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则">'+(sec.core||'')+'</textarea></div>'+
+        '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#f7971e">🏁 结束条件（每行一条）</label><div class="line-input-list">'+endH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="endAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addEndLine('+i+')">+</button></div></div>'+
         '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况</label>'+limH+
         '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div></div>';
     });
@@ -378,7 +385,7 @@ function addGpType(type){
     var count=D.sections.filter(s=>s.title.toLowerCase().includes(type.replace('_',' '))).length;
     var label=type==='free'?'Free Games'+(count?' (buff'+(count+1)+')':''):type==='respin'?'Respin'+(count?' (buff'+(count+1)+')':''):'Super Free Games'+(count?' '+(count+1):'');
     var limits=type.includes('free')?[{text:'进入时bet为触发时当前bet',on:true},{text:'断线重连进入对应界面',on:true}]:[{text:'Bonus必须完整出现',on:true},{text:'断线重连进入对应界面',on:true}];
-    D.sections.push({title:label,core:'',trigger:'',desc:'',limits:limits});renderGp();gpActive=D.sections.length-1;switchGp(gpActive);
+    D.sections.push({title:label,core:'',trigger:'',desc:'',endCondition:'',icons:[],limits:limits});renderGp();gpActive=D.sections.length-1;switchGp(gpActive);
 }
 function addTrigLine(i){var el=document.getElementById('trigAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].trigger=lines.join('\n');el.value='';renderGp()}
 function rmTrigLine(i,li){var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].trigger=lines.join('\n');renderGp()}
@@ -386,8 +393,12 @@ function updTrigLine(i,li,val){var lines=(D.sections[i].trigger||'').split('\n')
 function addDescLine(i){var el=document.getElementById('descAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].desc=lines.join('\n');el.value='';renderGp()}
 function rmDescLine(i,li){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].desc=lines.join('\n');renderGp()}
 function updDescLine(i,li,val){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].desc=lines.join('\n')}
-function addGp(){D.sections.push({title:'新段落',core:'',trigger:'',desc:'',limits:[]});renderGp()}
+function addGp(){D.sections.push({title:'新段落',core:'',trigger:'',desc:'',endCondition:'',icons:[],limits:[]});renderGp()}
 function addLim(i){var el=document.getElementById('lm_'+i);if(!el||!el.value.trim())return;D.sections[i].limits.push({text:el.value.trim(),on:true});el.value='';renderGp()}
+function togSecIcon(si,name,checked){if(!D.sections[si].icons)D.sections[si].icons=[];if(checked&&!D.sections[si].icons.includes(name))D.sections[si].icons.push(name);else D.sections[si].icons=D.sections[si].icons.filter(n=>n!==name)}
+function addEndLine(i){var el=document.getElementById('endAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].endCondition||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].endCondition=lines.join('\n');el.value='';renderGp()}
+function rmEndLine(i,li){var lines=(D.sections[i].endCondition||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].endCondition=lines.join('\n');renderGp()}
+function updEndLine(i,li,val){var lines=(D.sections[i].endCondition||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].endCondition=lines.join('\n')}
 function syncFunc(){
     var all=D.sections.map(s=>s.core+'\n'+s.desc+'\n'+s.trigger).join('\n');
     D.specials.forEach(ic=>{if(ic.func&&ic.func.trim())return;var lines=all.split('\n').filter(l=>l.includes(ic.name));if(lines.length)ic.func=lines.slice(0,3).join('；')});
@@ -417,6 +428,21 @@ function toggleComboSec(ci,si,checked){
     var arr=D.combos[ci].selectedSections;
     if(checked&&!arr.includes(si))arr.push(si);
     else D.combos[ci].selectedSections=arr.filter(x=>x!==si);
+    // 自动补齐触发规则
+    autoComboRule(ci);
+    renderCombos();
+}
+function autoComboRule(ci){
+    var cb=D.combos[ci];var selected=cb.selectedSections.map(si=>D.sections[si]).filter(Boolean);
+    if(selected.length<2){cb.rule='';return}
+    // 找到对应的收集区
+    var collectNames=[];
+    selected.forEach((sec,idx)=>{
+        var ci2=D.collects.findIndex(c=>sec.title.includes(c.name)||sec.icons&&sec.icons.some(ic=>D.collects.some(cl=>cl.name===ic)));
+        if(ci2>=0)collectNames.push('收集区'+(ci2+1));
+        else collectNames.push(sec.title);
+    });
+    cb.rule='单次spin中'+collectNames.join('和')+'同时收集进行触发，buff叠加，spin次数为'+Math.max(10,selected.length*5)+'次';
 }
 function addComboDescLine(ci){var el=document.getElementById('comboDescAdd_'+ci);if(!el||!el.value.trim())return;var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.combos[ci].desc=lines.join('\n');el.value='';renderCombos()}
 function rmComboDesc(ci,li){var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.combos[ci].desc=lines.join('\n');renderCombos()}
@@ -446,6 +472,31 @@ function addArt(){D.arts.push({title:'',desc:''});renderArts()}
 
 var FTPL={collect:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{收集图标?}\n  C-->|是|D[收集动画]\n  D-->E{收集区触发?}\n  E-->|是|F[触发弹板]\n  E-->|否|G[结算]\n  C-->|否|G\n  G-->A',scatter:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{Scatter>=3?}\n  C-->|是|D[触发FG]\n  C-->|否|E[结算]\n  E-->A',respin:'graph TD\n  A[Spin]-->B{Bonus>=5?}\n  B-->|是|C[Respin]\n  C-->D{新Bonus?}\n  D-->|是|E[锁定+重置]\n  E-->C\n  D-->|否|F{次数完?}\n  F-->|否|C\n  F-->|是|G[结算]',free:'graph TD\n  A[触发FG]-->B[开始弹板]\n  B-->C[Free Spin]\n  C-->D{次数完?}\n  D-->|否|C\n  D-->|是|E[结算]'};
 
+function autoGenFlows(){
+    // 如果已有流程图则不覆盖
+    if(D.flows.length>0)return;
+    // 根据玩法段落自动生成匹配的流程图
+    D.sections.forEach(sec=>{
+        var t=sec.title.toLowerCase();
+        if(t.includes('base')){
+            var hasCollect=D.collects.length>0;
+            var code=hasCollect?FTPL.collect:FTPL.scatter;
+            D.flows.push({code:code,label:'Base - '+(hasCollect?'收集触发':'Scatter触发')});
+        }else if(t.includes('free')){
+            D.flows.push({code:FTPL.free,label:sec.title});
+        }else if(t.includes('respin')||t.includes('link')){
+            D.flows.push({code:FTPL.respin,label:sec.title});
+        }
+    });
+    // 组合触发流程
+    if(D.combos.length){
+        D.combos.forEach(cb=>{
+            var names=cb.selectedSections.map(si=>D.sections[si]?D.sections[si].title:'').filter(Boolean);
+            var code='graph TD\n  A['+names.join('+')+' 同时触发]-->B[组合开始弹板]\n  B-->C[Buff叠加生效]\n  C-->D[组合Spin]\n  D-->E{次数完?}\n  E-->|否|D\n  E-->|是|F[结算]';
+            D.flows.push({code:code,label:cb.name||'组合触发'});
+        });
+    }
+}
 function renderFlows(){
     var c=document.getElementById('flowList');c.innerHTML='';
     D.flows.forEach((f,i)=>{
@@ -547,10 +598,20 @@ async function exportXlsx(){
     // 玩法内容
     D.sections.forEach(sec=>{
         ws.getCell('A'+r).value=sec.title+'：';ws.getCell('A'+r).font=bf;ws.getCell('A'+r).alignment=al;r++;
-        if(sec.trigger){ws.getCell('B'+r).value='触发条件：'+sec.trigger;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+        if(sec.icons&&sec.icons.length){ws.getCell('B'+r).value='关联图标：'+sec.icons.join('、');ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+        if(sec.trigger){
+            var tLines=sec.trigger.split('\n').filter(l=>l.trim());
+            ws.getCell('B'+r).value='触发条件：';ws.getCell('B'+r).font=bf;r++;
+            tLines.forEach(line=>{ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++});
+        }
         if(sec.desc){
             ws.getCell('A'+r).value='玩法说明：';ws.getCell('A'+r).font=bf;r++;
             sec.desc.split('\n').forEach(line=>{if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});
+        }
+        if(sec.endCondition){
+            var eLines=sec.endCondition.split('\n').filter(l=>l.trim());
+            ws.getCell('B'+r).value='结束条件：';ws.getCell('B'+r).font=bf;r++;
+            eLines.forEach(line=>{ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++});
         }
         var lims=sec.limits.filter(l=>l.on);
         if(lims.length){
