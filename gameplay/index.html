@@ -166,9 +166,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
 <div class="step-panel" id="s3">
     <div class="card">
         <div class="card-title">📄 玩法段落</div>
-        <div class="info-tip">左侧选择玩法，右侧编辑。Base 玩法包含 Jackpot/Wild列/高低Bet 配置。每句独立一行对应 Excel 每行。支持添加多个同类玩法段落（如多个带不同buff的Free）。</div>
-        <button class="btn-primary" id="aiBtn" onclick="aiGen()" style="margin-bottom:10px"><span class="btn-text">🤖 AI 补全所有段落</span><span class="spinner"></span></button>
-        <div class="ai-status" id="aiSt"></div>
+        <div class="info-tip">左侧选择玩法，右侧编辑。每个段落有独立的 AI 补全按钮。每句独立一行对应 Excel 每行。</div>
         <div class="gp-layout">
             <div class="gp-sidebar" id="gpSidebar"></div>
             <div class="gp-content" id="gpContent"></div>
@@ -377,7 +375,8 @@ function renderGp(){
         '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
         '<div class="form-group"><label style="color:#f7971e">🏁 结束条件（每行一条）</label><div class="line-input-list">'+endH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="endAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addEndLine('+i+')">+</button></div></div>'+
         '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况</label>'+limH+
-        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div></div>';
+        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div>'+
+        '<div style="margin-top:12px"><button class="btn-primary" onclick="aiGenOne('+i+')" style="width:100%;font-size:0.8rem;padding:8px"><span class="btn-text">🤖 AI 补全本段落</span><span class="spinner"></span></button><div class="ai-status" id="aiSt_'+i+'"></div></div></div>';
     });
 }
 function switchGp(i){gpActive=i;document.querySelectorAll('.gp-sidebar .nav-item').forEach((el,idx)=>{el.classList.toggle('active',idx===i)});document.querySelectorAll('.gp-content .section-area').forEach((el,idx)=>{el.classList.toggle('active',idx===i)})}
@@ -452,18 +451,28 @@ function updComboDesc(ci,li,val){var lines=(D.combos[ci].desc||'').split('\n').f
 var aiReady=false,puterLoading=false;
 function loadPuter(){return new Promise((ok,no)=>{if(aiReady){ok();return}if(puterLoading){var w=setInterval(()=>{if(aiReady){clearInterval(w);ok()}},300);setTimeout(()=>{clearInterval(w);no(new Error('超时'))},30000);return}puterLoading=true;var s=document.createElement('script');s.src='https://js.puter.com/v2/';s.onload=()=>{var e=0,t=setInterval(()=>{e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);ok()}if(e>=30000){clearInterval(t);no(new Error('超时'))}},500)};s.onerror=()=>{puterLoading=false;no(new Error('加载失败'))};document.head.appendChild(s)})}
 async function callAI(p){await loadPuter();var r=await puter.ai.chat(p,{model:'gpt-4o-mini',temperature:0.7});if(typeof r==='string')return r;if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(x=>x.text||x).join('');return c}return String(r)}
-async function aiGen(){
-    var btn=document.getElementById('aiBtn'),st=document.getElementById('aiSt');
-    btn.classList.add('loading');btn.disabled=true;st.textContent='🔄 生成中...';st.className='ai-status generating';
+async function aiGenOne(idx){
+    var sec=D.sections[idx];if(!sec)return;
+    var btn=document.querySelector('#gpa_'+idx+' .btn-primary');
+    var st=document.getElementById('aiSt_'+idx);
+    if(btn){btn.classList.add('loading');btn.disabled=true}
+    if(st){st.textContent='🔄 生成中...';st.className='ai-status generating'}
     try{
         var name=document.getElementById('f_name').value||'未命名';
-        var info=D.sections.map((s,i)=>(i+1)+'.'+s.title+(s.core?'[核心:'+s.core+']':'')+(s.trigger?'[触发:'+s.trigger+']':'')).join('; ');
-        var p='你是老虎机策划。关卡"'+name+'"，架构Base+'+D.archTags.join('+')+',图标:'+D.specials.map(s=>s.name).join(',')+'\n段落:'+info+'\n为每段生成trigger,desc(150-250字),limits(3-5条)。已有内容请扩充。返回JSON数组(无代码块):[{"title":"","trigger":"","desc":"","limits":["",""]}]';
-        var raw=await callAI(p);var data;try{data=JSON.parse(raw)}catch(e){var m=raw.match(/\[[\s\S]*\]/);if(m)data=JSON.parse(m[0])}
-        if(Array.isArray(data)){data.forEach((d,i)=>{if(D.sections[i]){if(d.trigger)D.sections[i].trigger=d.trigger;if(d.desc)D.sections[i].desc=d.desc;if(d.limits)D.sections[i].limits=d.limits.map(l=>({text:l,on:true}))}});renderGp();st.textContent='✅ 完成';st.className='ai-status done'}
-        else{st.textContent='❌ 解析失败';st.className='ai-status error'}
-    }catch(e){st.textContent='❌ '+e.message;st.className='ai-status error'}
-    finally{btn.classList.remove('loading');btn.disabled=false}
+        var icons=sec.icons&&sec.icons.length?sec.icons.join(','):'无';
+        var p='你是老虎机策划。关卡"'+name+'"，当前段落:"'+sec.title+'"'+(sec.core?'，核心描述:'+sec.core:'')+(sec.trigger?'，已有触发:'+sec.trigger:'')+',关联图标:'+icons+'\n请生成：1.trigger(触发条件,多条用换行分隔) 2.desc(玩法说明,每条规则换行,150-250字) 3.endCondition(结束条件,多条换行) 4.limits(极限情况3-5条数组)\n已有内容请保留并扩充。返回JSON(无代码块):{"trigger":"","desc":"","endCondition":"","limits":["",""]}';
+        var raw=await callAI(p);var data;
+        try{data=JSON.parse(raw)}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)data=JSON.parse(m[0])}
+        if(data){
+            if(data.trigger)sec.trigger=data.trigger;
+            if(data.desc)sec.desc=data.desc;
+            if(data.endCondition)sec.endCondition=data.endCondition;
+            if(data.limits)sec.limits=data.limits.map(l=>({text:l,on:true}));
+            renderGp();
+            if(st){st.textContent='✅ 完成';st.className='ai-status done'}
+        }else{if(st){st.textContent='❌ 解析失败';st.className='ai-status error'}}
+    }catch(e){if(st){st.textContent='❌ '+e.message;st.className='ai-status error'}}
+    finally{if(btn){btn.classList.remove('loading');btn.disabled=false}}
 }
 
 /* ===== Step 4: 美术 + 流程图（多个）===== */
