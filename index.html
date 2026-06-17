@@ -206,16 +206,16 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-title">🎙️ 默认音色设置</div>
-                <div class="info-tip">选择默认音色人物和描述，生成后可在预览表格中为每句配音单独修改音色。</div>
+                <div class="card-title">🎙️ 默认音色设置（可选）</div>
+                <div class="info-tip">可不选择，AI将根据主题和故事氛围自动判断最合适的音色人物和描述。生成后可在预览表格中为每句配音单独修改。</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="v_character">默认音色人物</label>
-                        <select id="v_character"><option value="">请选择音色人物</option></select>
+                        <select id="v_character"><option value="">AI 自动判断</option></select>
                     </div>
                     <div class="form-group">
                         <label for="v_tone">默认音色描述</label>
-                        <select id="v_tone"><option value="">请选择音色描述</option></select>
+                        <select id="v_tone"><option value="">AI 自动判断</option></select>
                     </div>
                 </div>
             </div>
@@ -375,11 +375,13 @@
 
     function voiceInitSelects() {
         var sel = document.getElementById('v_character'); sel.length = 1;
+        sel.options[0].text = 'AI 自动判断';
         Object.keys(VOICE_CHARACTERS).forEach(function(c) { var o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
     }
     function voiceUpdateTone() {
         var c = document.getElementById('v_character').value;
         var ts = document.getElementById('v_tone'); ts.length = 1; ts.selectedIndex = 0;
+        ts.options[0].text = c ? '请选择音色描述' : 'AI 自动判断';
         if (!c) return;
         getTonesFor(c).forEach(function(t) { var o = document.createElement('option'); o.value=t; o.textContent=t; ts.appendChild(o); });
     }
@@ -454,8 +456,6 @@
         var scenes = Array.from(document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked')).map(function(cb){return cb.value;});
         if (!theme) { alert('请输入主题名称'); return; }
         if (!atmo) { alert('请输入故事氛围描述'); return; }
-        if (!char) { alert('请选择音色人物'); return; }
-        if (!tone) { alert('请选择音色描述'); return; }
         if (scenes.length === 0) { alert('请至少选择一个应用场景'); return; }
 
         var btn = document.getElementById('v_genBtn'); btn.classList.add('loading'); btn.disabled = true;
@@ -464,27 +464,59 @@
             st.textContent = '🔄 正在连接AI服务...'; st.className = 'ai-status generating';
             var normal = scenes.filter(function(s){return !isJackpot(s);}), jp = scenes.filter(function(s){return isJackpot(s);});
             var all = [];
+
+            // 构建音色人物库说明
+            var voiceLib = Object.keys(VOICE_CHARACTERS).map(function(c){ return c+'('+VOICE_CHARACTERS[c].join('/')+')'; }).join('、');
+
             if (normal.length > 0) {
                 st.textContent = '🔄 正在生成配音内容（'+normal.length+'个场景）...';
                 var scenesText = normal.map(function(s,i){return (i+1)+'. '+s;}).join('\n');
-                var prompt = '你是老虎机游戏配音文案专家。请根据以下信息为每个场景生成一条简短的中文配音台词和对应英文翻译。\n\n主题名称：'+theme+'\n故事氛围：'+atmo+'\n音色人物：'+char+'\n音色描述：'+tone+'\n\n场景列表：\n'+scenesText+'\n\n要求：\n1. 中文1-10字，简短有力\n2. 英文是准确翻译\n3. 符合主题氛围和音色特征\n\n严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","chinese":"中文台词","english":"English"}]';
+
+                var prompt = '你是老虎机游戏配音文案专家。请根据主题和故事氛围，为每个场景生成贴切的中文配音台词、英文翻译，并为每个场景选择最合适的音色人物和音色描述。\n\n' +
+                    '主题名称：'+theme+'\n故事氛围：'+atmo+'\n\n';
+
+                // 如果用户手动指定了音色，作为偏好提示
+                if (char && tone) {
+                    prompt += '用户偏好音色（可参考但不必全部使用）：'+char+' - '+tone+'\n\n';
+                }
+
+                prompt += '可选音色人物库：'+voiceLib+'\n\n' +
+                    '场景列表：\n'+scenesText+'\n\n' +
+                    '要求：\n' +
+                    '1. 中文配音1-10字，简短有力，紧扣主题和故事氛围\n' +
+                    '2. 英文是准确翻译，符合英语表达习惯\n' +
+                    '3. 根据主题氛围和每个场景的情境，为每条配音选择最贴切的音色人物和音色描述\n' +
+                    '4. 例如：神话主题可选精灵/成熟男性，动物主题可选旁白解说，恐怖主题可选怪物\n' +
+                    '5. 对于"进入关卡"场景，生成符合主题的欢迎/引入台词\n' +
+                    '6. 对于"预告中奖"场景，生成激动兴奋的预告台词\n' +
+                    '7. 对于"大赢动画播放时"，生成庆祝/狂喜类台词\n' +
+                    '8. 配音台词要有角色感，不要泛泛而谈\n\n' +
+                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"音色人物","voiceTone":"音色描述","chinese":"中文台词","english":"English"}]';
+
                 var raw = await callAI(prompt);
                 var result = null;
                 try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
                 normal.forEach(function(sn) {
                     var f = Array.isArray(result) ? result.find(function(g){return g.scene===sn;}) : null;
-                    all.push({scene:sn, voiceCharacter:char, voiceTone:tone, chinese:f?f.chinese:'', english:f?f.english:''});
+                    var vc = (f && f.voiceCharacter && VOICE_CHARACTERS[f.voiceCharacter]) ? f.voiceCharacter : (char || '旁白解说');
+                    var vt = f && f.voiceTone ? f.voiceTone : (tone || '');
+                    // 校验voiceTone是否在对应人物的可选范围内
+                    var validTones = VOICE_CHARACTERS[vc] || [];
+                    if (validTones.indexOf(vt) === -1 && validTones.length > 0) vt = validTones[0];
+                    all.push({scene:sn, voiceCharacter:vc, voiceTone:vt, chinese:f?f.chinese:'', english:f?f.english:''});
                 });
             }
             if (jp.length > 0) {
                 st.textContent = '🔄 正在翻译JACKPOT文本...';
                 var jpItems = jp.map(function(s){return getJackpotText(s);});
                 var jpPrompt = '将以下JACKPOT文本翻译为英文：\n'+jpItems.map(function(t){return '- '+t;}).join('\n')+'\n\n严格返回JSON数组(不要markdown代码块)：[{"chinese":"原文","english":"翻译"}]';
+                var defaultChar = char || '旁白解说';
+                var defaultTone = tone || (VOICE_CHARACTERS[defaultChar] ? VOICE_CHARACTERS[defaultChar][0] : '');
                 try {
                     var jpRaw = await callAI(jpPrompt); var jpR = null;
                     try { jpR = JSON.parse(jpRaw); } catch(e) { var jm = jpRaw.match(/\[[\s\S]*?\]/); if(jm) jpR = JSON.parse(jm[0]); }
-                    jp.forEach(function(sn) { var cn = getJackpotText(sn); var en = cn; if(Array.isArray(jpR)){var f=jpR.find(function(j){return j.chinese===cn;}); if(f) en=f.english;} all.push({scene:sn,voiceCharacter:char,voiceTone:tone,chinese:cn,english:en}); });
-                } catch(e) { jp.forEach(function(sn){var t=getJackpotText(sn); all.push({scene:sn,voiceCharacter:char,voiceTone:tone,chinese:t,english:t});}); }
+                    jp.forEach(function(sn) { var cn = getJackpotText(sn); var en = cn; if(Array.isArray(jpR)){var f=jpR.find(function(j){return j.chinese===cn;}); if(f) en=f.english;} all.push({scene:sn,voiceCharacter:defaultChar,voiceTone:defaultTone,chinese:cn,english:en}); });
+                } catch(e) { jp.forEach(function(sn){var t=getJackpotText(sn); all.push({scene:sn,voiceCharacter:defaultChar,voiceTone:defaultTone,chinese:t,english:t});}); }
             }
             var ordered = []; scenes.forEach(function(sn){var e=all.find(function(x){return x.scene===sn;}); if(e) ordered.push(e);});
             voiceEntries = ordered; voiceRenderTable();
