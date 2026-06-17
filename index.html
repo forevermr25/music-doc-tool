@@ -206,18 +206,22 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-title">🎙️ 默认音色设置（可选）</div>
-                <div class="info-tip">可不选择，AI将根据主题和故事氛围自动判断最合适的音色人物和描述。生成后可在预览表格中为每句配音单独修改。</div>
+                <div class="card-title">🎙️ 音色设置</div>
+                <div class="info-tip">点击「AI生成音色」可根据主题和故事氛围自动推荐配音人物与音色，也可手动选择后覆盖。</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="v_character">默认音色人物</label>
+                        <label for="v_character">音色人物</label>
                         <select id="v_character"><option value="">AI 自动判断</option></select>
                     </div>
                     <div class="form-group">
-                        <label for="v_tone">默认音色描述</label>
+                        <label for="v_tone">音色描述</label>
                         <select id="v_tone"><option value="">AI 自动判断</option></select>
                     </div>
                 </div>
+                <button class="btn-ai" id="v_voiceAiBtn" type="button" onclick="voiceAiSuggest()">
+                    <span class="btn-text">🎙️ AI 生成音色</span><span class="spinner"></span>
+                </button>
+                <div class="ai-status" id="v_voiceStatus"></div>
             </div>
             <div class="card">
                 <div class="card-title">🎬 应用场景</div>
@@ -259,7 +263,7 @@
             <div class="card" id="v_previewCard" style="display:none;">
                 <div class="card-title">📋 配音内容预览 <span class="generated-tag">AI 生成</span></div>
                 <div class="preview-table-wrapper">
-                    <table class="preview-table"><thead><tr><th>序号</th><th>应用场景</th><th>音色人物</th><th>音色描述</th><th>中文配音内容</th><th>英文配音内容</th></tr></thead>
+                    <table class="preview-table"><thead><tr><th>序号</th><th>中文配音内容</th><th>英文配音内容</th><th>应用场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
                     <tbody id="v_tbody"></tbody></table>
                 </div>
             </div>
@@ -422,7 +426,7 @@
     function voiceCharChange(el) {
         var i = parseInt(el.dataset.index); var c = el.value;
         if(voiceEntries[i]){voiceEntries[i].voiceCharacter=c; voiceEntries[i].voiceTone='';}
-        var row = el.closest('tr'); row.querySelectorAll('td')[3].innerHTML = voiceBuildToneSelect(c,'',i);
+        var row = el.closest('tr'); row.querySelectorAll('td')[5].innerHTML = voiceBuildToneSelect(c,'',i);
     }
     function voiceToneChange(el) { var i=parseInt(el.dataset.index); if(voiceEntries[i]) voiceEntries[i].voiceTone=el.value; }
 
@@ -433,19 +437,71 @@
         card.style.display = '';
         voiceEntries.forEach(function(entry, i) {
             var tr = document.createElement('tr');
-            tr.innerHTML = '<td class="seq-cell">'+(i+1)+'</td><td>'+entry.scene+'</td><td>'+voiceBuildCharSelect(entry.voiceCharacter||'',i)+'</td><td>'+voiceBuildToneSelect(entry.voiceCharacter||'',entry.voiceTone||'',i)+'</td>';
+            // 序号
+            tr.innerHTML = '<td class="seq-cell">'+(i+1)+'</td>';
+            // 中文配音（可编辑）
             var tdCn = document.createElement('td');
             var inCn = document.createElement('input'); inCn.type='text'; inCn.className='editable-cell'; inCn.value=entry.chinese||''; inCn.maxLength=200; inCn.dataset.index=i; inCn.dataset.field='chinese';
             inCn.addEventListener('input',function(e){voiceEntries[i].chinese=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
             if(!entry.chinese||!entry.chinese.trim()) inCn.classList.add('warning');
             tdCn.appendChild(inCn); tr.appendChild(tdCn);
+            // 英文配音（可编辑）
             var tdEn = document.createElement('td');
             var inEn = document.createElement('input'); inEn.type='text'; inEn.className='editable-cell'; inEn.value=entry.english||''; inEn.maxLength=500; inEn.dataset.index=i; inEn.dataset.field='english';
             inEn.addEventListener('input',function(e){voiceEntries[i].english=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
             if(!entry.english||!entry.english.trim()) inEn.classList.add('warning');
             tdEn.appendChild(inEn); tr.appendChild(tdEn);
+            // 应用场景
+            var tdScene = document.createElement('td'); tdScene.textContent = entry.scene; tr.appendChild(tdScene);
+            // 音色人物（下拉）
+            var tdChar = document.createElement('td'); tdChar.innerHTML = voiceBuildCharSelect(entry.voiceCharacter||'',i); tr.appendChild(tdChar);
+            // 音色描述（下拉）
+            var tdTone = document.createElement('td'); tdTone.innerHTML = voiceBuildToneSelect(entry.voiceCharacter||'',entry.voiceTone||'',i); tr.appendChild(tdTone);
             tbody.appendChild(tr);
         });
+    }
+
+    // AI生成音色推荐
+    async function voiceAiSuggest() {
+        var theme = document.getElementById('v_theme').value.trim();
+        var atmo = document.getElementById('v_atmosphere').value.trim();
+        if (!theme) { alert('请先输入主题名称'); return; }
+        if (!atmo) { alert('请先输入故事氛围描述'); return; }
+
+        var btn = document.getElementById('v_voiceAiBtn'); btn.classList.add('loading'); btn.disabled = true;
+        var st = document.getElementById('v_voiceStatus');
+        try {
+            st.textContent = '🔄 正在分析主题氛围，推荐音色...'; st.className = 'ai-status generating';
+            var voiceLib = Object.keys(VOICE_CHARACTERS).map(function(c){ return c+'('+VOICE_CHARACTERS[c].join('/')+')'; }).join('、');
+            var prompt = '你是老虎机游戏配音策划专家。根据以下主题和故事氛围，从音色库中选择一个最适合作为该关卡基础配音人物的音色人物和音色描述。\n\n' +
+                '主题名称：'+theme+'\n故事氛围：'+atmo+'\n\n' +
+                '可选音色库：'+voiceLib+'\n\n' +
+                '要求：选择最贴合主题氛围的音色人物和音色描述，并简要说明选择理由。\n\n' +
+                '严格返回JSON(不要markdown代码块)：{"voiceCharacter":"音色人物","voiceTone":"音色描述","reason":"选择理由"}';
+
+            var raw = await callAI(prompt);
+            var result = null;
+            try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\{[\s\S]*?\}/); if(m) result = JSON.parse(m[0]); }
+
+            if (result && result.voiceCharacter && VOICE_CHARACTERS[result.voiceCharacter]) {
+                // 设置下拉选择
+                document.getElementById('v_character').value = result.voiceCharacter;
+                voiceUpdateTone();
+                if (result.voiceTone) {
+                    var validTones = VOICE_CHARACTERS[result.voiceCharacter] || [];
+                    if (validTones.indexOf(result.voiceTone) !== -1) {
+                        document.getElementById('v_tone').value = result.voiceTone;
+                    } else if (validTones.length > 0) {
+                        document.getElementById('v_tone').value = validTones[0];
+                    }
+                }
+                st.textContent = '✅ 推荐：' + result.voiceCharacter + ' - ' + (document.getElementById('v_tone').value || result.voiceTone) + '（' + (result.reason || '') + '）';
+                st.className = 'ai-status done';
+            } else {
+                st.textContent = '⚠️ AI未能返回有效推荐，请手动选择'; st.className = 'ai-status error';
+            }
+        } catch(err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
+        finally { btn.classList.remove('loading'); btn.disabled = false; }
     }
 
     async function voiceGenerate() {
@@ -472,26 +528,26 @@
                 st.textContent = '🔄 正在生成配音内容（'+normal.length+'个场景）...';
                 var scenesText = normal.map(function(s,i){return (i+1)+'. '+s;}).join('\n');
 
-                var prompt = '你是老虎机游戏配音文案专家。请根据主题和故事氛围，为每个场景生成贴切的中文配音台词、英文翻译，并为每个场景选择最合适的音色人物和音色描述。\n\n' +
-                    '主题名称：'+theme+'\n故事氛围：'+atmo+'\n\n';
+                var prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
+                    '故事氛围为：'+atmo+'\n\n';
 
                 // 如果用户手动指定了音色，作为偏好提示
                 if (char && tone) {
-                    prompt += '用户偏好音色（可参考但不必全部使用）：'+char+' - '+tone+'\n\n';
+                    prompt += '配音人物偏好：'+char+' - '+tone+'\n\n';
                 }
 
                 prompt += '可选音色人物库：'+voiceLib+'\n\n' +
-                    '场景列表：\n'+scenesText+'\n\n' +
-                    '要求：\n' +
-                    '1. 中文配音1-10字，简短有力，紧扣主题和故事氛围\n' +
-                    '2. 英文是准确翻译，符合英语表达习惯\n' +
-                    '3. 根据主题氛围和每个场景的情境，为每条配音选择最贴切的音色人物和音色描述\n' +
-                    '4. 例如：神话主题可选精灵/成熟男性，动物主题可选旁白解说，恐怖主题可选怪物\n' +
-                    '5. 对于"进入关卡"场景，生成符合主题的欢迎/引入台词\n' +
-                    '6. 对于"预告中奖"场景，生成激动兴奋的预告台词\n' +
-                    '7. 对于"大赢动画播放时"，生成庆祝/狂喜类台词\n' +
-                    '8. 配音台词要有角色感，不要泛泛而谈\n\n' +
-                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"音色人物","voiceTone":"音色描述","chinese":"中文台词","english":"English"}]';
+                    '节点如下：\n'+scenesText+'\n\n' +
+                    '输出要求：\n' +
+                    '1. 为每个节点生成一条英文配音台词（简短有力，1-5个英文单词或短语）\n' +
+                    '2. 给出对应的中文解释/翻译（1-10字）\n' +
+                    '3. 根据主题氛围为每条配音选择最贴切的音色人物和音色描述\n' +
+                    '4. 配音要紧扣主题故事氛围，有角色感和代入感\n' +
+                    '5. 对于"进入关卡"生成欢迎/引入类台词\n' +
+                    '6. 对于"预告中奖"生成激动兴奋类台词\n' +
+                    '7. 对于"大赢动画播放时"生成庆祝/狂喜类台词\n' +
+                    '8. 对于"free/Respin"相关节点生成对应开始或结算类台词\n\n' +
+                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"音色人物","voiceTone":"音色描述","chinese":"中文台词","english":"English line"}]';
 
                 var raw = await callAI(prompt);
                 var result = null;
@@ -532,17 +588,17 @@
         var atmo = document.getElementById('v_atmosphere').value.trim();
         try {
             var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet('配音需求');
-            ws.columns = [{width:8},{width:28},{width:14},{width:14},{width:30},{width:40}];
+            ws.columns = [{width:8},{width:30},{width:40},{width:28},{width:14},{width:14}];
             var bf={name:'Microsoft YaHei',size:11}, bld={name:'Microsoft YaHei',size:11,bold:true}, tf={name:'Microsoft YaHei',size:14,bold:true};
             var al={vertical:'middle',horizontal:'left',wrapText:true}, bd={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
             ws.mergeCells('A1:F1'); ws.getRow(1).height=28; ws.getCell('A1').value='主题名称：'+theme; ws.getCell('A1').font=tf; ws.getCell('A1').alignment=al;
             ws.mergeCells('A2:F2'); ws.getRow(2).height=22; ws.getCell('A2').value='故事氛围：'+atmo; ws.getCell('A2').font=bf; ws.getCell('A2').alignment=al;
-            var hdr=['序号','应用场景','音色人物','音色描述','中文配音内容','英文配音内容'];
+            var hdr=['序号','中文配音内容','英文配音内容','应用场景','音色人物','音色描述'];
             var hr=ws.getRow(3); hr.height=22;
             hdr.forEach(function(h,i){var c=hr.getCell(i+1); c.value=h; c.font=bld; c.alignment={vertical:'middle',horizontal:'center',wrapText:true}; c.border=bd; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE8D44D'}};});
             voiceEntries.forEach(function(e,i){
                 var row=ws.getRow(4+i); row.height=20;
-                [i+1,e.scene,e.voiceCharacter||'',e.voiceTone||'',e.chinese||'',e.english||''].forEach(function(v,j){var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;});
+                [i+1, e.chinese||'', e.english||'', e.scene, e.voiceCharacter||'', e.voiceTone||''].forEach(function(v,j){var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;});
                 row.getCell(1).alignment={vertical:'middle',horizontal:'center'};
             });
             var buf = await wb.xlsx.writeBuffer();
