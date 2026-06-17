@@ -575,10 +575,9 @@
                 // 如果有音色偏好（手动选择或AI推荐）
                 if (effectiveChar && effectiveTone) {
                     prompt += '配音人物设定：'+effectiveChar+' - '+effectiveTone+(aiGender?' ('+aiGender+')':'')+'\n';
-                    // 加入AI推荐理由作为角色氛围参考
                     var reasonEl = document.getElementById('v_voiceResultText');
                     if (reasonEl && reasonEl.textContent) {
-                        prompt += '角色背景参考：'+reasonEl.textContent.replace(/[\\n]/g,' ').substring(0,200)+'\n';
+                        prompt += '角色背景参考：'+reasonEl.textContent.replace(/[\n]/g,' ').substring(0,200)+'\n';
                     }
                     prompt += '\n';
                 } else if (aiGender) {
@@ -587,24 +586,28 @@
 
                 prompt += '可选音色人物库：'+voiceLib+'\n\n' +
                     '节点如下（仅表示配音播放的时机，不是台词内容）：\n'+scenesText+'\n\n' +
-                    '核心要求：\n' +
-                    '1. 所有配音台词必须以配音人物的第一视角说出，就像这个角色真的在对玩家说话\n' +
-                    '2. 台词要符合真人说话的语境和语气，有情感、有性格，不要像机器翻译\n' +
-                    '3. 英文配音是主要输出（2-8个单词的自然口语短句），中文是对应的意译而非直译\n' +
-                    '4. 根据主题故事氛围和角色性格来构建台词的情绪基调\n\n' +
-                    '各节点台词指导：\n' +
-                    '- 进入关卡：角色以自己的身份欢迎/引诱/召唤玩家，带有角色特有的说话方式\n' +
-                    '- 预告中奖：角色感应到好运来临时的兴奋反应，像是角色自己在期待\n' +
-                    '- scatter/Bonus触发：角色被激活或觉醒时的反应台词\n' +
-                    '- JACKPOT弹板：角色为玩家庆祝大奖的方式\n' +
-                    '- free/Respin开始：角色宣告特殊模式开启，带有角色特色的宣言\n' +
-                    '- free/Respin结算：角色对成果的总结或赞叹\n' +
-                    '- 收集区触发：角色收集到重要物品时的反应\n' +
-                    '- 大赢动画：角色极度兴奋的狂喜表达\n\n' +
-                    '示例参考（假设角色是海盗船长）：\n' +
-                    '- 进入关卡：英文"Ahoy! Ready to plunder?" 中文"嘿！准备好掠夺了吗？"\n' +
-                    '- 预告中奖：英文"I smell treasure ahead!" 中文"我闻到前方宝藏的气息了！"\n' +
-                    '- 大赢：英文"What a haul, matey!" 中文"好大一笔收获啊，伙计！"\n\n' +
+                    '【最重要的要求】每一句台词都必须包含与【'+theme+'】主题直接相关的意象、词汇或隐喻。绝不允许出现换一个主题也能通用的台词。\n\n' +
+                    '具体规则：\n' +
+                    '1. 台词以配音角色的第一视角说出，角色就是这个主题中的人物\n' +
+                    '2. 每句台词中必须嵌入至少一个与主题相关的具体名词或动词（如：万圣节小丑→trick/treat/juggle/balloon/laugh；海盗→plunder/sail/treasure/anchor；埃及→pharaoh/pyramid/scarab/tomb）\n' +
+                    '3. 英文是主要配音输出（自然口语短句），中文是对应意译\n' +
+                    '4. 台词要有角色独特的说话腔调和人格特征\n\n' +
+                    '各节点的角色反应方向：\n' +
+                    '- 进入关卡：角色用自己的主题特色方式招呼玩家进入自己的领地\n' +
+                    '- 预告中奖：角色用主题相关的比喻来暗示好运\n' +
+                    '- scatter/Bonus触发：角色的主题技能/法术/特长被触发时的台词\n' +
+                    '- free/Respin开始：角色宣布开启主题相关的特殊事件\n' +
+                    '- free/Respin结算：角色用主题语言总结战果\n' +
+                    '- 收集区触发：角色得到主题相关的关键物品\n' +
+                    '- 大赢动画：角色用主题相关的最高级表达来庆祝\n\n' +
+                    '反面示例（不要这样写，太通用）：\n' +
+                    '❌ "Welcome to my playground" - 任何主题都能用\n' +
+                    '❌ "I sense riches are drawing near" - 没有主题特色\n' +
+                    '❌ "Behold, the results are here" - 毫无角色感\n\n' +
+                    '正面示例（万圣节小丑主题应该这样写）：\n' +
+                    '✅ 进入关卡："Step right up to my haunted circus!" 中文"欢迎来到我的闹鬼马戏团！"\n' +
+                    '✅ 预告中奖："My balloon is about to pop with gold!" 中文"我的气球快被金币撑爆了！"\n' +
+                    '✅ 大赢："Ha ha ha! Trick or treat? All treats tonight!" 中文"哈哈哈！不给糖就捣蛋？今晚全是糖！"\n\n' +
                     '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","voiceCharacter":"音色人物","voiceTone":"音色描述","chinese":"中文台词","english":"English line"}]';
 
                 var raw = await callAI(prompt);
