@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:28px 14px;color:#e0e0e0}
@@ -197,10 +198,16 @@ select option{background:#1a1a2e;color:#e0e0e0}
         <textarea id="f_anim" placeholder="关键动效流程描述"></textarea>
     </div>
     <div class="card">
-        <div class="card-title">📐 流程图（可选）</div>
-        <div class="form-group"><label>模板</label><select onchange="loadTpl(this.value)"><option value="">选择...</option><option value="collect">收集触发</option><option value="scatter">Scatter触发</option><option value="respin">Respin</option><option value="free">Free Games</option></select></div>
-        <div class="flowchart-editor"><textarea id="flowCode" placeholder="Mermaid代码" oninput="renderFlow()"></textarea></div>
-        <div class="flowchart-container" id="flowPv"></div>
+        <div class="card-title">📐 流程图（支持多个）</div>
+        <div class="info-tip">可添加多个流程图，导出时以图片形式嵌入 Excel。</div>
+        <div id="flowList"></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-add" onclick="addFlow('collect')">+ 收集触发</button>
+            <button class="btn-add" onclick="addFlow('scatter')">+ Scatter触发</button>
+            <button class="btn-add" onclick="addFlow('respin')">+ Respin</button>
+            <button class="btn-add" onclick="addFlow('free')">+ Free Games</button>
+            <button class="btn-add" onclick="addFlow('')">+ 空白</button>
+        </div>
     </div>
     <button class="btn-export" onclick="exportXlsx()">📥 导出玩法文档 (.xlsx)</button>
     <div style="margin-top:10px"><button class="btn-primary" onclick="go(3)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button></div>
@@ -208,8 +215,8 @@ select option{background:#1a1a2e;color:#e0e0e0}
 </div>
 <div class="success-toast" id="toast"></div>
 <script>
-var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[]};
-function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp()}if(n===4)renderArts();window.scrollTo(0,0)}
+var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[],flows:[]};
+function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp()}if(n===4){renderArts();renderFlows()};window.scrollTo(0,0)}
 function tog(el){el.classList.toggle('selected');D.archTags=[...document.querySelectorAll('#archTags .tag-item.selected')].map(t=>t.dataset.v)}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
@@ -399,12 +406,33 @@ async function aiGen(){
     finally{btn.classList.remove('loading');btn.disabled=false}
 }
 
-/* ===== Step 4: 美术 + 流程图 ===== */
+/* ===== Step 4: 美术 + 流程图（多个）===== */
 function renderArts(){var c=document.getElementById('artList');c.innerHTML='';D.arts.forEach((a,i)=>{c.innerHTML+='<div class="gp-block"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:0.82rem;color:#ccd6f6">设计重点'+(i+1)+'</strong><button class="btn-danger" onclick="D.arts.splice('+i+',1);renderArts()">×</button></div><div class="form-group" style="margin-bottom:4px"><input type="text" value="'+(a.title||'')+'" onchange="D.arts['+i+'].title=this.value" placeholder="标题"></div><div class="form-group" style="margin-bottom:0"><textarea onchange="D.arts['+i+'].desc=this.value" placeholder="描述">'+(a.desc||'')+'</textarea></div></div>'})}
 function addArt(){D.arts.push({title:'',desc:''});renderArts()}
+
 var FTPL={collect:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{收集图标?}\n  C-->|是|D[收集动画]\n  D-->E{收集区触发?}\n  E-->|是|F[触发弹板]\n  E-->|否|G[结算]\n  C-->|否|G\n  G-->A',scatter:'graph TD\n  A[Spin]-->B[停轮]\n  B-->C{Scatter>=3?}\n  C-->|是|D[触发FG]\n  C-->|否|E[结算]\n  E-->A',respin:'graph TD\n  A[Spin]-->B{Bonus>=5?}\n  B-->|是|C[Respin]\n  C-->D{新Bonus?}\n  D-->|是|E[锁定+重置]\n  E-->C\n  D-->|否|F{次数完?}\n  F-->|否|C\n  F-->|是|G[结算]',free:'graph TD\n  A[触发FG]-->B[开始弹板]\n  B-->C[Free Spin]\n  C-->D{次数完?}\n  D-->|否|C\n  D-->|是|E[结算]'};
-function loadTpl(v){if(!v)return;document.getElementById('flowCode').value=FTPL[v]||'';renderFlow()}
-function renderFlow(){var code=document.getElementById('flowCode').value;var c=document.getElementById('flowPv');if(!code.trim()){c.innerHTML='';return}c.innerHTML='<div class="mermaid">'+code+'</div>';try{mermaid.run({nodes:c.querySelectorAll('.mermaid')})}catch(e){}}
+
+function renderFlows(){
+    var c=document.getElementById('flowList');c.innerHTML='';
+    D.flows.forEach((f,i)=>{
+        c.innerHTML+='<div class="gp-block"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:0.8rem;color:#ccd6f6">流程图 '+(i+1)+(f.label?' - '+f.label:'')+'</strong><button class="btn-danger" onclick="D.flows.splice('+i+',1);renderFlows()">×</button></div>'+
+        '<div class="flowchart-editor"><textarea id="fc_'+i+'" oninput="D.flows['+i+'].code=this.value;renderOneFlow('+i+')" placeholder="Mermaid代码">'+f.code+'</textarea></div>'+
+        '<div class="flowchart-container" id="fpv_'+i+'"></div></div>';
+    });
+    setTimeout(()=>{D.flows.forEach((_,i)=>renderOneFlow(i))},100);
+}
+function renderOneFlow(i){
+    var code=D.flows[i].code;var c=document.getElementById('fpv_'+i);
+    if(!c||!code.trim()){if(c)c.innerHTML='';return}
+    c.innerHTML='<div class="mermaid">'+code+'</div>';
+    try{mermaid.run({nodes:c.querySelectorAll('.mermaid')})}catch(e){}
+}
+function addFlow(tpl){
+    var code=FTPL[tpl]||'';
+    var labels={collect:'Base收集触发',scatter:'Scatter触发',respin:'Respin',free:'Free Games'};
+    D.flows.push({code:code,label:labels[tpl]||'自定义'});
+    renderFlows();
+}
 
 /* ===== Excel导出（严格对齐文档格式：每字段独立行）===== */
 async function exportXlsx(){
@@ -505,8 +533,58 @@ async function exportXlsx(){
     }
     var anim=document.getElementById('f_anim').value.trim();
     if(anim){ws.getCell('A'+r).value='动效设计重点：';ws.getCell('A'+r).font=bf;r++;anim.split('\n').forEach(l=>{if(l.trim()){ws.getCell('B'+r).value=l.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});r++}
-    var flow=document.getElementById('flowCode').value.trim();
-    if(flow){ws.getCell('A'+r).value='流程图：';ws.getCell('A'+r).font=bf;r++;ws.getCell('B'+r).value=flow;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;ws.mergeCells('B'+r+':H'+r);ws.getRow(r).height=180;r++}
+
+    // 图标图片嵌入（实体机/竞品 + 参考）
+    var hasImgs=D.specials.some(s=>s.compImg||s.refImg)||D.normals.some(n=>n.compImg||n.refImg);
+    if(hasImgs){
+        // 特殊图标图片
+        var spImgs=D.specials.filter(s=>s.compImg||s.refImg);
+        if(spImgs.length){
+            for(var si=0;si<D.specials.length;si++){
+                var sp=D.specials[si];
+                if(sp.compImg){try{var imgId=wb.addImage({base64:sp.compImg.split(',')[1],extension:'png'});ws.addImage(imgId,{tl:{col:2+si,row:r-1},ext:{width:80,height:80}})}catch(e){}}
+                if(sp.refImg){try{var imgId2=wb.addImage({base64:sp.refImg.split(',')[1],extension:'png'});ws.addImage(imgId2,{tl:{col:2+si,row:r},ext:{width:80,height:80}})}catch(e){}}
+            }
+            ws.getRow(r).height=70;ws.getCell('A'+r).value='特殊图标-实体机图';ws.getCell('A'+r).font=bf;r++;
+            ws.getRow(r).height=70;ws.getCell('A'+r).value='特殊图标-参考图';ws.getCell('A'+r).font=bf;r++;
+        }
+        // 普通图标图片
+        var nmImgs=D.normals.filter(n=>n.compImg||n.refImg);
+        if(nmImgs.length){
+            for(var ni=0;ni<D.normals.length;ni++){
+                var nm=D.normals[ni];
+                if(nm.compImg){try{var imgId3=wb.addImage({base64:nm.compImg.split(',')[1],extension:'png'});ws.addImage(imgId3,{tl:{col:2+ni,row:r-1},ext:{width:60,height:60}})}catch(e){}}
+                if(nm.refImg){try{var imgId4=wb.addImage({base64:nm.refImg.split(',')[1],extension:'png'});ws.addImage(imgId4,{tl:{col:2+ni,row:r},ext:{width:60,height:60}})}catch(e){}}
+            }
+            ws.getRow(r).height=60;ws.getCell('A'+r).value='普通图标-实体机图';ws.getCell('A'+r).font=bf;r++;
+            ws.getRow(r).height=60;ws.getCell('A'+r).value='普通图标-参考图';ws.getCell('A'+r).font=bf;r++;
+        }
+        r++;
+    }
+
+    // 流程图以图片导出
+    if(D.flows.length){
+        ws.getCell('A'+r).value='流程图：';ws.getCell('A'+r).font=bf;r++;
+        for(var fi=0;fi<D.flows.length;fi++){
+            var fpv=document.getElementById('fpv_'+fi);
+            if(fpv&&fpv.querySelector('svg')){
+                try{
+                    var canvas=await html2canvas(fpv,{backgroundColor:'#1a1a2e',scale:2});
+                    var dataUrl=canvas.toDataURL('image/png');
+                    var imgId5=wb.addImage({base64:dataUrl.split(',')[1],extension:'png'});
+                    var imgW=Math.min(canvas.width/2,600);var imgH=Math.min(canvas.height/2,400);
+                    ws.addImage(imgId5,{tl:{col:1,row:r-1},ext:{width:imgW,height:imgH}});
+                    ws.getRow(r).height=imgH*0.75;
+                    ws.getCell('A'+r).value=D.flows[fi].label||'流程图'+(fi+1);ws.getCell('A'+r).font=nf;
+                }catch(e){
+                    ws.getCell('B'+r).value=D.flows[fi].code;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;
+                }
+                r++;
+            }else if(D.flows[fi].code.trim()){
+                ws.getCell('B'+r).value=D.flows[fi].code;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;ws.mergeCells('B'+r+':H'+r);ws.getRow(r).height=150;r++;
+            }
+        }
+    }
 
     var buf=await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),brand+name+'：玩法文档.xlsx');
