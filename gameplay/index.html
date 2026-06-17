@@ -62,7 +62,18 @@ select option{background:#1a1a2e;color:#e0e0e0}
 .collect-row{background:rgba(247,151,30,0.04);border:1px solid rgba(247,151,30,0.12);border-radius:7px;padding:10px;margin-bottom:8px}
 .flowchart-container{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:7px;padding:12px;min-height:100px;overflow-x:auto;margin-top:6px}
 .flowchart-editor textarea{min-height:80px;font-family:'Consolas','Monaco',monospace;font-size:0.75rem}
-@media(max-width:768px){body{padding:14px 8px}.card{padding:14px}.form-row{flex-direction:column;gap:0}.step-btn{padding:7px 10px;font-size:0.73rem}h1{font-size:1.3rem}}
+.gp-layout{display:flex;gap:12px;min-height:350px;margin-top:10px}
+.gp-sidebar{width:160px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.08);padding-right:10px}
+.gp-sidebar .nav-item{padding:8px 10px;border-radius:6px;font-size:0.78rem;color:#8892b0;cursor:pointer;margin-bottom:4px;transition:all .2s;border:1px solid transparent}
+.gp-sidebar .nav-item:hover{color:#ccd6f6;background:rgba(255,255,255,0.03)}
+.gp-sidebar .nav-item.active{color:#ffd200;background:rgba(247,151,30,0.1);border-color:rgba(247,151,30,0.3)}
+.gp-content{flex:1;min-width:0}
+.gp-content .section-area{display:none}.gp-content .section-area.active{display:block}
+.line-input-list{margin-top:4px}
+.line-input-list .line-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.line-input-list .line-row input{flex:1;font-size:0.78rem;padding:5px 8px}
+.line-input-list .line-row .btn-danger{flex-shrink:0}
+@media(max-width:768px){.gp-layout{flex-direction:column}.gp-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);padding-right:0;padding-bottom:8px;display:flex;flex-wrap:wrap;gap:4px}.gp-sidebar .nav-item{margin-bottom:0}}
 </style>
 </head>
 <body>
@@ -145,7 +156,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
     </div>
 </div>
 
-<!-- ===== Step 3: 玩法内容 ===== -->
+<!-- ===== Step 3: 玩法内容（侧边栏布局）===== -->
 <div class="step-panel" id="s3">
     <div class="card">
         <div class="card-title">🎮 Base 配置</div>
@@ -162,10 +173,13 @@ select option{background:#1a1a2e;color:#e0e0e0}
     </div>
     <div class="card">
         <div class="card-title">📄 玩法段落</div>
-        <div class="info-tip">每段只需填核心描述，AI 可补全触发条件、完整说明和极限情况。</div>
+        <div class="info-tip">左侧选择玩法段落，右侧编辑内容。每句话单独一行，导出时对应 Excel 每行。</div>
         <button class="btn-primary" id="aiBtn" onclick="aiGen()" style="margin-bottom:10px"><span class="btn-text">🤖 AI 补全所有段落</span><span class="spinner"></span></button>
         <div class="ai-status" id="aiSt"></div>
-        <div id="gpList"></div>
+        <div class="gp-layout">
+            <div class="gp-sidebar" id="gpSidebar"></div>
+            <div class="gp-content" id="gpContent"></div>
+        </div>
         <button class="btn-add" onclick="addGp()" style="margin-top:8px">+ 添加段落</button>
     </div>
     <div style="display:flex;justify-content:space-between">
@@ -298,18 +312,40 @@ function buildBet(){
         c.innerHTML+='<div class="collect-row"><strong style="font-size:0.78rem;color:#ccd6f6">Bet '+(i+1)+(i===0?' (默认)':'')+'</strong><div class="form-group" style="margin-top:4px"><label>该档锁定/解锁内容</label><input type="text" id="bet_'+i+'" placeholder="如：解锁Grand / 解锁大收集区"></div></div>';
     }
 }
+var gpActive=0;
 function renderGp(){
-    var c=document.getElementById('gpList');c.innerHTML='';
+    var sb=document.getElementById('gpSidebar');
+    var ct=document.getElementById('gpContent');
+    sb.innerHTML='';ct.innerHTML='';
     D.sections.forEach((sec,i)=>{
+        // 侧边栏导航项
+        sb.innerHTML+='<div class="nav-item'+(i===gpActive?' active':'')+'" onclick="switchGp('+i+')">'+sec.title+'</div>';
+        // 右侧内容区
         var limH=sec.limits.map((l,li)=>'<div class="limit-item"><input type="checkbox"'+(l.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+l.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderGp()">×</button></div>').join('');
-        c.innerHTML+='<div class="gp-block"><div class="title">'+sec.title+'<button class="btn-danger" style="margin-left:auto" onclick="D.sections.splice('+i+',1);renderGp()">删除</button></div>'+
-        '<div class="form-group"><label>核心描述（简要）</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需核心规则">'+(sec.core||'')+'</textarea></div>'+
-        '<div class="form-group"><label>触发条件</label><input type="text" value="'+(sec.trigger||'')+'" onchange="D.sections['+i+'].trigger=this.value"></div>'+
-        '<div class="form-group"><label>玩法说明（可AI生成）</label><textarea rows="3" onchange="D.sections['+i+'].desc=this.value">'+(sec.desc||'')+'</textarea></div>'+
-        '<div style="margin-top:6px"><label style="font-size:0.75rem;color:#ff6b6b">⚠️ 极限情况</label>'+limH+
-        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div></div>';
+        // 触发条件行列表
+        var trigLines=(sec.trigger||'').split('\n').filter(l=>l.trim());
+        var trigH=trigLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updTrigLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmTrigLine('+i+','+li+')">×</button></div>').join('');
+        // 玩法说明行列表
+        var descLines=(sec.desc||'').split('\n').filter(l=>l.trim());
+        var descH=descLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updDescLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmDescLine('+i+','+li+')">×</button></div>').join('');
+
+        ct.innerHTML+='<div class="section-area'+(i===gpActive?' active':'')+'" id="gpa_'+i+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()">删除段落</button></div>'+
+        '<div class="form-group"><label>核心玩法描述</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则，AI会自动扩充">'+(sec.core||'')+'</textarea></div>'+
+        '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list" id="trigList_'+i+'">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加触发条件" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条，对应Excel每行）</label><div class="line-input-list" id="descList_'+i+'">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加说明" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况（含断线重连）</label>'+limH+
+        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加极限情况" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div>'+
+        '</div>';
     });
 }
+function switchGp(i){gpActive=i;document.querySelectorAll('.gp-sidebar .nav-item').forEach((el,idx)=>{el.classList.toggle('active',idx===i)});document.querySelectorAll('.gp-content .section-area').forEach((el,idx)=>{el.classList.toggle('active',idx===i)})}
+function addTrigLine(i){var el=document.getElementById('trigAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].trigger=lines.join('\n');el.value='';renderGp()}
+function rmTrigLine(i,li){var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].trigger=lines.join('\n');renderGp()}
+function updTrigLine(i,li,val){var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].trigger=lines.join('\n')}
+function addDescLine(i){var el=document.getElementById('descAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].desc=lines.join('\n');el.value='';renderGp()}
+function rmDescLine(i,li){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].desc=lines.join('\n');renderGp()}
+function updDescLine(i,li,val){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].desc=lines.join('\n')}
 function addGp(){D.sections.push({title:'新段落',core:'',trigger:'',desc:'',limits:[]});renderGp()}
 function addLim(i){var el=document.getElementById('lm_'+i);if(!el||!el.value.trim())return;D.sections[i].limits.push({text:el.value.trim(),on:true});el.value='';renderGp()}
 function syncFunc(){
