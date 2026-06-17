@@ -711,9 +711,61 @@ async function exportXlsx(){
     var buf=await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),brand+name+'：玩法文档.xlsx');
     toast('✅ 文档已下载');
+    uploadToRepo(brand,name);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{primaryColor:'#f7971e',primaryTextColor:'#1a1a2e',lineColor:'#8892b0'}})});
+var GH_REPO='forevermr25/music-doc-tool';
+function getGHToken(){return localStorage.getItem('gh_token')||''}
+function setGHToken(t){localStorage.setItem('gh_token',t)}
+
+async function uploadToRepo(brand,name){
+    var token=getGHToken();
+    if(!token)return;
+    try{
+        var payload={
+            brand:brand,name:name,
+            board:document.getElementById('f_board').value,
+            orient:document.getElementById('f_orient').value,
+            lines:document.getElementById('f_lines').value,
+            archTags:D.archTags,collects:D.collects,
+            specials:D.specials.map(s=>({name:s.name,type:s.type,design:s.design,func:s.func,score:s.score})),
+            normals:D.normals.map(n=>({name:n.name,design:n.design,score:n.score})),
+            sections:D.sections.map(s=>({title:s.title,trigger:s.trigger,desc:s.desc,endCondition:s.endCondition||'',icons:s.icons||[],limits:(s.limits||[]).filter(l=>l.on).map(l=>l.text)})),
+            combos:D.combos.map(c=>({name:c.name,rule:c.rule,desc:c.desc,sections:c.selectedSections.map(si=>D.sections[si]?D.sections[si].title:'')})),
+            ts:new Date().toISOString()
+        };
+        var fn='data/'+brand+'_'+name.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g,'_')+'_'+Date.now()+'.json';
+        var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
+        var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+fn,{
+            method:'PUT',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
+            body:JSON.stringify({message:'auto: '+brand+name,content:content})
+        });
+        if(resp.ok)console.log('✅ 数据已上传到仓库');
+        else console.warn('上传失败:',resp.status);
+    }catch(e){console.warn('上传失败:',e.message)}
+}
+
+async function loadRepoData(){
+    var token=getGHToken();if(!token)return;
+    try{
+        var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/data',{headers:{'Authorization':'token '+token}});
+        if(!resp.ok)return;
+        var files=await resp.json();if(!Array.isArray(files))return;
+        window._repoData=[];
+        for(var f of files.slice(-20)){
+            if(!f.name.endsWith('.json'))continue;
+            try{var r2=await fetch(f.download_url);var d=await r2.json();window._repoData.push(d)}catch(e){}
+        }
+        if(window._repoData.length)console.log('已加载'+window._repoData.length+'条历史数据');
+    }catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+    mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{primaryColor:'#f7971e',primaryTextColor:'#1a1a2e',lineColor:'#8892b0'}});
+    loadRepoData();
+    // Token配置提示
+    if(!getGHToken()){var t=prompt('首次使用请输入 GitHub Token（用于同步数据到仓库，留空则跳过）');if(t)setGHToken(t.trim())}
+});
 </script>
 </body>
 </html>
