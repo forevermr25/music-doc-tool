@@ -375,7 +375,7 @@ function renderGp(){
         '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
         '<div class="form-group"><label style="color:#f7971e">🏁 结束条件（每行一条）</label><div class="line-input-list">'+endH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="endAdd_'+i+'" placeholder="添加" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addEndLine('+i+')">+</button></div></div>'+
         '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况</label>'+limH+
-        '<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap"><select id="limSel_'+i+'" style="flex:1;font-size:0.72rem;padding:4px 6px"><option value="">-- 选择常见极限情况 --</option><optgroup label="断线重连"><option>断线重连后直接进入对应玩法界面</option><option>断线重连后结算框显示之前累计奖励</option><option>断线重连后恢复当前牌面继续spin</option><option>播触发动效时断线，重连后重新播放</option><option>触发玩法后断线，重连直接进入玩法</option></optgroup><optgroup label="Bonus/图标"><option>Bonus连续出现两列即算连续</option><option>停轮后每个连续Bonus本次spin只获一次奖励</option><option>特殊Bonus必须完整出现在棋盘上</option><option>特殊图标不会在Base中出现</option><option>新Bonus落地重置Respin次数</option></optgroup><optgroup label="玩法规则"><option>进入时bet为触发时当前bet</option><option>玩法期间不可再触发同类玩法</option><option>spin次数耗尽后结束玩法</option><option>多个玩法不会同时触发</option><option>组合触发时buff叠加生效</option><option>玩法中只能获得1次彩金</option><option>结束后回base显示触发时牌面</option></optgroup><optgroup label="收集区"><option>收集区升级后不可降级</option><option>进度/收集跨session保留</option><option>组合触发只算一次进度</option></optgroup><optgroup label="操作/UI"><option>需要快停功能</option><option>支持连点</option><option>Pick选择后不可撤回</option><option>转盘结果不可撤回</option><option>无操作10s后自动执行</option></optgroup></select><button class="btn-add" style="font-size:0.68rem" onclick="addLimSel('+i+')">+选中</button></div>'+
+        '<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap"><select id="limSel_'+i+'" style="flex:1;font-size:0.72rem;padding:4px 6px">'+getLimOptions(i)+'</select><button class="btn-add" style="font-size:0.68rem" onclick="addLimSel('+i+')">+选中</button></div>'+
         '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="或手动输入" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div>'+
         '<div style="margin-top:12px"><button class="btn-primary" onclick="aiGenOne('+i+')" style="width:100%;font-size:0.8rem;padding:8px"><span class="btn-text">🤖 AI 补全本段落</span><span class="spinner"></span></button><div class="ai-status" id="aiSt_'+i+'"></div></div></div>';
     });
@@ -393,9 +393,18 @@ function updTrigLine(i,li,val){var lines=(D.sections[i].trigger||'').split('\n')
 function addDescLine(i){var el=document.getElementById('descAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].desc=lines.join('\n');el.value='';renderGp()}
 function rmDescLine(i,li){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].desc=lines.join('\n');renderGp()}
 function updDescLine(i,li,val){var lines=(D.sections[i].desc||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].desc=lines.join('\n')}
-function addGp(){D.sections.push({title:'新段落',core:'',trigger:'',desc:'',endCondition:'',icons:[],limits:[]});renderGp()}
+function addGp(){
+    var title='新段落';
+    if(window._sectionTitles&&window._sectionTitles.length){
+        var suggestions=window._sectionTitles.filter(t=>!D.sections.some(s=>s.title===t)).slice(0,10);
+        if(suggestions.length){title=prompt('段落名称：\n\n历史建议：'+suggestions.join('、'),title)||title}
+        else title=prompt('段落名称：',title)||title;
+    }
+    D.sections.push({title:title,core:'',trigger:'',desc:'',endCondition:'',icons:[],limits:[]});renderGp();gpActive=D.sections.length-1;switchGp(gpActive);
+}
 function addLim(i){var el=document.getElementById('lm_'+i);if(!el||!el.value.trim())return;D.sections[i].limits.push({text:el.value.trim(),on:true});el.value='';renderGp()}
 function addLimSel(i){var sel=document.getElementById('limSel_'+i);if(!sel||!sel.value)return;D.sections[i].limits.push({text:sel.value,on:true});sel.selectedIndex=0;renderGp()}
+function getDesignHint(type){if(!window._iconDesignHints||!window._iconDesignHints[type])return '';return window._iconDesignHints[type].slice(0,3).join(' / ')}
 function togSecIcon(si,name,checked){if(!D.sections[si].icons)D.sections[si].icons=[];if(checked&&!D.sections[si].icons.includes(name))D.sections[si].icons.push(name);else D.sections[si].icons=D.sections[si].icons.filter(n=>n!==name)}
 function addEndLine(i){var el=document.getElementById('endAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].endCondition||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].endCondition=lines.join('\n');el.value='';renderGp()}
 function rmEndLine(i,li){var lines=(D.sections[i].endCondition||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].endCondition=lines.join('\n');renderGp()}
@@ -756,8 +765,47 @@ async function loadRepoData(){
             if(!f.name.endsWith('.json'))continue;
             try{var r2=await fetch(f.download_url);var d=await r2.json();window._repoData.push(d)}catch(e){}
         }
-        if(window._repoData.length)console.log('已加载'+window._repoData.length+'条历史数据');
+        if(window._repoData.length){console.log('已加载'+window._repoData.length+'条历史数据');enrichFromRepo()}
     }catch(e){}
+}
+
+/* ===== 从历史数据丰富选项 ===== */
+function enrichFromRepo(){
+    var data=window._repoData;if(!data||!data.length)return;
+    // 1. 收集所有极限情况（去重）
+    var allLimits=new Set();
+    data.forEach(d=>{(d.sections||[]).forEach(s=>{(s.limits||[]).forEach(l=>{if(l&&l.length>4)allLimits.add(l)})})});
+    window._extraLimits=[...allLimits];
+    // 2. 收集所有图标设计要点
+    var iconDesigns={};
+    data.forEach(d=>{(d.specials||[]).forEach(s=>{if(s.design&&s.type){if(!iconDesigns[s.type])iconDesigns[s.type]=new Set();iconDesigns[s.type].add(s.design)}})});
+    window._iconDesignHints={};
+    Object.keys(iconDesigns).forEach(k=>{window._iconDesignHints[k]=[...iconDesigns[k]]});
+    // 3. 收集所有玩法段落标题（作为添加段落时的建议）
+    var titles=new Set();
+    data.forEach(d=>{(d.sections||[]).forEach(s=>{if(s.title)titles.add(s.title)})});
+    window._sectionTitles=[...titles];
+    // 4. 收集所有架构组合
+    var archs=new Set();
+    data.forEach(d=>{(d.archTags||[]).forEach(a=>archs.add(a))});
+    window._usedArchs=[...archs];
+    console.log('选项已丰富: 极限'+window._extraLimits.length+'条, 图标设计提示'+Object.keys(window._iconDesignHints).length+'类, 段落模板'+window._sectionTitles.length+'个');
+}
+
+/* 在渲染极限情况下拉时追加历史选项 */
+function getLimOptions(i){
+    var base='<option value="">-- 选择常见极限情况 --</option><optgroup label="断线重连"><option>断线重连后直接进入对应玩法界面</option><option>断线重连后结算框显示之前累计奖励</option><option>断线重连后恢复当前牌面继续spin</option><option>播触发动效时断线，重连后重新播放</option><option>触发玩法后断线，重连直接进入玩法</option></optgroup><optgroup label="Bonus/图标"><option>Bonus连续出现两列即算连续</option><option>停轮后每个连续Bonus本次spin只获一次奖励</option><option>特殊Bonus必须完整出现在棋盘上</option><option>特殊图标不会在Base中出现</option><option>新Bonus落地重置Respin次数</option></optgroup><optgroup label="玩法规则"><option>进入时bet为触发时当前bet</option><option>玩法期间不可再触发同类玩法</option><option>spin次数耗尽后结束玩法</option><option>多个玩法不会同时触发</option><option>组合触发时buff叠加生效</option><option>玩法中只能获得1次彩金</option><option>结束后回base显示触发时牌面</option></optgroup><optgroup label="收集区"><option>收集区升级后不可降级</option><option>进度/收集跨session保留</option><option>组合触发只算一次进度</option></optgroup><optgroup label="操作/UI"><option>需要快停功能</option><option>支持连点</option><option>Pick选择后不可撤回</option><option>转盘结果不可撤回</option><option>无操作10s后自动执行</option></optgroup>';
+    // 追加历史数据中的极限情况
+    if(window._extraLimits&&window._extraLimits.length){
+        var existing=base;
+        var extras=window._extraLimits.filter(l=>!existing.includes(l)).slice(0,30);
+        if(extras.length){
+            base+='<optgroup label="📚 历史数据">';
+            extras.forEach(l=>{base+='<option>'+l+'</option>'});
+            base+='</optgroup>';
+        }
+    }
+    return base;
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
