@@ -180,6 +180,12 @@ select option{background:#1a1a2e;color:#e0e0e0}
             <button class="btn-add" onclick="addGpType('super_free')">+ Super Free</button>
         </div>
     </div>
+    <div class="card">
+        <div class="card-title">🔗 组合触发</div>
+        <div class="info-tip">若存在多个玩法组合触发的情况（如双buff触发、三buff全满触发等），可在此添加组合规则。支持多种组合。</div>
+        <div id="comboList"></div>
+        <button class="btn-add" onclick="addCombo()">+ 添加组合触发</button>
+    </div>
     <div style="display:flex;justify-content:space-between">
         <button class="btn-primary" onclick="go(2)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button>
         <button class="btn-primary" onclick="syncFunc();go(4)"><span class="btn-text">同步图标功能 → 下一步</span></button>
@@ -215,8 +221,8 @@ select option{background:#1a1a2e;color:#e0e0e0}
 </div>
 <div class="success-toast" id="toast"></div>
 <script>
-var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[],flows:[]};
-function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp()}if(n===4){renderArts();renderFlows()};window.scrollTo(0,0)}
+var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[],flows:[],combos:[]};
+function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp();renderCombos()}if(n===4){renderArts();renderFlows()};window.scrollTo(0,0)}
 function tog(el){el.classList.toggle('selected');D.archTags=[...document.querySelectorAll('#archTags .tag-item.selected')].map(t=>t.dataset.v)}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
@@ -388,6 +394,34 @@ function syncFunc(){
     toast('✅ 图标功能已同步');
 }
 
+/* ===== 组合触发 ===== */
+function renderCombos(){
+    var c=document.getElementById('comboList');c.innerHTML='';
+    D.combos.forEach((cb,i)=>{
+        // 可选的玩法列表（来自 D.sections）
+        var checkboxes=D.sections.map((sec,si)=>{
+            var checked=cb.selectedSections.includes(si);
+            return '<label style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:0.75rem;color:#ccd6f6;cursor:pointer"><input type="checkbox"'+(checked?' checked':'')+' onchange="toggleComboSec('+i+','+si+',this.checked)" style="width:12px;height:12px;accent-color:#f7971e">'+sec.title+'</label>';
+        }).join('');
+        var descLines=(cb.desc||'').split('\n').filter(l=>l.trim());
+        var descH=descLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updComboDesc('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmComboDesc('+i+','+li+')">×</button></div>').join('');
+        c.innerHTML+='<div class="gp-block"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong style="font-size:0.82rem;color:#ffd200">组合触发 '+(i+1)+'</strong><button class="btn-danger" onclick="D.combos.splice('+i+',1);renderCombos()">删除</button></div>'+
+        '<div class="form-group"><label>组合名称</label><input type="text" value="'+(cb.name||'')+'" onchange="D.combos['+i+'].name=this.value" placeholder="如：双混合触发 / 三混合触发"></div>'+
+        '<div class="form-group"><label>选择参与组合的玩法（勾选）</label><div style="margin-top:4px">'+checkboxes+'</div></div>'+
+        '<div class="form-group"><label>组合触发规则</label><input type="text" value="'+(cb.rule||'')+'" onchange="D.combos['+i+'].rule=this.value" placeholder="如：任意两个收集区同时触发 / 三个收集区全满"></div>'+
+        '<div class="form-group"><label style="color:#27ae60">组合玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="comboDescAdd_'+i+'" placeholder="添加说明" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addComboDescLine('+i+')">+</button></div></div></div>';
+    });
+}
+function addCombo(){D.combos.push({name:'',selectedSections:[],rule:'',desc:''});renderCombos()}
+function toggleComboSec(ci,si,checked){
+    var arr=D.combos[ci].selectedSections;
+    if(checked&&!arr.includes(si))arr.push(si);
+    else D.combos[ci].selectedSections=arr.filter(x=>x!==si);
+}
+function addComboDescLine(ci){var el=document.getElementById('comboDescAdd_'+ci);if(!el||!el.value.trim())return;var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.combos[ci].desc=lines.join('\n');el.value='';renderCombos()}
+function rmComboDesc(ci,li){var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.combos[ci].desc=lines.join('\n');renderCombos()}
+function updComboDesc(ci,li,val){var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines[li]=val;D.combos[ci].desc=lines.join('\n')}
+
 /* ===== AI ===== */
 var aiReady=false,puterLoading=false;
 function loadPuter(){return new Promise((ok,no)=>{if(aiReady){ok();return}if(puterLoading){var w=setInterval(()=>{if(aiReady){clearInterval(w);ok()}},300);setTimeout(()=>{clearInterval(w);no(new Error('超时'))},30000);return}puterLoading=true;var s=document.createElement('script');s.src='https://js.puter.com/v2/';s.onload=()=>{var e=0,t=setInterval(()=>{e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);ok()}if(e>=30000){clearInterval(t);no(new Error('超时'))}},500)};s.onerror=()=>{puterLoading=false;no(new Error('加载失败'))};document.head.appendChild(s)})}
@@ -525,6 +559,22 @@ async function exportXlsx(){
         }
         r++;
     });
+
+    // 组合触发
+    if(D.combos.length){
+        ws.getCell('A'+r).value='组合触发：';ws.getCell('A'+r).font=bf;r++;
+        D.combos.forEach((cb,ci)=>{
+            ws.getCell('B'+r).value=(cb.name||'组合触发'+(ci+1));ws.getCell('B'+r).font=bf;r++;
+            if(cb.rule){ws.getCell('B'+r).value='触发规则：'+cb.rule;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+            var combined=cb.selectedSections.map(si=>D.sections[si]?D.sections[si].title:'').filter(Boolean).join(' + ');
+            if(combined){ws.getCell('B'+r).value='组合玩法：'+combined;ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}
+            if(cb.desc){
+                ws.getCell('B'+r).value='玩法说明：';ws.getCell('B'+r).font=bf;r++;
+                cb.desc.split('\n').forEach(line=>{if(line.trim()){ws.getCell('B'+r).value=line.trim();ws.getCell('B'+r).font=nf;ws.getCell('B'+r).alignment=al;r++}});
+            }
+            r++;
+        });
+    }
 
     // 美术
     if(D.arts.length){
