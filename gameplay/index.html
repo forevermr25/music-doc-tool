@@ -51,8 +51,8 @@ select option{background:#1a1a2e;color:#e0e0e0}
 .icon-block{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px;margin-bottom:10px}
 .icon-block .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .icon-block .hdr .nm{font-size:0.82rem;font-weight:600;color:#ffd200}
-.img-upload{width:100%;height:50px;border:1px dashed rgba(255,255,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#8892b0;cursor:pointer;position:relative;overflow:hidden;margin-top:4px}
-.img-upload:hover{border-color:rgba(247,151,30,0.3)}
+.img-upload{width:100%;height:50px;border:1px dashed rgba(255,255,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#8892b0;cursor:pointer;position:relative;overflow:hidden;margin-top:4px;outline:none}
+.img-upload:hover,.img-upload:focus{border-color:rgba(247,151,30,0.3)}
 .img-upload img{max-width:100%;max-height:48px;object-fit:contain}
 .img-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .gp-block{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:9px;padding:14px;margin-bottom:10px}
@@ -110,7 +110,8 @@ select option{background:#1a1a2e;color:#e0e0e0}
         <div class="card-title">🏗️ 玩法架构（Base + 多选）</div>
         <div class="tag-group" id="archTags">
             <span class="tag-item" data-v="free" onclick="tog(this)">Free Games</span>
-            <span class="tag-item" data-v="respin" onclick="tog(this)">Respin/Link</span>
+            <span class="tag-item" data-v="respin" onclick="tog(this)">Respin</span>
+            <span class="tag-item" data-v="link" onclick="tog(this)">Link Game</span>
             <span class="tag-item" data-v="eliminate" onclick="tog(this)">消除</span>
             <span class="tag-item" data-v="shop" onclick="tog(this)">商店</span>
             <span class="tag-item" data-v="build" onclick="tog(this)">建造</span>
@@ -118,7 +119,11 @@ select option{background:#1a1a2e;color:#e0e0e0}
             <span class="tag-item" data-v="super_node" onclick="tog(this)">Super节点</span>
             <span class="tag-item" data-v="wheel" onclick="tog(this)">转盘</span>
             <span class="tag-item" data-v="pick" onclick="tog(this)">Pick</span>
+            <span class="tag-item" data-v="storage" onclick="tog(this)">存储机制</span>
+            <span class="tag-item" data-v="long_collect" onclick="tog(this)">长线收集</span>
             <span class="tag-item" data-v="series" onclick="tog(this)">系列关卡</span>
+            <span class="tag-item" data-v="super_free" onclick="tog(this)">Super Free</span>
+            <span class="tag-item" data-v="super_respin" onclick="tog(this)">Super Respin</span>
         </div>
     </div>
     <div style="text-align:right"><button class="btn-primary" onclick="applyGo2()"><span class="btn-text">下一步 →</span></button></div>
@@ -159,28 +164,20 @@ select option{background:#1a1a2e;color:#e0e0e0}
 <!-- ===== Step 3: 玩法内容（侧边栏布局）===== -->
 <div class="step-panel" id="s3">
     <div class="card">
-        <div class="card-title">🎮 Base 配置</div>
-        <div class="form-row">
-            <div class="form-group"><label>Jackpot 档位</label><select id="f_jp"><option value="">无</option><option value="4">四档(GRAND,MAJOR,MINOR,MINI)</option><option value="5">五档(GRAND,MEGA,MAJOR,MINOR,MINI)</option><option value="6">六档(GRAND,MEGA,MAJOR,MAXI,MINOR,MINI)</option><option value="custom">自定义</option></select></div>
-            <div class="form-group"><label>Wild 出现列</label><select id="f_wildCol"><option value="any">任意列</option><option value="2345">2,3,4,5列</option><option value="234">2,3,4列</option><option value="custom">自定义</option></select></div>
-        </div>
-        <div class="form-group" id="jpCustom" style="display:none"><label>自定义Jackpot档位</label><input type="text" id="f_jpCustom" placeholder="逗号分隔，如：ULTRA,GRAND,MEGA,MAJOR,MINOR,MINI"></div>
-        <div class="form-group" id="wcCustom" style="display:none"><label>自定义Wild列</label><input type="text" id="f_wcCustom" placeholder="如：1,3,5"></div>
-        <div class="form-row">
-            <div class="form-group"><label>高低Bet</label><select id="f_bet" onchange="buildBet()"><option value="0">无</option><option value="2">2档</option><option value="3">3档</option><option value="4">4档</option></select></div>
-        </div>
-        <div id="betCfg"></div>
-    </div>
-    <div class="card">
         <div class="card-title">📄 玩法段落</div>
-        <div class="info-tip">左侧选择玩法段落，右侧编辑内容。每句话单独一行，导出时对应 Excel 每行。</div>
+        <div class="info-tip">左侧选择玩法，右侧编辑。Base 玩法包含 Jackpot/Wild列/高低Bet 配置。每句独立一行对应 Excel 每行。支持添加多个同类玩法段落（如多个带不同buff的Free）。</div>
         <button class="btn-primary" id="aiBtn" onclick="aiGen()" style="margin-bottom:10px"><span class="btn-text">🤖 AI 补全所有段落</span><span class="spinner"></span></button>
         <div class="ai-status" id="aiSt"></div>
         <div class="gp-layout">
             <div class="gp-sidebar" id="gpSidebar"></div>
             <div class="gp-content" id="gpContent"></div>
         </div>
-        <button class="btn-add" onclick="addGp()" style="margin-top:8px">+ 添加段落</button>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-add" onclick="addGp()">+ 自定义段落</button>
+            <button class="btn-add" onclick="addGpType('free')">+ Free(带buff)</button>
+            <button class="btn-add" onclick="addGpType('respin')">+ Respin(带buff)</button>
+            <button class="btn-add" onclick="addGpType('super_free')">+ Super Free</button>
+        </div>
     </div>
     <div style="display:flex;justify-content:space-between">
         <button class="btn-primary" onclick="go(2)" style="background:rgba(255,255,255,0.08);color:#ccd6f6"><span class="btn-text">← 上一步</span></button>
@@ -212,7 +209,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
 <div class="success-toast" id="toast"></div>
 <script>
 var D={specials:[],normals:[],sections:[],arts:[],archTags:[],collects:[]};
-function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp();document.getElementById('f_jp').onchange=()=>{document.getElementById('jpCustom').style.display=document.getElementById('f_jp').value==='custom'?'':'none'};document.getElementById('f_wildCol').onchange=()=>{document.getElementById('wcCustom').style.display=document.getElementById('f_wildCol').value==='custom'?'':'none'}}if(n===4)renderArts();window.scrollTo(0,0)}
+function go(n){document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.step-btn').forEach((b,i)=>{b.classList.remove('active');if(i+1===n)b.classList.add('active')});document.getElementById('s'+n).classList.add('active');if(n===2){renderSp();renderNorm()}if(n===3){renderGp()}if(n===4)renderArts();window.scrollTo(0,0)}
 function tog(el){el.classList.toggle('selected');D.archTags=[...document.querySelectorAll('#archTags .tag-item.selected')].map(t=>t.dataset.v)}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
@@ -222,7 +219,7 @@ function buildCollect(){
     var c=document.getElementById('collectCfg');c.innerHTML='';D.collects=[];
     for(var i=0;i<n;i++){
         D.collects.push({type:'bonus',name:'bonus'+(i+1),triggerMode:'prob_free'});
-        c.innerHTML+='<div class="collect-row"><strong style="font-size:0.8rem;color:#ffd200">收集区'+(i+1)+'</strong><div class="form-row" style="margin-top:6px"><div class="form-group"><label>图标类型</label><select data-i="'+i+'" onchange="D.collects['+i+'].type=this.value;autoN('+i+')"><option value="bonus">Bonus</option><option value="wild">Wild</option><option value="scatter">Scatter</option></select></div><div class="form-group"><label>图标名称</label><input type="text" id="cn_'+i+'" value="bonus'+(i+1)+'" onchange="D.collects['+i+'].name=this.value"></div><div class="form-group"><label>触发方式</label><select onchange="D.collects['+i+'].triggerMode=this.value"><option value="prob_free">有概率触发Free</option><option value="prob_respin">有概率触发Respin</option><option value="certain_free">确定触发Free</option><option value="certain_respin">确定触发Respin</option></select></div></div></div>';
+        c.innerHTML+='<div class="collect-row"><strong style="font-size:0.8rem;color:#ffd200">收集区'+(i+1)+'</strong><div class="form-row" style="margin-top:6px"><div class="form-group"><label>图标类型</label><select data-i="'+i+'" onchange="D.collects['+i+'].type=this.value;autoN('+i+')"><option value="bonus">Bonus</option><option value="wild">Wild</option><option value="scatter">Scatter</option></select></div><div class="form-group"><label>图标名称</label><input type="text" id="cn_'+i+'" value="bonus'+(i+1)+'" onchange="D.collects['+i+'].name=this.value"></div><div class="form-group"><label>触发方式</label><select onchange="D.collects['+i+'].triggerMode=this.value"><option value="prob_free">有概率触发带对应buff的Free</option><option value="prob_respin">有概率触发带对应buff的Respin</option><option value="certain_free">确定触发带对应buff的Free</option><option value="certain_respin">确定触发带对应buff的Respin</option></select></div></div></div>';
     }
 }
 function autoN(i){var t=D.collects[i].type;var el=document.getElementById('cn_'+i);el.value=t+(i+1);D.collects[i].name=t+(i+1)}
@@ -234,15 +231,16 @@ function applyGo2(){
     D.collects.forEach(ci=>D.specials.push({name:ci.name,type:ci.type,design:'',func:'',score:'',refImg:'',compImg:''}));
     var at=D.archTags;
     if(at.includes('free')&&D.collects.length===0)D.specials.push({name:'scatter',type:'scatter',design:'超框',func:'',score:'',refImg:'',compImg:''});
-    if(at.includes('free')||at.includes('respin'))D.specials.push({name:'wild',type:'wild',design:'',func:'',score:'',refImg:'',compImg:''});
-    if(at.includes('respin')){var bn=D.specials.filter(s=>s.name.startsWith('bonus')).length+1;D.specials.push({name:'bonus'+bn,type:'bonus',design:'带金额',func:'',score:'',refImg:'',compImg:''})}
+    if(at.includes('free')||at.includes('respin')||at.includes('link'))D.specials.push({name:'wild',type:'wild',design:'',func:'',score:'',refImg:'',compImg:''});
+    if(at.includes('respin')||at.includes('link')){var bn=D.specials.filter(s=>s.name.startsWith('bonus')).length+1;D.specials.push({name:'bonus'+bn,type:'bonus',design:'带金额',func:'',score:'',refImg:'',compImg:''})}
     // 去重
     var seen={};D.specials=D.specials.filter(s=>{if(seen[s.name])return false;seen[s.name]=true;return true});
     // 玩法段落
     D.sections=[];
     D.sections.push({title:'Base 玩法',core:'',trigger:'',desc:'',limits:[{text:'断线重连后直接进入对应界面',on:true}]});
     if(at.includes('free'))D.sections.push({title:'Free Games',core:'',trigger:'',desc:'',limits:[{text:'进入时bet为触发时当前bet',on:true},{text:'结算框显示累计奖励',on:true},{text:'断线重连进入FG界面',on:true}]});
-    if(at.includes('respin'))D.sections.push({title:'Respin / Link',core:'',trigger:'',desc:'',limits:[{text:'Bonus必须完整出现在棋盘上',on:true},{text:'新Bonus落地重置次数',on:true},{text:'断线重连进入Respin界面',on:true}]});
+    if(at.includes('respin'))D.sections.push({title:'Respin',core:'',trigger:'',desc:'',limits:[{text:'Bonus必须完整出现在棋盘上',on:true},{text:'新Bonus落地重置次数',on:true},{text:'断线重连进入Respin界面',on:true}]});
+    if(at.includes('link'))D.sections.push({title:'Link Game',core:'',trigger:'',desc:'',limits:[{text:'Bonus锁定后不消失',on:true},{text:'断线重连进入Link界面',on:true}]});
     if(at.includes('eliminate'))D.sections.push({title:'消除玩法',core:'',trigger:'',desc:'',limits:[{text:'掉落填充直到无可消除',on:true}]});
     if(at.includes('shop'))D.sections.push({title:'商店系统',core:'',trigger:'',desc:'',limits:[{text:'代币跨session保留',on:true}]});
     if(at.includes('build'))D.sections.push({title:'建造系统',core:'',trigger:'',desc:'',limits:[{text:'进度跨session保留',on:true}]});
@@ -250,12 +248,16 @@ function applyGo2(){
     if(at.includes('super_node'))D.sections.push({title:'Super节点',core:'',trigger:'',desc:'',limits:[{text:'已解锁节点不可重置',on:true}]});
     if(at.includes('wheel'))D.sections.push({title:'转盘玩法',core:'',trigger:'',desc:'',limits:[{text:'转盘结果不可撤回',on:true}]});
     if(at.includes('pick'))D.sections.push({title:'Pick Game',core:'',trigger:'',desc:'',limits:[{text:'选择后不可撤回',on:true}]});
+    if(at.includes('storage'))D.sections.push({title:'存储机制',core:'',trigger:'',desc:'',limits:[{text:'存储状态跨session保留',on:true}]});
+    if(at.includes('long_collect'))D.sections.push({title:'长线收集',core:'',trigger:'',desc:'',limits:[{text:'长线进度跨session保留',on:true}]});
     if(at.includes('series'))D.sections.push({title:'系列关卡',core:'',trigger:'',desc:'',limits:[]});
+    if(at.includes('super_free'))D.sections.push({title:'Super Free Games',core:'',trigger:'',desc:'',limits:[{text:'断线重连进入Super FG',on:true}]});
+    if(at.includes('super_respin'))D.sections.push({title:'Super Respin',core:'',trigger:'',desc:'',limits:[{text:'断线重连进入Super Respin',on:true}]});
     // 收集触发描述写入Base
     if(D.collects.length){
         var base=D.sections[0];
-        var desc=D.collects.map((c,i)=>'收集'+c.name+'到收集区'+(i+1)+'，'+(c.triggerMode.includes('prob')?'有概率':'确定')+'触发'+(c.triggerMode.includes('free')?'Free':'Respin')).join('；');
-        base.trigger=(base.trigger?base.trigger+'；':'')+desc;
+        var desc=D.collects.map((c,i)=>'收集'+c.name+'到收集区'+(i+1)+'，'+(c.triggerMode.includes('prob')?'有概率':'确定')+'触发带对应buff的'+(c.triggerMode.includes('free')?'Free':'Respin')).join('；');
+        base.trigger=(base.trigger?base.trigger+'\n':'')+desc;
     }
     toast('✅ 骨架已生成');go(2);
 }
@@ -267,8 +269,8 @@ function renderSp(){
         c.innerHTML+='<div class="icon-block"><div class="hdr"><span class="nm">'+ic.name+' ('+ic.type+')</span><button class="btn-danger" onclick="D.specials.splice('+i+',1);renderSp()">×</button></div>'+
         '<div class="form-row"><div class="form-group"><label>名称</label><input type="text" value="'+ic.name+'" onchange="D.specials['+i+'].name=this.value;renderSp()"></div><div class="form-group"><label>设计要点</label><input type="text" value="'+(ic.design||'')+'" onchange="D.specials['+i+'].design=this.value"></div></div>'+
         '<div class="form-row"><div class="form-group"><label>分值</label><input type="text" value="'+(ic.score||'')+'" onchange="D.specials['+i+'].score=this.value" placeholder="5-200 4-80 3-20"></div><div class="form-group"><label>功能（自动补齐）</label><input type="text" value="'+(ic.func||'')+'" onchange="D.specials['+i+'].func=this.value" placeholder="⏳"></div></div>'+
-        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" id="comp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>点击上传</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'comp\')"></div></div>'+
-        '<div class="form-group"><label>参考图标</label><div class="img-upload" id="ref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>点击上传</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'ref\')"></div></div></div></div>';
+        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" tabindex="0" data-idx="'+i+'" data-cat="sp" data-field="comp" id="comp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>点击上传或粘贴</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'comp\')"></div></div>'+
+        '<div class="form-group"><label>参考图标</label><div class="img-upload" tabindex="0" data-idx="'+i+'" data-cat="sp" data-field="ref" id="ref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>点击上传或粘贴</span>')+'<input type="file" accept="image/*" onchange="upImg(this,'+i+',\'ref\')"></div></div></div></div>';
     });
 }
 function addSp(type){
@@ -294,14 +296,29 @@ function renderNorm(){
     D.normals.forEach((ic,i)=>{
         c.innerHTML+='<div class="icon-block" style="padding:8px"><div class="hdr"><span class="nm">'+ic.name+'</span></div>'+
         '<div class="form-row"><div class="form-group"><label>设计要点</label><input type="text" value="'+(ic.design||'')+'" onchange="D.normals['+i+'].design=this.value" placeholder="如：满框，糖果质感"></div><div class="form-group"><label>分值</label><input type="text" value="'+(ic.score||'')+'" onchange="D.normals['+i+'].score=this.value" placeholder="5-150 4-50 3-10"></div></div>'+
-        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" id="ncomp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>上传</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'comp\')"></div></div>'+
-        '<div class="form-group"><label>参考图标</label><div class="img-upload" id="nref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>上传</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'ref\')"></div></div></div></div>';
+        '<div class="form-row"><div class="form-group"><label>实体机/竞品图标</label><div class="img-upload" tabindex="0" data-idx="'+i+'" data-cat="nm" data-field="comp" id="ncomp_'+i+'">'+(ic.compImg?'<img src="'+ic.compImg+'">':'<span>上传/粘贴</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'comp\')"></div></div>'+
+        '<div class="form-group"><label>参考图标</label><div class="img-upload" tabindex="0" data-idx="'+i+'" data-cat="nm" data-field="ref" id="nref_'+i+'">'+(ic.refImg?'<img src="'+ic.refImg+'">':'<span>上传/粘贴</span>')+'<input type="file" accept="image/*" onchange="upNImg(this,'+i+',\'ref\')"></div></div></div></div>';
     });
 }
 function upNImg(input,i,field){
     var file=input.files[0];if(!file)return;
     var r=new FileReader();r.onload=e=>{if(field==='comp')D.normals[i].compImg=e.target.result;else D.normals[i].refImg=e.target.result;renderNorm()};r.readAsDataURL(file);
 }
+/* 粘贴上传支持 */
+document.addEventListener('paste',function(e){
+    var items=e.clipboardData&&e.clipboardData.items;if(!items)return;
+    var el=document.activeElement;if(!el||!el.classList.contains('img-upload'))return;
+    for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf('image')!==-1){
+            var file=items[i].getAsFile();if(!file)continue;
+            var idx=+el.dataset.idx,cat=el.dataset.cat,field=el.dataset.field;
+            var r=new FileReader();r.onload=function(ev){
+                if(cat==='sp'){if(field==='comp')D.specials[idx].compImg=ev.target.result;else D.specials[idx].refImg=ev.target.result;renderSp()}
+                else{if(field==='comp')D.normals[idx].compImg=ev.target.result;else D.normals[idx].refImg=ev.target.result;renderNorm()}
+            };r.readAsDataURL(file);e.preventDefault();break;
+        }
+    }
+});
 
 /* ===== Step 3: 玩法内容 ===== */
 function buildBet(){
@@ -318,28 +335,38 @@ function renderGp(){
     var ct=document.getElementById('gpContent');
     sb.innerHTML='';ct.innerHTML='';
     D.sections.forEach((sec,i)=>{
-        // 侧边栏导航项
         sb.innerHTML+='<div class="nav-item'+(i===gpActive?' active':'')+'" onclick="switchGp('+i+')">'+sec.title+'</div>';
-        // 右侧内容区
         var limH=sec.limits.map((l,li)=>'<div class="limit-item"><input type="checkbox"'+(l.on?' checked':'')+' onchange="D.sections['+i+'].limits['+li+'].on=this.checked"><span style="flex:1">'+l.text+'</span><button class="btn-danger" onclick="D.sections['+i+'].limits.splice('+li+',1);renderGp()">×</button></div>').join('');
-        // 触发条件行列表
         var trigLines=(sec.trigger||'').split('\n').filter(l=>l.trim());
         var trigH=trigLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updTrigLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmTrigLine('+i+','+li+')">×</button></div>').join('');
-        // 玩法说明行列表
         var descLines=(sec.desc||'').split('\n').filter(l=>l.trim());
         var descH=descLines.map((l,li)=>'<div class="line-row"><input type="text" value="'+l.replace(/"/g,'&quot;')+'" onchange="updDescLine('+i+','+li+',this.value)"><button class="btn-danger" onclick="rmDescLine('+i+','+li+')">×</button></div>').join('');
-
+        // Base段落额外显示 Jackpot/Wild/Bet 配置
+        var baseExtra='';
+        if(sec.title==='Base 玩法'){
+            baseExtra='<div style="background:rgba(247,151,30,0.04);border:1px solid rgba(247,151,30,0.12);border-radius:7px;padding:10px;margin-bottom:12px"><strong style="font-size:0.78rem;color:#ffd200">Base 配置</strong>'+
+            '<div class="form-row" style="margin-top:6px"><div class="form-group"><label>Jackpot档位</label><select id="f_jp" onchange="document.getElementById(\'jpCustom\').style.display=this.value===\'custom\'?\'\':\'none\'"><option value="">无</option><option value="4">四档(GRAND,MAJOR,MINOR,MINI)</option><option value="5">五档(GRAND,MEGA,MAJOR,MINOR,MINI)</option><option value="6">六档(GRAND,MEGA,MAJOR,MAXI,MINOR,MINI)</option><option value="custom">自定义</option></select></div><div class="form-group"><label>Wild出现列</label><select id="f_wildCol" onchange="document.getElementById(\'wcCustom\').style.display=this.value===\'custom\'?\'\':\'none\'"><option value="any">任意列</option><option value="2345">2,3,4,5列</option><option value="234">2,3,4列</option><option value="custom">自定义</option></select></div></div>'+
+            '<div class="form-group" id="jpCustom" style="display:none"><input type="text" id="f_jpCustom" placeholder="自定义Jackpot，逗号分隔"></div>'+
+            '<div class="form-group" id="wcCustom" style="display:none"><input type="text" id="f_wcCustom" placeholder="自定义列，如1,3,5"></div>'+
+            '<div class="form-row"><div class="form-group"><label>高低Bet</label><select id="f_bet" onchange="buildBet()"><option value="0">无</option><option value="2">2档</option><option value="3">3档</option><option value="4">4档</option></select></div></div><div id="betCfg"></div></div>';
+        }
         ct.innerHTML+='<div class="section-area'+(i===gpActive?' active':'')+'" id="gpa_'+i+'">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()">删除段落</button></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#ccd6f6;font-size:0.9rem">'+sec.title+'</strong><button class="btn-danger" onclick="D.sections.splice('+i+',1);if(gpActive>=D.sections.length)gpActive=Math.max(0,D.sections.length-1);renderGp()">删除</button></div>'+
+        baseExtra+
         '<div class="form-group"><label>核心玩法描述</label><textarea onchange="D.sections['+i+'].core=this.value" placeholder="只需写核心规则，AI会自动扩充">'+(sec.core||'')+'</textarea></div>'+
-        '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list" id="trigList_'+i+'">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加触发条件" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
-        '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条，对应Excel每行）</label><div class="line-input-list" id="descList_'+i+'">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加说明" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
-        '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况（含断线重连）</label>'+limH+
-        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加极限情况" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div>'+
-        '</div>';
+        '<div class="form-group"><label style="color:#4facfe">触发条件（每行一条）</label><div class="line-input-list">'+trigH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="trigAdd_'+i+'" placeholder="添加触发条件" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addTrigLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#27ae60">玩法说明（每行一条）</label><div class="line-input-list">'+descH+'</div><div style="display:flex;gap:4px;margin-top:4px"><input type="text" id="descAdd_'+i+'" placeholder="添加说明" style="flex:1;font-size:0.75rem;padding:4px 7px"><button class="btn-add" style="font-size:0.68rem" onclick="addDescLine('+i+')">+</button></div></div>'+
+        '<div class="form-group"><label style="color:#ff6b6b">⚠️ 极限情况</label>'+limH+
+        '<div style="display:flex;gap:4px;margin-top:3px"><input type="text" id="lm_'+i+'" placeholder="添加" style="flex:1;font-size:0.72rem;padding:4px 6px"><button class="btn-add" style="font-size:0.68rem" onclick="addLim('+i+')">+</button></div></div></div>';
     });
 }
 function switchGp(i){gpActive=i;document.querySelectorAll('.gp-sidebar .nav-item').forEach((el,idx)=>{el.classList.toggle('active',idx===i)});document.querySelectorAll('.gp-content .section-area').forEach((el,idx)=>{el.classList.toggle('active',idx===i)})}
+function addGpType(type){
+    var count=D.sections.filter(s=>s.title.toLowerCase().includes(type.replace('_',' '))).length;
+    var label=type==='free'?'Free Games'+(count?' (buff'+(count+1)+')':''):type==='respin'?'Respin'+(count?' (buff'+(count+1)+')':''):'Super Free Games'+(count?' '+(count+1):'');
+    var limits=type.includes('free')?[{text:'进入时bet为触发时当前bet',on:true},{text:'断线重连进入对应界面',on:true}]:[{text:'Bonus必须完整出现',on:true},{text:'断线重连进入对应界面',on:true}];
+    D.sections.push({title:label,core:'',trigger:'',desc:'',limits:limits});renderGp();gpActive=D.sections.length-1;switchGp(gpActive);
+}
 function addTrigLine(i){var el=document.getElementById('trigAdd_'+i);if(!el||!el.value.trim())return;var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.push(el.value.trim());D.sections[i].trigger=lines.join('\n');el.value='';renderGp()}
 function rmTrigLine(i,li){var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.sections[i].trigger=lines.join('\n');renderGp()}
 function updTrigLine(i,li,val){var lines=(D.sections[i].trigger||'').split('\n').filter(l=>l.trim());lines[li]=val;D.sections[i].trigger=lines.join('\n')}
