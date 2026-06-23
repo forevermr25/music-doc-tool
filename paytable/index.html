@@ -333,70 +333,73 @@ async function aiParseAndGenerate(){
 
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
 
-        var prompt='Act as a slots game planner. Write a player-facing paytable document for a slot machine. Use professional slots terminology.\n\n'+
+        var prompt='Act as a slots game planner. Write a player-facing paytable document.\n\n'+
         'Game Info: Brand='+brand+', Name='+name+', Grid='+board+', Ways/Lines='+lines+'\n\n'+
         structuredContent+'\n\n'+
-        '=== CRITICAL RULES ===\n\n'+
-        'RULE 1: Every sentence MUST start with "* " in both cn and en fields.\n\n'+
-        'RULE 2: Page 1 title FIXED: title="FEATURE", titleEn="FEATURE".\n\n'+
-        'RULE 3: EXCLUDED content (do NOT output):\n'+
-        '  - NO "游戏规则" page\n'+
-        '  - NO 断线重连/reconnection rules\n'+
-        '  - NO 极限情况/edge cases\n'+
-        '  - NO 数值规避/value restrictions\n'+
-        '  - NO 多触发棋盘顺序/multi-trigger grid order\n'+
-        '  - NO 美术设计/art design notes\n\n'+
-        'RULE 4: FEATURE page (page 1) must include:\n'+
-        '  a) Each feature trigger condition as a separate bullet:\n'+
-        '    - SCATTER trigger (if exists): "* 3个及以上[SCATTER]触发XXX"\n'+
-        '    - BONUS trigger for respin: "* 6个及以上[BONUS1]触发RESPIN" (use correct number from doc)\n'+
-        '    - Collection trigger: "* 收集[BONUS1][BONUS2][BONUS3]可触发Buff Respin"\n'+
-        '  b) WILD description split into SEPARATE bullets:\n'+
-        '    - Substitution: list ALL icons WILD cannot substitute (ALL bonus types + scatter + link)\n'+
-        '    - Reels: which reels WILD appears on\n'+
-        '    - Size/shape: if WILD has special size (1x3, expanding, etc.)\n'+
-        '  c) Each BONUS icon type described briefly (what it displays, where it appears)\n'+
-        '  d) LINK icon if exists\n\n'+
-        'RULE 5: Feature detail pages - describe CORRECTLY based on document:\n'+
-        '  - Match trigger to correct feature! SCATTER->Free Games, BONUS count->Respin, Collection->Buff\n'+
-        '  - Do NOT confuse which trigger belongs to which feature\n'+
-        '  - Each feature page should have 4-8 bullets covering: trigger, core mechanics, end condition\n'+
-        '  - Use the EXACT buff names from the gameplay doc (buff1/buff2/buff3 or their actual names)\n'+
-        '  - Do NOT invent buff names. If doc says "buff1-extra respin" use that exact name.\n\n'+
-        'RULE 6: For games with multiple features, create SEPARATE pages:\n'+
-        '  - FREE GAMES page (if scatter triggers free spins)\n'+
-        '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
-        '  - BUFF RESPIN page (if collection triggers enhanced respin)\n'+
-        '  - WHEEL page (normal wheel - list ALL specific reward items from the doc)\n'+
-        '  - SUPER WHEEL / UPGRADE page - MANDATORY if doc has "收集玩法"/"升级转盘"/"super转盘"\n'+
-        '    Must describe: unlock condition (e.g. "普通转盘触发5次后升级"), upgrade details (e.g. "2X全部升级为3X")\n'+
-        '  - NEVER merge normal wheel and super wheel into one page.\n'+
-        '  - NEVER generalize wheel rewards as "various bonuses". List the SPECIFIC items.\n\n'+
-        'RULE 7: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
-        '  BAD: "* 转盘奖励列表包含双倍奖金、增加次数等选项" (too vague!)\n'+
-        '  GOOD: "* 转盘奖励包括：2X双棋盘、2X加次数、2X加钱、3X双棋盘、GRAND、MAJOR、MINOR、MINI"\n'+
-        '  BAD: "* Extra buff → adds bonus symbols"\n'+
-        '  GOOD: "* [BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
-        '  Each buff/reward = specific mechanic from the doc, not generic summary.\n\n'+
-        'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
-        'RULE 9: OUTPUT ORDER must follow the EXACT order features appear in the document.\n'+
-        '  - Do NOT rearrange feature pages. The order in [FEATURES] section above is the correct order.\n'+
-        '  - FEATURE page always first, PAYS always second, then features in document order, PAY LINES last.\n\n'+
-        '=== PAGE STRUCTURE ===\n\n'+
-        'PAGE 1: FEATURE / FEATURE (required)\n'+
-        'PAGE 2: PAYS / PAYS (required)\n'+
-        'PAGE 3+: One page per distinct feature (FREE GAMES / RESPIN / BUFF RESPIN / WHEEL etc.)\n'+
+        '=== LAYER 1: FEATURE IDENTIFICATION ===\n'+
+        'Before writing, identify every gameplay mechanic and classify into:\n'+
+        '- Base Game / Free Games / Hold & Spin / Collection / Progression\n'+
+        '- Upgrade / Wheel / Super Wheel / Buff / Jackpot / Train\n'+
+        '- Multiplier / Symbol Transformation / Persistent Feature / Mission Feature\n'+
+        '- Custom Feature (if none of the above fit)\n'+
+        'Analyze: Theme, Core Gameplay Loop, Player Objective, Reward Structure.\n\n'+
+        '=== LAYER 2: FEATURE NAMING ENGINE ===\n'+
+        'Every feature page MUST have a player-facing feature name.\n'+
+        'Step 1: Check if feature matches industry-standard slot names:\n'+
+        '  Hold & Spin, Collection Feature, Free Games, Wheel Feature,\n'+
+        '  Multiplier Feature, Upgrade Feature, Train Feature, etc.\n'+
+        'Step 2: If game theme provides stronger immersion, generate themed name.\n'+
+        '  Examples: Egypt Hold&Spin→"Scarab Respin", Chinese Collection→"Fortune Gathering"\n'+
+        'Step 3: For unique mechanics, generate custom name (2-4 words, commercial style, theme relevant).\n'+
+        'Use this name as page titleEn. Chinese title uses the doc original name or translated version.\n\n'+
+        '=== LAYER 3: PLAYER VISIBILITY FILTER ===\n'+
+        'PLAYER VISIBLE (include):\n'+
+        '  Trigger Conditions, Feature Effects, Collection Requirements, Upgrade Rules,\n'+
+        '  Progression Rules, Buff Results, Jackpot Awards, Multiplier Effects,\n'+
+        '  Wheel Rewards, Symbol Behaviors, End Conditions\n'+
+        'DEVELOPER ONLY (exclude entirely):\n'+
+        '  RTP, Reel Weights, Trigger Probability, Hit Rate, Simulation Data,\n'+
+        '  Internal Variable Names, Config IDs, Server Logic, State Machine Logic,\n'+
+        '  Animation Notes, UI Notes, Art Notes, 断线重连, 极限情况, 数值规避,\n'+
+        '  多触发棋盘顺序, 美术设计, reconnection rules, edge cases\n\n'+
+        '=== LAYER 4: BUFF DOCUMENTATION RULE ===\n'+
+        '<=5 Buffs: Describe every Buff individually with specific mechanic.\n'+
+        '6~15 Buffs: Group by category (Respin/Value/Collector/Upgrade), describe each briefly.\n'+
+        '16+ Buffs: Summarize by category only. Do NOT list every Buff.\n\n'+
+        '=== LAYER 5: PAGE GENERATION ===\n'+
+        'Generate pages in this EXACT order:\n'+
+        'PAGE 1: FEATURE / FEATURE (overview of all special symbols and triggers)\n'+
+        'PAGE 2: PAYS / PAYS (symbol payouts)\n'+
+        'PAGE 3+: Feature Pages (in document order, never rearrange)\n'+
+        'LAST: PAY LINES\n\n'+
+        'Each Feature Page must contain:\n'+
+        '  title: Chinese feature name\n'+
+        '  titleEn: Generated Feature Name (from Layer 2)\n'+
+        '  items: 4~8 bullets covering Trigger, Core Gameplay, Rewards, End Condition\n'+
+        '  No labels (no "触发条件：" prefix). Direct description only.\n'+
+        '  Every sentence starts with "* " in both cn and en.\n\n'+
+        'FEATURE page (PAGE 1) rules:\n'+
+        '  - Each trigger as separate bullet (SCATTER->FreeGames, BONUS count->Respin, Collection->Buff)\n'+
+        '  - Match trigger to CORRECT feature. Do NOT confuse.\n'+
+        '  - WILD: split into separate bullets (substitution listing ALL excluded icons / reels / size)\n'+
+        '  - BONUS icons: brief description of function\n\n'+
+        '=== LAYER 6: ADVANCED FEATURE LIBRARY ===\n'+
+        'Recognize these common mechanics:\n'+
+        '  Collection, Hold & Spin, Lock & Respins, Train, Persistent Reel,\n'+
+        '  Upgrade, Evolution, Progression, Journey, Mission, Wheel, Super Wheel,\n'+
+        '  Jackpot, Buff, Merge, Cluster, Symbol Transformation, Expanding Reel,\n'+
+        '  Growing Reel, Level Up, Multi-Level Bonus, Cash On Reels, Feature Unlock\n\n'+
+        '=== ADDITIONAL RULES ===\n'+
+        '- Buff descriptions must use ORIGINAL names and SPECIFIC mechanics from the doc.\n'+
+        '  BAD: "Extra buff adds bonus"\n'+
+        '  GOOD: "[BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
+        '- Wheel rewards: list SPECIFIC items, never generalize as "various bonuses".\n'+
+        '- SUPER/UPGRADE versions MUST be separate pages from normal versions.\n'+
+        '- Output order MUST match document order. Never rearrange.\n\n'+
         paylineInstruction+'\n'+
-        '=== LANGUAGE ===\n'+
-        'CN: 简洁准确, 每句"* "开头, 使用文档中的图标原名\n'+
-        'EN: Professional paytable English:\n'+
-        '  "* [WILD] substitutes for all symbols except [SCATTER], [BONUS1], [BONUS2], [BONUS3], [BONUS4], and [BONUS5]."\n'+
-        '  "* 3 or more [SCATTER] anywhere triggers 8 Free Games."\n'+
-        '  "* 6 or more [BONUS1] on reels triggers Respin Feature."\n'+
-        '  "* Initial spin count: 3. Any new symbol resets count to 3."\n\n'+
         '=== FORMAT ===\n'+
         'Return ONLY valid JSON:\n'+
-        '{"pages":[{"title":"中文","titleEn":"EN","items":[{"cn":"* 中文","en":"* English"}]}]}';
+        '{"pages":[{"title":"中文","titleEn":"ENGLISH FEATURE NAME","items":[{"cn":"* 中文","en":"* English"}]}]}';
 
         var raw=await callAI(prompt);
         var result=null;
