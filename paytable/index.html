@@ -72,6 +72,17 @@ select option{background:#1a1a2e;color:#e0e0e0}
 .preview-table td{padding:6px 10px;border:1px solid rgba(255,255,255,.06);vertical-align:top}
 .preview-table tr:hover{background:rgba(255,255,255,.02)}
 @media(max-width:768px){body{padding:16px 8px}.form-row{flex-direction:column;gap:0}.step-nav{gap:2px}.step-btn{padding:8px 10px;font-size:.76rem}.parsed-summary{grid-template-columns:1fr 1fr}}
+.icon-upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.icon-upload-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;text-align:center;transition:border-color .3s}
+.icon-upload-item:hover{border-color:rgba(247,151,30,.4)}
+.icon-upload-item .icon-name{font-size:.78rem;font-weight:600;color:#ffd200;margin-bottom:6px}
+.icon-upload-item .icon-drop{width:100%;height:80px;border:2px dashed rgba(255,255,255,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all .3s}
+.icon-upload-item .icon-drop:hover,.icon-upload-item .icon-drop.dragover{border-color:#f7971e;background:rgba(247,151,30,.05)}
+.icon-upload-item .icon-drop img{max-width:100%;max-height:76px;object-fit:contain}
+.icon-upload-item .icon-drop .placeholder{font-size:.7rem;color:#8892b0;text-align:center}
+.icon-upload-item .icon-drop input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.icon-upload-item.has-image .icon-drop{border-style:solid;border-color:rgba(39,174,96,.4)}
+.preview-icon-img{display:inline-block;width:40px;height:40px;object-fit:contain;vertical-align:middle;margin:0 4px;border-radius:4px;background:rgba(255,255,255,.05)}
 </style>
 </head>
 <body>
@@ -115,6 +126,11 @@ select option{background:#1a1a2e;color:#e0e0e0}
 
 <div class="step-panel" id="step2">
 <div class="card">
+<div class="card-title">🖼️ 图标图片</div>
+<div class="info-tip">根据文档识别的图标列表，点击或拖拽添加对应图片。图片将嵌入到导出的Excel文档中。</div>
+<div id="iconUploadArea"></div>
+</div>
+<div class="card">
 <div class="card-title">👁️ 文档预览</div>
 <div class="preview-wrap" id="previewWrap"></div>
 </div>
@@ -127,11 +143,12 @@ select option{background:#1a1a2e;color:#e0e0e0}
 'use strict';
 var paytableData={brand:'CTS',name:'',board:'',lines:'',pages:[]};
 var parsedRaw=null;
+var iconImages={}; // {iconName: base64DataUrl}
 
 function goStep(n){
     document.querySelectorAll('.step-btn').forEach(function(b,i){b.classList.toggle('active',i===n-1)});
     document.querySelectorAll('.step-panel').forEach(function(p,i){p.classList.toggle('active',i===n-1)});
-    if(n===2)renderPreview();
+    if(n===2){renderIconUploadArea();renderPreview()}
 }
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
 
@@ -335,6 +352,7 @@ async function aiParseAndGenerate(){
                 }
             }
             paytableData.pages=result.pages;
+            renderIconUploadArea();
             renderPreview();
             st.textContent='✅ 生成完成！（识别到'+structured.features.length+'个玩法）';st.className='ai-status done';
             showToast('✨ Paytable内容已生成');
@@ -519,6 +537,73 @@ function structuralParse(allLines){
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+// ========== ICON IMAGE MANAGEMENT ==========
+function detectIconsFromPages(){
+    var icons=new Set();
+    var pattern=/\[([A-Z][A-Z0-9_\s]*)\]/g;
+    paytableData.pages.forEach(function(page){
+        page.items.forEach(function(item){
+            var m;
+            while((m=pattern.exec(item.cn||''))!==null) icons.add(m[1].trim());
+            pattern.lastIndex=0;
+            while((m=pattern.exec(item.en||''))!==null) icons.add(m[1].trim());
+            pattern.lastIndex=0;
+        });
+    });
+    // Also add H1-H5, L1-L6 from PAYS page
+    paytableData.pages.forEach(function(page){
+        if((page.titleEn||'').toUpperCase()==='PAYS'||(page.title||'').includes('赔付')){
+            page.items.forEach(function(item){
+                var hm=(item.cn||'').match(/[HL]\d/g);
+                if(hm) hm.forEach(function(h){icons.add(h)});
+            });
+        }
+    });
+    return Array.from(icons).sort();
+}
+
+function renderIconUploadArea(){
+    var icons=detectIconsFromPages();
+    if(!icons.length){
+        document.getElementById('iconUploadArea').innerHTML='<div style="color:#8892b0;font-size:.82rem">未检测到图标引用</div>';
+        return;
+    }
+    var html='<div class="icon-upload-grid">';
+    icons.forEach(function(name){
+        var hasImg=iconImages[name]?'has-image':'';
+        var imgContent=iconImages[name]?'<img src="'+iconImages[name]+'" alt="'+name+'">':'<div class="placeholder">点击/拖拽<br>添加图片</div>';
+        html+='<div class="icon-upload-item '+hasImg+'" data-icon="'+name+'">';
+        html+='<div class="icon-name">'+name+'</div>';
+        html+='<div class="icon-drop" data-icon="'+name+'" ondragover="iconDragOver(event)" ondragleave="iconDragLeave(event)" ondrop="iconDrop(event,\''+name+'\')">';
+        html+=imgContent;
+        html+='<input type="file" accept="image/*" onchange="iconFileChange(this,\''+name+'\')">';
+        html+='</div></div>';
+    });
+    html+='</div>';
+    document.getElementById('iconUploadArea').innerHTML=html;
+}
+
+function iconDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover')}
+function iconDragLeave(e){e.currentTarget.classList.remove('dragover')}
+function iconDrop(e,name){
+    e.preventDefault();e.currentTarget.classList.remove('dragover');
+    var file=e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/')) readIconFile(file,name);
+}
+function iconFileChange(input,name){
+    var file=input.files[0];
+    if(file) readIconFile(file,name);
+}
+function readIconFile(file,name){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+        iconImages[name]=ev.target.result;
+        renderIconUploadArea();
+        renderPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
 function renderPreview(){
     var html='';
     paytableData.pages.forEach(function(page,pi){
@@ -532,13 +617,24 @@ function renderPreview(){
         html+='</div>';
         html+='<table class="preview-table" style="margin:0"><thead><tr><th style="width:50%">中文内容</th><th style="width:50%">English Translation</th></tr></thead><tbody>';
         page.items.forEach(function(item){
-            html+='<tr><td style="color:#e0e0e0;white-space:pre-wrap;font-size:.82rem;line-height:1.5">'+escHtml(item.cn||'')+'</td>';
-            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic;font-size:.82rem;line-height:1.5">'+escHtml(item.en||'')+'</td></tr>';
+            html+='<tr><td style="color:#e0e0e0;white-space:pre-wrap;font-size:.82rem;line-height:1.5">'+inlineIcons(escHtml(item.cn||''))+'</td>';
+            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic;font-size:.82rem;line-height:1.5">'+inlineIcons(escHtml(item.en||''))+'</td></tr>';
         });
         html+='</tbody></table></div>';
     });
-    if(!html) html='<div style="text-align:center;padding:40px;color:#8892b0">暂无内容，请先在步骤②中编辑</div>';
+    if(!html) html='<div style="text-align:center;padding:40px;color:#8892b0">暂无内容，请先生成Paytable</div>';
     document.getElementById('previewWrap').innerHTML=html;
+}
+
+// Replace [ICON_NAME] in preview text with inline images if available
+function inlineIcons(text){
+    return text.replace(/\[([A-Z][A-Z0-9_\s]*)\]/g,function(match,name){
+        var trimmed=name.trim();
+        if(iconImages[trimmed]){
+            return '<img class="preview-icon-img" src="'+iconImages[trimmed]+'" title="'+trimmed+'"> ';
+        }
+        return match;
+    });
 }
 
 async function exportExcel(){
@@ -556,6 +652,18 @@ async function exportExcel(){
         var alc={vertical:'middle',horizontal:'center',wrapText:true};
         var r=1;
 
+        // Add icon images to workbook
+        var iconImageIds={};
+        Object.keys(iconImages).forEach(function(name){
+            if(iconImages[name]){
+                try{
+                    var base64=iconImages[name].split(',')[1];
+                    var ext=iconImages[name].match(/data:image\/(\w+)/);
+                    iconImageIds[name]=wb.addImage({base64:base64,extension:ext?ext[1]:'png'});
+                }catch(e){}
+            }
+        });
+
         // Document title
         ws.mergeCells('A'+r+':B'+r);
         ws.getCell('A'+r).value=paytableData.brand+paytableData.name+'：paytable需求';
@@ -566,7 +674,7 @@ async function exportExcel(){
         ws.getRow(r).height=30;r++;r++;
 
         paytableData.pages.forEach(function(page,pi){
-            // Page separator with page number
+            // Page separator
             ws.mergeCells('A'+r+':B'+r);
             ws.getCell('A'+r).value='第'+(pi+1)+'页';
             ws.getCell('A'+r).font=bld;
@@ -579,7 +687,7 @@ async function exportExcel(){
             ws.getCell('C'+r).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};
             ws.getRow(r).height=20;r++;
 
-            // Page title (feature name)
+            // Page title
             ws.mergeCells('A'+r+':B'+r);
             ws.getCell('A'+r).value=page.title||'';
             ws.getCell('A'+r).font=tf;
@@ -590,13 +698,38 @@ async function exportExcel(){
             ws.getCell('C'+r).alignment=alc;
             ws.getRow(r).height=26;r++;
 
-            // Items (each rule)
+            // Check if this is FEATURE or PAYS page - embed icon images
+            var isFeaturePage=(page.titleEn||'').toUpperCase()==='FEATURE'||(page.titleEn||'').toUpperCase()==='PAYS';
+
             page.items.forEach(function(item){
                 var cnText=item.cn||'';
                 var enText=item.en||'';
                 var cnLines=cnText.split('\n');
-                var enLines=enText.split('\n');
-                var maxL=Math.max(cnLines.length,enLines.length,1);
+                var maxL=Math.max(cnLines.length,1);
+
+                // Find icon references in this item
+                var referencedIcons=[];
+                var iconPattern=/\[([A-Z][A-Z0-9_\s]*)\]/g;
+                var m;
+                while((m=iconPattern.exec(cnText))!==null){
+                    var iname=m[1].trim();
+                    if(iconImageIds[iname]&&referencedIcons.indexOf(iname)===-1) referencedIcons.push(iname);
+                }
+                iconPattern.lastIndex=0;
+
+                // If icons found and on FEATURE/PAYS page, add image in col A
+                if(referencedIcons.length&&isFeaturePage){
+                    var firstIcon=referencedIcons[0];
+                    ws.getRow(r).height=Math.max(50,maxL*15);
+                    try{
+                        ws.addImage(iconImageIds[firstIcon],{
+                            tl:{col:0,row:r-1},
+                            ext:{width:45,height:45}
+                        });
+                    }catch(e){}
+                }else{
+                    ws.getRow(r).height=Math.max(18,maxL*15);
+                }
 
                 ws.getCell('B'+r).value=cnText;
                 ws.getCell('B'+r).font=bf;
@@ -604,10 +737,8 @@ async function exportExcel(){
                 ws.getCell('D'+r).value=enText;
                 ws.getCell('D'+r).font=bf;
                 ws.getCell('D'+r).alignment=al;
-                ws.getRow(r).height=Math.max(18,maxL*15);
                 r++;
             });
-            // Blank row between pages
             ws.getRow(r).height=10;r++;
         });
 
