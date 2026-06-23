@@ -233,63 +233,87 @@ async function aiParseAndGenerate(){
     try{
         st.textContent='🔄 正在分析玩法文档内容...';st.className='ai-status generating';
         var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,6000);
-        var prompt='Act as a slots game planner and paytable document expert. Generate a structured paytable document based on the gameplay document below. Use professional slots terminology to ensure short, clarity and readability.\n\n'+
-        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Lines/Ways='+lines:'')+'\n\n'+
-        'Gameplay Document Content:\n'+excerpt+'\n\n'+
-        '=== OUTPUT RULES ===\n'+
-        'Generate a COMPLETE paytable document. Each feature/section is its OWN page.\n'+
-        'The output MUST follow real slot machine paytable format (like NetEnt, Pragmatic Play, L&W).\n\n'+
-        '=== PAGE STRUCTURE (generate ALL applicable pages) ===\n\n'+
-        'PAGE 1: GAME RULES / 游戏规则\n'+
-        'Content rules:\n'+
-        '* Grid size and basic win direction (e.g. "3-reel, 5-column video slot with 243 ways to win")\n'+
-        '* All symbols pay left to right on adjacent reels\n'+
-        '* Jackpot tiers if applicable (list all: GRAND, MAJOR, MINOR, MINI)\n'+
-        '* Collection area overview if applicable\n\n'+
-        'PAGE 2: FEATURE / 特殊图标\n'+
-        'Content rules - describe EACH special symbol:\n'+
-        '* [WILD] - substitution rules, appearance rules, special behavior (e.g. expanding, sticky)\n'+
-        '* [SCATTER] - trigger conditions, where it appears\n'+
-        '* [BONUS1/2/3] - what each triggers, appearance on reels, carried values\n'+
-        '* [LINK] - where it appears, what it carries\n'+
-        '* Use format: "* [SYMBOL_NAME] description of function"\n\n'+
-        'PAGE 3: PAYS / 赔付表\n'+
-        'Content rules:\n'+
-        '* List all paying symbols with their payouts\n'+
-        '* Format: "H1: 5-value 4-value 3-value" (use placeholder values if not in doc)\n'+
-        '* Separate High symbols (H1-H5) and Low symbols (L1-L5/L6)\n'+
-        '* Note: if doc says no specific values, write "数值待定/Values TBD"\n\n'+
-        'PAGE 4+: EACH FEATURE GETS ITS OWN PAGE\n'+
-        'Generate a SEPARATE page for EACH of these features found in the document:\n'+
-        '- BASE GAME WILD feature (if has special wild behavior)\n'+
-        '- RESPIN / LINK GAME (with ALL buff variants as sub-sections)\n'+
-        '- FREE GAMES / FREE SPINS\n'+
-        '- WHEEL / SPINNER feature\n'+
-        '- COLLECTION / UPGRADE feature\n'+
-        '- JACKPOT feature\n'+
-        '- Any other unique feature\n\n'+
-        'For EACH feature page, include ALL of these sections:\n'+
-        '* TRIGGER: How the feature is triggered (be specific with symbol counts)\n'+
-        '* RULES: Step-by-step gameplay mechanics, extracted DIRECTLY from the gameplay doc\n'+
-        '* BUFF/VARIANT details: If there are multiple modes (buff1, buff2, buff3), describe EACH\n'+
-        '* END CONDITION: When/how the feature ends\n'+
-        '* RECONNECTION: Disconnect/reconnect behavior\n\n'+
-        'LAST PAGE: PAY LINES / 赔付线\n'+
-        '* Number of lines/ways\n'+
-        '* Configuration note\n\n'+
-        '=== LANGUAGE STYLE (CRITICAL) ===\n'+
-        'Chinese (cn field): 从玩法文档直接提取关键规则，保持原文的描述方式，简洁明确\n'+
-        'English (en field): Professional paytable English - CONCISE like real paytables:\n'+
-        '  "appears on all reels" / "substitutes for all symbols except [X]"\n'+
-        '  "3 or more scattered anywhere triggers..." / "awards X spins"\n'+
-        '  "locks in place" / "resets spin count to X" / "collects all [X] values"\n'+
-        '  "when all positions filled, awards GRAND" / "multiplier applies to total win"\n'+
-        '  Keep each bullet to 1-2 SHORT sentences maximum.\n\n'+
-        '=== FORMAT ===\n'+
-        'Each item: "* " prefix for bullets. Symbol names in [BRACKETS].\n'+
-        'Return ONLY valid JSON (absolutely no markdown, no ```): \n'+
-        '{"pages":[{"title":"中文标题","titleEn":"ENGLISH TITLE","items":[{"cn":"* 中文描述","en":"* English description"}]}]}\n\n'+
-        'IMPORTANT: Generate at least 6-10 pages covering ALL features thoroughly. Do NOT merge features into one page.';
+
+        // Determine if this is a full-ways game (满线) based on grid and lines
+        var isFullWays=false;
+        var waysNum=0;
+        var gridMatch=board.match(/(\d+)\s*[xX*]\s*(\d+)/);
+        if(gridMatch){
+            var rows=parseInt(gridMatch[1]);var cols=parseInt(gridMatch[2]);
+            // Normalize: ensure rows < cols (rows=3, cols=5 for 3X5)
+            if(rows>cols){var tmp=rows;rows=cols;cols=tmp}
+            var maxWays=Math.pow(rows,cols); // e.g. 3^5=243, 4^5=1024
+            var linesVal=lines.replace(/[^0-9]/g,'');
+            waysNum=parseInt(linesVal)||0;
+            if(waysNum===maxWays||lines.toLowerCase().includes('ways')||waysNum>=243){isFullWays=true}
+        }
+
+        var paylineInstruction='';
+        if(isFullWays){
+            paylineInstruction='LAST PAGE: PAY LINES - This is a FULL WAYS game ('+waysNum+' ways). Use this EXACT fixed content:\n'+
+            'cn items:\n'+
+            '* '+waysNum+' Ways to win!\n'+
+            '* 无赔付线\n'+
+            '* 匹配图标在连续转轴的任何位置赔付\n'+
+            '* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘\n'+
+            '* 只赔付最高的中奖组合\n'+
+            '* 赢钱额乘以投注倍数\n\n'+
+            'en items:\n'+
+            '* '+waysNum+' Ways to win!\n'+
+            '* No paylines.\n'+
+            '* Matching symbols pay in any position on consecutive reels.\n'+
+            '* Matching winning symbols on the same reel multiply the win by the number matched.\n'+
+            '* Only the highest winning combination is paid.\n'+
+            '* Wins are multiplied by the bet multiplier.\n';
+        }else{
+            paylineInstruction='LAST PAGE: PAY LINES\n* State the number of paylines and basic configuration.\n';
+        }
+
+        var prompt='Act as a slots game planner. Translate and structure a paytable for a slot game. Use professional slots terminology - SHORT, clear, readable.\n\n'+
+        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Ways/Lines='+lines:'')+'\n\n'+
+        'Gameplay Document:\n'+excerpt+'\n\n'+
+        '=== CRITICAL OUTPUT RULES (MUST FOLLOW ALL) ===\n\n'+
+        'RULE 1: Every single sentence in BOTH cn and en fields MUST start with "* " (asterisk + space).\n'+
+        'RULE 2: Page 1 title is ALWAYS fixed as: title="FEATURE", titleEn="FEATURE". This page describes all special symbols.\n'+
+        'RULE 3: There is NO "游戏规则/GAME RULES" page. Do NOT generate one.\n'+
+        'RULE 4: [WILD] description MUST be split into separate items:\n'+
+        '  - One item for substitution (e.g. "substitutes for all symbols except...")\n'+
+        '  - One item for which reels it appears on (e.g. "appears on reels 2,3,4,5 only")\n'+
+        '  - One item for each additional function (expanding, sticky, etc.)\n'+
+        '  - If WILD only participates in line wins (no special feature), do NOT create a separate WILD feature page.\n'+
+        'RULE 5: Feature pages must NOT have labels like "触发条件：" or "玩法说明：" or "结束条件：". Just directly describe the rules.\n'+
+        '  BAD: "* 触发条件：收集3个SCATTER触发转盘"\n'+
+        '  GOOD: "* 收集3个或以上[SCATTER]图标触发转盘玩法"\n'+
+        'RULE 6: Do NOT include reconnection/disconnect rules (断线重连) or edge cases (极限情况). These are internal dev notes, not player-facing paytable content.\n'+
+        'RULE 7: Every line from the 玩法说明 section in the gameplay doc MUST be described. Merge similar rules, but split different rules into separate items. Be thorough and detailed.\n'+
+        'RULE 8: Each feature with distinct gameplay gets its OWN page with a clear feature name as title.\n\n'+
+        '=== PAGE STRUCTURE ===\n\n'+
+        'PAGE 1 (FIXED): FEATURE / FEATURE\n'+
+        '- Describe each special symbol: [WILD], [SCATTER], [BONUS1], [BONUS2], [BONUS3], [LINK], etc.\n'+
+        '- Split each symbol into multiple items (one function per item)\n'+
+        '- Example items:\n'+
+        '  {"cn":"* [WILD]图标可替代除[SCATTER]和[BONUS]外的所有图标","en":"* [WILD] substitutes for all symbols except [SCATTER] and [BONUS]."}\n'+
+        '  {"cn":"* [WILD]仅出现在第2、3、4、5列","en":"* [WILD] appears on reels 2, 3, 4, 5 only."}\n'+
+        '  {"cn":"* [WILD]为1x3整列图标","en":"* [WILD] is a 1x3 full-reel symbol."}\n\n'+
+        'PAGE 2: PAYS / PAYS\n'+
+        '- All symbol payouts. Use "数值待定/Values TBD" if not specified in doc.\n\n'+
+        'PAGE 3+: Each unique feature as its own page\n'+
+        '- Title should be the FEATURE NAME (e.g. "RESPIN GAME", "WHEEL FEATURE", "SUPER WHEEL")\n'+
+        '- Describe trigger, mechanics, end condition DIRECTLY without labels\n'+
+        '- For features with buffs/variants, describe each buff as separate items within the same page\n'+
+        '- Every gameplay rule line from the doc = at least one item in the output\n\n'+
+        paylineInstruction+'\n'+
+        '=== LANGUAGE STYLE ===\n'+
+        'Chinese: 简洁明确，每句以"* "开头，直接描述规则\n'+
+        'English: Professional paytable English, every sentence starts with "* ", SHORT and concise:\n'+
+        '  "* [WILD] substitutes for all symbols except [SCATTER]."\n'+
+        '  "* 3 or more [SCATTER] anywhere triggers the Wheel Feature."\n'+
+        '  "* Initial spin count: 3. New [LINK] resets count to 3."\n'+
+        '  "* When all 5 columns filled at least once, GRAND JACKPOT is awarded."\n\n'+
+        '=== OUTPUT FORMAT ===\n'+
+        'Return ONLY valid JSON (no markdown, no ```):\n'+
+        '{"pages":[{"title":"中文标题","titleEn":"ENGLISH TITLE","items":[{"cn":"* 中文","en":"* English"}]}]}\n\n'+
+        'Generate thorough content covering ALL features. At least 5-8 pages.';
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
         var raw=await callAI(prompt);
         var result=null;
