@@ -315,7 +315,7 @@ async function aiParseAndGenerate(){
         }
 
         if(structured.features.length){
-            structuredContent+='[FEATURES - Each one needs its own page]\n';
+            structuredContent+='[FEATURES - Output pages in THIS EXACT ORDER. Do NOT reorder or merge.]\n';
             structured.features.forEach(function(feat,i){
                 structuredContent+='\n--- FEATURE '+(i+1)+': '+feat.name+' ---\n';
                 if(feat.trigger) structuredContent+='Trigger: '+feat.trigger+'\n';
@@ -379,6 +379,9 @@ async function aiParseAndGenerate(){
         '  GOOD: "* [BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
         '  Each buff/reward = specific mechanic from the doc, not generic summary.\n\n'+
         'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
+        'RULE 9: OUTPUT ORDER must follow the EXACT order features appear in the document.\n'+
+        '  - Do NOT rearrange feature pages. The order in [FEATURES] section above is the correct order.\n'+
+        '  - FEATURE page always first, PAYS always second, then features in document order, PAY LINES last.\n\n'+
         '=== PAGE STRUCTURE ===\n\n'+
         'PAGE 1: FEATURE / FEATURE (required)\n'+
         'PAGE 2: PAYS / PAYS (required)\n'+
@@ -654,6 +657,8 @@ function structuralParse(allLines){
     }
 
     // ---- 3. Feature extraction with buff separation ----
+    // Known feature name patterns from all existing gameplay documents
+    var knownFeatureNames=['BASE玩法','Base玩法','base玩法','FG玩法','FG-BONUS玩法','FG-JACKPOT玩法','FG-升行玩法','FG1-EXPAND玩法','FG2-REPEAT玩法','FG3-JACKPOT玩法','FireLink玩法','PICK玩法','Respin玩法','SUPER FREE玩法','bonus玩法','bonus连续列玩法','fg通用玩法','free games','free玩法','respin玩法','super转盘玩法','wheel玩法','三小收集区触发free games','三种多福多彩玩法','再触发玩法','地图玩法','大收集区pick玩法','开门玩法','组合触发玩法','转盘玩法','连续列玩法','长线玩法','高低Bet玩法','高低bet玩法','普通respin玩法','普通转盘玩法','收集玩法','升级转盘玩法'];
     var featureHeaders=[
         {pattern:/BASE.*(?:玩法|WILD|wild)/i, priority:1},
         {pattern:/base下.*WILD|WILD.*变整列|整列wild/i, priority:2},
@@ -697,9 +702,16 @@ function structuralParse(allLines){
             if(fh.pattern.test(line)&&line.length<80) matchedHeader=fh;
         });
 
-        // Also detect generic feature headers
+        // Also detect generic feature headers and known feature names
         if(!matchedHeader&&/^[A-Za-z\u4e00-\u9fff\s]+(?:玩法|GAME)[：:\s]*$/i.test(line)&&line.length<50){
             matchedHeader={pattern:null,priority:1};
+        }
+        // Check against known feature names database
+        if(!matchedHeader){
+            var lineTrimmed=line.replace(/[：:]\s*$/,'').trim();
+            if(knownFeatureNames.some(function(kn){return lineTrimmed===kn||lineTrimmed.includes(kn)||kn.includes(lineTrimmed)})&&line.length<60){
+                matchedHeader={pattern:null,priority:1};
+            }
         }
 
         if(matchedHeader){
