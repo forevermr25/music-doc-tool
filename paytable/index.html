@@ -372,30 +372,46 @@ async function aiParseAndGenerate(){
         'PAGE 2: PAYS / PAYS (symbol payouts)\n'+
         'PAGE 3+: Feature Pages (in document order, never rearrange)\n'+
         'LAST: PAY LINES\n\n'+
-        'Each Feature Page must contain:\n'+
-        '  title: Chinese feature name\n'+
-        '  titleEn: Generated Feature Name (from Layer 2)\n'+
-        '  items: 4~8 bullets covering Trigger, Core Gameplay, Rewards, End Condition\n'+
-        '  No labels (no "触发条件：" prefix). Direct description only.\n'+
-        '  Every sentence starts with "* " in both cn and en.\n\n'+
-        'FEATURE page (PAGE 1) rules:\n'+
-        '  - Each trigger as separate bullet (SCATTER->FreeGames, BONUS count->Respin, Collection->Buff)\n'+
-        '  - Match trigger to CORRECT feature. Do NOT confuse.\n'+
-        '  - WILD: split into separate bullets (substitution listing ALL excluded icons / reels / size)\n'+
-        '  - BONUS icons: brief description of function\n\n'+
         '=== LAYER 6: ADVANCED FEATURE LIBRARY ===\n'+
         'Recognize these common mechanics:\n'+
         '  Collection, Hold & Spin, Lock & Respins, Train, Persistent Reel,\n'+
         '  Upgrade, Evolution, Progression, Journey, Mission, Wheel, Super Wheel,\n'+
         '  Jackpot, Buff, Merge, Cluster, Symbol Transformation, Expanding Reel,\n'+
         '  Growing Reel, Level Up, Multi-Level Bonus, Cash On Reels, Feature Unlock\n\n'+
-        '=== ADDITIONAL RULES ===\n'+
-        '- Buff descriptions must use ORIGINAL names and SPECIFIC mechanics from the doc.\n'+
+        '=== CRITICAL RULES ===\n\n'+
+        'RULE 1: Every sentence MUST start with "* " in both cn and en fields.\n\n'+
+        'RULE 2: Page 1 title FIXED: title="FEATURE", titleEn="FEATURE".\n\n'+
+        'RULE 3: FEATURE page (page 1) must include:\n'+
+        '  a) Each feature trigger condition as a separate bullet:\n'+
+        '    - SCATTER trigger: "* 3个及以上[SCATTER]触发XXX"\n'+
+        '    - BONUS trigger for respin: "* 6个及以上[BONUS]触发RESPIN"\n'+
+        '    - Collection trigger: "* 收集[BONUS1][BONUS2][BONUS3]可触发Buff Respin"\n'+
+        '  b) WILD description split into SEPARATE bullets:\n'+
+        '    - Substitution: list ALL icons WILD cannot substitute (ALL bonus types + scatter + link)\n'+
+        '    - Reels: which reels WILD appears on\n'+
+        '    - Size/shape: if WILD has special size (1x3, expanding, etc.)\n'+
+        '  c) Each BONUS icon type described briefly\n'+
+        '  d) LINK icon if exists\n\n'+
+        'RULE 4: Feature detail pages:\n'+
+        '  - Match trigger to CORRECT feature! SCATTER->Free Games, BONUS count->Respin, Collection->Buff\n'+
+        '  - Do NOT confuse which trigger belongs to which feature\n'+
+        '  - Each feature page: 4~8 bullets covering trigger, core mechanics, end condition\n'+
+        '  - Use EXACT buff names from the gameplay doc. Do NOT invent names.\n\n'+
+        'RULE 5: Separate pages required:\n'+
+        '  - FREE GAMES page (if scatter triggers free spins)\n'+
+        '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
+        '  - BUFF RESPIN page (if collection triggers enhanced respin)\n'+
+        '  - WHEEL page (list ALL specific reward items from doc)\n'+
+        '  - SUPER WHEEL / UPGRADE page - MANDATORY if doc has "收集玩法"/"升级转盘"/"super转盘"\n'+
+        '    Must describe: unlock condition + upgrade details\n'+
+        '  - NEVER merge normal and super/upgrade into one page\n'+
+        '  - NEVER generalize wheel rewards as "various bonuses". List SPECIFIC items.\n\n'+
+        'RULE 6: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
         '  BAD: "Extra buff adds bonus"\n'+
-        '  GOOD: "[BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
-        '- Wheel rewards: list SPECIFIC items, never generalize as "various bonuses".\n'+
-        '- SUPER/UPGRADE versions MUST be separate pages from normal versions.\n'+
-        '- Output order MUST match document order. Never rearrange.\n\n'+
+        '  GOOD: "[BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n\n'+
+        'RULE 7: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
+        'RULE 8: Output order MUST match document order. Never rearrange feature pages.\n'+
+        '  FEATURE first, PAYS second, then features in document order, PAY LINES last.\n\n'+
         paylineInstruction+'\n'+
         '=== FORMAT ===\n'+
         'Return ONLY valid JSON:\n'+
