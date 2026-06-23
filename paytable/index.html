@@ -326,63 +326,61 @@ async function aiParseAndGenerate(){
 
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
 
-        var prompt='Act as a slots game planner. Write a paytable document for players. Keep it EXTREMELY CONCISE like a real slot machine paytable screen. Players only need to know WHAT happens, not internal dev details.\n\n'+
+        var prompt='Act as a slots game planner. Write a player-facing paytable document for a slot machine. Use professional slots terminology.\n\n'+
         'Game Info: Brand='+brand+', Name='+name+', Grid='+board+', Ways/Lines='+lines+'\n\n'+
         structuredContent+'\n\n'+
         '=== CRITICAL RULES ===\n\n'+
-        'RULE 1: Every sentence MUST start with "* " in both cn and en fields.\n'+
-        'RULE 2: Page 1 title FIXED: title="FEATURE", titleEn="FEATURE".\n'+
-        'RULE 3: NO game rules page. NO reconnection/disconnect rules. NO edge cases. NO 数值规避. NO multi-trigger grid order details.\n'+
-        'RULE 4: CONCISENESS IS KEY. Real paytables describe each feature in 3-6 SHORT bullets max.\n'+
-        '  - Each buff/variant = 1-2 sentences describing the CORE mechanic only\n'+
-        '  - Do NOT dump every line from the gameplay doc. Summarize for PLAYERS.\n'+
-        '  - Internal dev notes (棋盘顺序, 规避, 重连) are NOT player-facing content.\n'+
-        'RULE 5: [WILD] description:\n'+
-        '  - List ALL specific symbols WILD cannot substitute (by exact name from the doc)\n'+
-        '  - Format: "* [WILD] substitutes for all symbols except [BONUS1], [BONUS2], [BONUS3] and [BONUS4]."\n'+
-        '  - State which reels WILD appears on.\n'+
-        '  - If WILD only participates in line-wins with no special feature, do NOT give it a separate page.\n'+
-        'RULE 6: Feature pages should be SEPARATE for:\n'+
-        '  - Main feature (e.g. RESPIN FEATURE) = trigger + universal rules\n'+
-        '  - Buff/variant page (e.g. BUFF RESPIN) = brief table-style description of each buff\n'+
-        '  These are TWO separate pages, not one.\n'+
-        'RULE 7: For BUFF descriptions, use concise table-style format:\n'+
-        '  Each buff = 1 item with its core effect in ONE sentence.\n'+
-        '  Example: "* [bonus5]出现后会给棋盘上随机位置增加3个bonus或者给bonus加钱"\n'+
-        '  Example EN: "* When [bonus5] lands, it adds 3 bonus to random positions or boosts bonus values."\n'+
-        'RULE 8: NO labels like "触发条件：" or "玩法说明：" or "结束条件：". Just describe directly.\n\n'+
+        'RULE 1: Every sentence MUST start with "* " in both cn and en fields.\n\n'+
+        'RULE 2: Page 1 title FIXED: title="FEATURE", titleEn="FEATURE".\n\n'+
+        'RULE 3: EXCLUDED content (do NOT output):\n'+
+        '  - NO "游戏规则" page\n'+
+        '  - NO 断线重连/reconnection rules\n'+
+        '  - NO 极限情况/edge cases\n'+
+        '  - NO 数值规避/value restrictions\n'+
+        '  - NO 多触发棋盘顺序/multi-trigger grid order\n'+
+        '  - NO 美术设计/art design notes\n\n'+
+        'RULE 4: FEATURE page (page 1) must include:\n'+
+        '  a) Each feature trigger condition as a separate bullet:\n'+
+        '    - SCATTER trigger (if exists): "* 3个及以上[SCATTER]触发XXX"\n'+
+        '    - BONUS trigger for respin: "* 6个及以上[BONUS1]触发RESPIN" (use correct number from doc)\n'+
+        '    - Collection trigger: "* 收集[BONUS1][BONUS2][BONUS3]可触发Buff Respin"\n'+
+        '  b) WILD description split into SEPARATE bullets:\n'+
+        '    - Substitution: list ALL icons WILD cannot substitute (ALL bonus types + scatter + link)\n'+
+        '    - Reels: which reels WILD appears on\n'+
+        '    - Size/shape: if WILD has special size (1x3, expanding, etc.)\n'+
+        '  c) Each BONUS icon type described briefly (what it displays, where it appears)\n'+
+        '  d) LINK icon if exists\n\n'+
+        'RULE 5: Feature detail pages - describe CORRECTLY based on document:\n'+
+        '  - Match trigger to correct feature! SCATTER->Free Games, BONUS count->Respin, Collection->Buff\n'+
+        '  - Do NOT confuse which trigger belongs to which feature\n'+
+        '  - Each feature page should have 4-8 bullets covering: trigger, core mechanics, end condition\n'+
+        '  - Use the EXACT buff names from the gameplay doc (buff1/buff2/buff3 or their actual names)\n'+
+        '  - Do NOT invent buff names. If doc says "buff1-extra respin" use that exact name.\n\n'+
+        'RULE 6: For games with multiple features, create SEPARATE pages:\n'+
+        '  - FREE GAMES page (if scatter triggers free spins)\n'+
+        '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
+        '  - BUFF RESPIN page (if collection triggers enhanced respin) OR describe buffs within RESPIN page\n'+
+        '  - WHEEL page (if there is a wheel/spinner feature)\n\n'+
+        'RULE 7: Buff descriptions must use the ORIGINAL names and specific mechanics from the doc:\n'+
+        '  BAD: "* Extra buff → adds bonus symbols"\n'+
+        '  GOOD: "* [BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
+        '  Keep each buff to 1-2 sentences but include the SPECIFIC mechanic, not generic description.\n\n'+
+        'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
         '=== PAGE STRUCTURE ===\n\n'+
-        'PAGE 1: FEATURE / FEATURE\n'+
-        '  - How main feature is triggered (e.g. "6 or more [BONUS4] triggers Respin Feature")\n'+
-        '  - How buff features are triggered (e.g. "Collecting [BONUS1] [BONUS2] [BONUS3] may trigger Buff Respin")\n'+
-        '  - WILD: substitution + reels (split into separate items)\n'+
-        '  - BONUS icon images go here (user adds them later)\n\n'+
-        'PAGE 2: PAYS / PAYS\n'+
-        '  - All symbol payout values. Use "数值待定/Values TBD" if not in doc.\n\n'+
-        'PAGE 3: Main Feature (e.g. RESPIN FEATURE / RESPIN FEATURE)\n'+
-        '  - Trigger condition (1 bullet)\n'+
-        '  - 3-5 core mechanics bullets (grid setup, spin count, collection, fill reward, GRAND)\n'+
-        '  - End condition (1 bullet) - written as a normal rule, no label\n\n'+
-        'PAGE 4: Buff Feature (e.g. BUFF RESPIN / BUFF RESPIN)\n'+
-        '  - 1 bullet: how buff is triggered\n'+
-        '  - 1 bullet: general rule (e.g. "In Buff Respin, each grid features its matching buff symbols")\n'+
-        '  - Then 1 bullet per buff variant describing its CORE effect only:\n'+
-        '    * Jackpot buff → jackpot wheel appears\n'+
-        '    * Collect buff → collects all prizes from grid\n'+
-        '    * Extra buff → adds bonus symbols or boosts values\n\n'+
-        'PAGE 5+ (if applicable): Other features (WHEEL, PICK, etc.)\n\n'+
+        'PAGE 1: FEATURE / FEATURE (required)\n'+
+        'PAGE 2: PAYS / PAYS (required)\n'+
+        'PAGE 3+: One page per distinct feature (FREE GAMES / RESPIN / BUFF RESPIN / WHEEL etc.)\n'+
         paylineInstruction+'\n'+
-        '=== LANGUAGE STYLE ===\n'+
-        'CN: 简洁玩家facing描述，每句"* "开头。用实际图标名称。\n'+
-        'EN: Professional paytable English, SHORT (1-2 sentences per bullet):\n'+
-        '  "* 6 or more [BONUS4] trigger Respin Feature."\n'+
-        '  "* Initial spin count: 3. New symbols reset count to 3."\n'+
-        '  "* When a grid is fully filled, all prizes on it are awarded ×2."\n'+
-        '  "* When all 4 grids are filled, an extra GRAND Jackpot is awarded."\n\n'+
-        '=== OUTPUT FORMAT ===\n'+
-        'Return ONLY valid JSON (no markdown):\n'+
-        '{"pages":[{"title":"中文标题","titleEn":"ENGLISH TITLE","items":[{"cn":"* 中文","en":"* English"}]}]}\n\n'+
-        'Target: 4-6 pages total. Keep it CONCISE like a real paytable.';
+        '=== LANGUAGE ===\n'+
+        'CN: 简洁准确, 每句"* "开头, 使用文档中的图标原名\n'+
+        'EN: Professional paytable English:\n'+
+        '  "* [WILD] substitutes for all symbols except [SCATTER], [BONUS1], [BONUS2], [BONUS3], [BONUS4], and [BONUS5]."\n'+
+        '  "* 3 or more [SCATTER] anywhere triggers 8 Free Games."\n'+
+        '  "* 6 or more [BONUS1] on reels triggers Respin Feature."\n'+
+        '  "* Initial spin count: 3. Any new symbol resets count to 3."\n\n'+
+        '=== FORMAT ===\n'+
+        'Return ONLY valid JSON:\n'+
+        '{"pages":[{"title":"中文","titleEn":"EN","items":[{"cn":"* 中文","en":"* English"}]}]}';
 
         var raw=await callAI(prompt);
         var result=null;
