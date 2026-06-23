@@ -221,102 +221,300 @@ async function aiParseAndGenerate(){
     var btn=document.getElementById('parseBtn');btn.classList.add('loading');btn.disabled=true;
     var st=document.getElementById('aiStatus');
     try{
-        st.textContent='🔄 正在分析玩法文档内容...';st.className='ai-status generating';
-        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,6000);
+        st.textContent='🔄 正在结构化解析玩法文档...';st.className='ai-status generating';
 
-        // Determine if this is a full-ways game (满线) based on grid and lines
+        // ========== STRUCTURAL PRE-PARSING ==========
+        var allLines=parsedRaw.allText.filter(Boolean);
+        var structured=structuralParse(allLines);
+
+        // Determine if full-ways game
         var isFullWays=false;
         var waysNum=0;
         var gridMatch=board.match(/(\d+)\s*[xX*]\s*(\d+)/);
         if(gridMatch){
             var rows=parseInt(gridMatch[1]);var cols=parseInt(gridMatch[2]);
-            // Normalize: ensure rows < cols (rows=3, cols=5 for 3X5)
             if(rows>cols){var tmp=rows;rows=cols;cols=tmp}
-            var maxWays=Math.pow(rows,cols); // e.g. 3^5=243, 4^5=1024
+            var maxWays=Math.pow(rows,cols);
             var linesVal=lines.replace(/[^0-9]/g,'');
             waysNum=parseInt(linesVal)||0;
-            if(waysNum===maxWays||lines.toLowerCase().includes('ways')||waysNum>=243){isFullWays=true}
+            if(waysNum===maxWays||(lines.toLowerCase().includes('ways')&&waysNum>0)){isFullWays=true}
         }
 
         var paylineInstruction='';
         if(isFullWays){
-            paylineInstruction='LAST PAGE: PAY LINES - This is a FULL WAYS game ('+waysNum+' ways). Use this EXACT fixed content:\n'+
-            'cn items:\n'+
-            '* '+waysNum+' Ways to win!\n'+
-            '* 无赔付线\n'+
-            '* 匹配图标在连续转轴的任何位置赔付\n'+
-            '* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘\n'+
-            '* 只赔付最高的中奖组合\n'+
-            '* 赢钱额乘以投注倍数\n\n'+
-            'en items:\n'+
-            '* '+waysNum+' Ways to win!\n'+
-            '* No paylines.\n'+
-            '* Matching symbols pay in any position on consecutive reels.\n'+
-            '* Matching winning symbols on the same reel multiply the win by the number matched.\n'+
-            '* Only the highest winning combination is paid.\n'+
-            '* Wins are multiplied by the bet multiplier.\n';
+            paylineInstruction='LAST PAGE: PAY LINES - FULL WAYS game. Use EXACT fixed content:\n'+
+            'cn: "* '+waysNum+' Ways to win!" / "* 无赔付线" / "* 匹配图标在连续转轴的任何位置赔付" / "* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘" / "* 只赔付最高的中奖组合" / "* 赢钱额乘以投注倍数"\n'+
+            'en: "* '+waysNum+' Ways to win!" / "* No paylines." / "* Matching symbols pay in any position on consecutive reels." / "* Matching winning symbols on the same reel multiply the win by the number matched." / "* Only the highest winning combination is paid." / "* Wins are multiplied by the bet multiplier."\n';
         }else{
-            paylineInstruction='LAST PAGE: PAY LINES\n* State the number of paylines and basic configuration.\n';
+            paylineInstruction='LAST PAGE: PAY LINES - State payline count and configuration.\n';
         }
 
-        var prompt='Act as a slots game planner. Translate and structure a paytable for a slot game. Use professional slots terminology - SHORT, clear, readable.\n\n'+
-        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Ways/Lines='+lines:'')+'\n\n'+
-        'Gameplay Document:\n'+excerpt+'\n\n'+
-        '=== CRITICAL OUTPUT RULES (MUST FOLLOW ALL) ===\n\n'+
-        'RULE 1: Every single sentence in BOTH cn and en fields MUST start with "* " (asterisk + space).\n'+
-        'RULE 2: Page 1 title is ALWAYS fixed as: title="FEATURE", titleEn="FEATURE". This page describes all special symbols.\n'+
-        'RULE 3: There is NO "游戏规则/GAME RULES" page. Do NOT generate one.\n'+
-        'RULE 4: [WILD] description MUST be split into separate items:\n'+
-        '  - One item for substitution (e.g. "substitutes for all symbols except...")\n'+
-        '  - One item for which reels it appears on (e.g. "appears on reels 2,3,4,5 only")\n'+
-        '  - One item for each additional function (expanding, sticky, etc.)\n'+
-        '  - If WILD only participates in line wins (no special feature), do NOT create a separate WILD feature page.\n'+
-        'RULE 5: Feature pages must NOT have labels like "触发条件：" or "玩法说明：" or "结束条件：". Just directly describe the rules.\n'+
-        '  BAD: "* 触发条件：收集3个SCATTER触发转盘"\n'+
-        '  GOOD: "* 收集3个或以上[SCATTER]图标触发转盘玩法"\n'+
-        'RULE 6: Do NOT include reconnection/disconnect rules (断线重连) or edge cases (极限情况). These are internal dev notes, not player-facing paytable content.\n'+
-        'RULE 7: Every line from the 玩法说明 section in the gameplay doc MUST be described. Merge similar rules, but split different rules into separate items. Be thorough and detailed.\n'+
-        'RULE 8: Each feature with distinct gameplay gets its OWN page with a clear feature name as title.\n\n'+
-        '=== PAGE STRUCTURE ===\n\n'+
-        'PAGE 1 (FIXED): FEATURE / FEATURE\n'+
-        '- Describe each special symbol: [WILD], [SCATTER], [BONUS1], [BONUS2], [BONUS3], [LINK], etc.\n'+
-        '- Split each symbol into multiple items (one function per item)\n'+
-        '- Example items:\n'+
-        '  {"cn":"* [WILD]图标可替代除[SCATTER]和[BONUS]外的所有图标","en":"* [WILD] substitutes for all symbols except [SCATTER] and [BONUS]."}\n'+
-        '  {"cn":"* [WILD]仅出现在第2、3、4、5列","en":"* [WILD] appears on reels 2, 3, 4, 5 only."}\n'+
-        '  {"cn":"* [WILD]为1x3整列图标","en":"* [WILD] is a 1x3 full-reel symbol."}\n\n'+
-        'PAGE 2: PAYS / PAYS\n'+
-        '- All symbol payouts. Use "数值待定/Values TBD" if not specified in doc.\n\n'+
-        'PAGE 3+: Each unique feature as its own page\n'+
-        '- Title should be the FEATURE NAME (e.g. "RESPIN GAME", "WHEEL FEATURE", "SUPER WHEEL")\n'+
-        '- Describe trigger, mechanics, end condition DIRECTLY without labels\n'+
-        '- For features with buffs/variants, describe each buff as separate items within the same page\n'+
-        '- Every gameplay rule line from the doc = at least one item in the output\n\n'+
-        paylineInstruction+'\n'+
-        '=== LANGUAGE STYLE ===\n'+
-        'Chinese: 简洁明确，每句以"* "开头，直接描述规则\n'+
-        'English: Professional paytable English, every sentence starts with "* ", SHORT and concise:\n'+
-        '  "* [WILD] substitutes for all symbols except [SCATTER]."\n'+
-        '  "* 3 or more [SCATTER] anywhere triggers the Wheel Feature."\n'+
-        '  "* Initial spin count: 3. New [LINK] resets count to 3."\n'+
-        '  "* When all 5 columns filled at least once, GRAND JACKPOT is awarded."\n\n'+
-        '=== OUTPUT FORMAT ===\n'+
-        'Return ONLY valid JSON (no markdown, no ```):\n'+
-        '{"pages":[{"title":"中文标题","titleEn":"ENGLISH TITLE","items":[{"cn":"* 中文","en":"* English"}]}]}\n\n'+
-        'Generate thorough content covering ALL features. At least 5-8 pages.';
+        // Build structured prompt with pre-parsed sections
+        var structuredContent='=== PRE-PARSED DOCUMENT STRUCTURE ===\n\n';
+        structuredContent+='[BASIC INFO]\n';
+        structuredContent+='关卡名: '+name+'\n';
+        structuredContent+='棋盘: '+board+'\n';
+        structuredContent+='线数: '+lines+'\n';
+        if(structured.combo) structuredContent+='玩法组合: '+structured.combo+'\n';
+        if(structured.jackpots.length) structuredContent+='Jackpot档位: '+structured.jackpots.join(', ')+'\n';
+        structuredContent+='\n';
+
+        if(structured.specialIcons.length){
+            structuredContent+='[SPECIAL ICONS]\n';
+            structured.specialIcons.forEach(function(ic){
+                structuredContent+='- '+ic.name+': '+ic.desc+'\n';
+            });
+            structuredContent+='\n';
+        }
+
+        if(structured.normalIcons.length){
+            structuredContent+='[NORMAL ICONS]\n';
+            structured.normalIcons.forEach(function(ic){
+                structuredContent+='- '+ic+'\n';
+            });
+            structuredContent+='\n';
+        }
+
+        if(structured.features.length){
+            structuredContent+='[FEATURES - Each one needs its own page]\n';
+            structured.features.forEach(function(feat,i){
+                structuredContent+='\n--- FEATURE '+(i+1)+': '+feat.name+' ---\n';
+                if(feat.trigger) structuredContent+='Trigger: '+feat.trigger+'\n';
+                if(feat.rules.length){
+                    structuredContent+='Rules:\n';
+                    feat.rules.forEach(function(r){structuredContent+='  '+r+'\n'});
+                }
+                if(feat.endCondition) structuredContent+='End: '+feat.endCondition+'\n';
+            });
+        }
+
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
+
+        var prompt='Act as a slots game planner. Translate and structure a paytable for a slot game. Use professional slots terminology - SHORT, clear, readable.\n\n'+
+        'Game Info: Brand='+brand+', Name='+name+', Grid='+board+', Ways/Lines='+lines+'\n\n'+
+        structuredContent+'\n\n'+
+        '=== CRITICAL OUTPUT RULES ===\n\n'+
+        'RULE 1: Every sentence in BOTH cn and en MUST start with "* ".\n'+
+        'RULE 2: Page 1 title fixed as: title="FEATURE", titleEn="FEATURE". Describes all special symbols.\n'+
+        'RULE 3: NO "游戏规则/GAME RULES" page.\n'+
+        'RULE 4: [WILD] split into separate items (substitution / reels / size / behavior).\n'+
+        '  If WILD only does line-wins, no separate WILD feature page.\n'+
+        'RULE 5: NO labels like "触发条件：" or "玩法说明：". Describe rules directly.\n'+
+        'RULE 6: NO reconnection/disconnect rules. NO edge cases.\n'+
+        'RULE 7: Every rule line from each feature MUST appear. Merge similar, split different.\n'+
+        'RULE 8: Each distinct feature = its own page with clear feature name.\n\n'+
+        '=== PAGE STRUCTURE ===\n\n'+
+        'PAGE 1: FEATURE / FEATURE - All special symbols described\n'+
+        'PAGE 2: PAYS / PAYS - Symbol payouts (数值待定/TBD if not specified)\n'+
+        'PAGE 3+: One page per feature from [FEATURES] section above\n'+
+        paylineInstruction+'\n'+
+        '=== LANGUAGE ===\n'+
+        'CN: 简洁, 每句"* "开头, 直接描述规则\n'+
+        'EN: Professional paytable English, "* " prefix, SHORT:\n'+
+        '  "* [WILD] substitutes for all except [SCATTER]." / "* 3 or more [SCATTER] triggers Wheel."\n\n'+
+        '=== FORMAT ===\n'+
+        'Return ONLY JSON: {"pages":[{"title":"中文","titleEn":"EN","items":[{"cn":"* ...","en":"* ..."}]}]}\n'+
+        'Be thorough. Generate 5-8+ pages.';
+
         var raw=await callAI(prompt);
         var result=null;
         try{result=JSON.parse(raw)}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)result=JSON.parse(m[0])}
         if(result&&result.pages){
+            // Post-process: ensure PAY LINES page for full-ways games
+            if(isFullWays){
+                var hasPayline=result.pages.some(function(p){return(p.titleEn||'').toUpperCase().includes('PAY LINE')||(p.title||'').includes('赔付线')});
+                if(!hasPayline){
+                    result.pages.push({title:'赔付线',titleEn:'PAY LINES',items:[
+                        {cn:'* '+waysNum+' Ways to win!',en:'* '+waysNum+' Ways to win!'},
+                        {cn:'* 无赔付线',en:'* No paylines.'},
+                        {cn:'* 匹配图标在连续转轴的任何位置赔付',en:'* Matching symbols pay in any position on consecutive reels.'},
+                        {cn:'* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘',en:'* Matching winning symbols on the same reel multiply the win by the number matched.'},
+                        {cn:'* 只赔付最高的中奖组合',en:'* Only the highest winning combination is paid.'},
+                        {cn:'* 赢钱额乘以投注倍数',en:'* Wins are multiplied by the bet multiplier.'}
+                    ]});
+                }
+            }
             paytableData.pages=result.pages;
             renderPreview();
-            st.textContent='✅ 生成完成！';st.className='ai-status done';
+            st.textContent='✅ 生成完成！（识别到'+structured.features.length+'个玩法）';st.className='ai-status done';
             showToast('✨ Paytable内容已生成');
             goStep(2);
         }else{st.textContent='⚠️ AI返回格式异常，请重试';st.className='ai-status error'}
     }catch(err){st.textContent='❌ '+err.message;st.className='ai-status error'}
     finally{btn.classList.remove('loading');btn.disabled=false}
+}
+
+// ========== STRUCTURAL PARSER ==========
+function structuralParse(allLines){
+    var result={combo:'',jackpots:[],specialIcons:[],normalIcons:[],features:[]};
+    var fullText=allLines.join('\n');
+
+    // Extract combo/架构
+    var comboMatch=fullText.match(/玩法组合[：:]\s*(.+)/);
+    if(comboMatch) result.combo=comboMatch[1].trim();
+
+    // Extract jackpots
+    var jpMatch=fullText.match(/jackpot[^，。\n]*(?:GRAND|MAJOR|MINOR|MINI)[^。\n]*/i);
+    if(jpMatch){
+        var jpText=jpMatch[0];
+        ['GRAND','MAJOR','MINOR','MINI'].forEach(function(j){if(jpText.toUpperCase().includes(j))result.jackpots.push(j)});
+    }
+    if(!result.jackpots.length){
+        // Try Chinese pattern
+        if(fullText.includes('GRAND'))result.jackpots.push('GRAND');
+        if(fullText.includes('MAJOR'))result.jackpots.push('MAJOR');
+        if(fullText.includes('MINOR'))result.jackpots.push('MINOR');
+        if(fullText.includes('MINI')&&!fullText.match(/MINI[A-Z]/))result.jackpots.push('MINI');
+    }
+
+    // Extract special icons
+    var iconSection=false;
+    var currentIcon=null;
+    var specialKeywords=['BONUS','SCATTER','WILD','LINK','wild','scatter','bonus','link'];
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        if(line.includes('特殊图标')||line.includes('特殊图标列表')){iconSection=true;continue}
+        if(line.includes('普通图标')){iconSection=false;
+            // Capture normal icons
+            var normMatch=line.match(/H\d|L\d/g);
+            if(normMatch) result.normalIcons=result.normalIcons.concat(normMatch);
+            // Scan next lines for H/L patterns
+            for(var ni=i+1;ni<Math.min(i+10,allLines.length);ni++){
+                var nline=allLines[ni];
+                if(nline.match(/H\d|L\d/)){
+                    var hls=nline.match(/[HL]\d/g);
+                    if(hls) result.normalIcons=result.normalIcons.concat(hls);
+                }
+            }
+            result.normalIcons=[...new Set(result.normalIcons)];
+            continue;
+        }
+        if(iconSection){
+            // Look for icon names in the line
+            specialKeywords.forEach(function(kw){
+                var regex=new RegExp(kw+'\\d*','gi');
+                var matches=line.match(regex);
+                if(matches){
+                    matches.forEach(function(m){
+                        var existing=result.specialIcons.find(function(s){return s.name.toUpperCase()===m.toUpperCase()});
+                        if(!existing){
+                            result.specialIcons.push({name:m.toUpperCase(),desc:''});
+                        }
+                    });
+                }
+            });
+            // Check for 设计要点 descriptions
+            if(line.includes('设计要点')||line.match(/^\d+[、.]/)){
+                var lastIcon=result.specialIcons[result.specialIcons.length-1];
+                if(lastIcon&&!lastIcon.desc) lastIcon.desc=line;
+                else if(lastIcon) lastIcon.desc+='; '+line;
+            }
+        }
+    }
+
+    // Also scan for icon descriptions from 设计要点 rows
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        specialKeywords.forEach(function(kw){
+            if(line.toUpperCase().includes(kw)&&(line.includes('设计要点')||line.includes('仅'))){
+                var iconName=kw.toUpperCase();
+                var numMatch=line.match(new RegExp(kw+'(\\d+)','i'));
+                if(numMatch) iconName=kw.toUpperCase()+numMatch[1];
+                var existing=result.specialIcons.find(function(s){return s.name===iconName});
+                if(existing&&!existing.desc) existing.desc=line;
+                else if(!existing) result.specialIcons.push({name:iconName,desc:line});
+            }
+        });
+    }
+
+    // Extract features - identify by section headers
+    var featureKeywords=[
+        /(?:BASE|base).*(?:玩法|WILD|wild)/,
+        /(?:RESPIN|respin|Respin).*玩法/,
+        /(?:FREE|free|Free)\s*(?:GAMES|games|Games|SPIN|spin)/,
+        /(?:转盘|WHEEL|wheel|Wheel).*玩法/,
+        /(?:收集|COLLECT|collect|升级|UPGRADE).*玩法/,
+        /(?:JACKPOT|jackpot|Jackpot).*玩法/,
+        /(?:PICK|pick|Pick).*玩法/,
+        /(?:LINK|link|Link)\s*(?:GAME|game|Game)/,
+        /Respin-buff/i,
+        /(?:super|SUPER|Super)\s*(?:转盘|WHEEL|RESPIN|FREE)/i
+    ];
+    var genericFeaturePattern=/^[\s]*(?:[\w\s]+玩法|[\w\s]*(?:RESPIN|FREE|WHEEL|PICK|LINK|JACKPOT|BONUS|SUPER)[\w\s]*)[：:]*\s*$/i;
+
+    var currentFeature=null;
+    var inTrigger=false;
+    var inRules=false;
+    var inEnd=false;
+    var skipPatterns=[/极限情况/,/断线重连/,/美术/,/设计要点/,/参考图标/,/分值/,/实体机/,/竞品/,/图标等级/,/图标设计/,/重点图标/];
+
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        if(!line.trim()) continue;
+
+        // Skip lines matching skip patterns
+        var shouldSkip=false;
+        skipPatterns.forEach(function(p){if(p.test(line))shouldSkip=true});
+        if(shouldSkip){
+            inTrigger=false;inRules=false;inEnd=false;
+            // Skip until next section
+            continue;
+        }
+
+        // Check if this line starts a new feature section
+        var isFeatureHeader=false;
+        featureKeywords.forEach(function(kw){if(kw.test(line))isFeatureHeader=true});
+        if(!isFeatureHeader&&genericFeaturePattern.test(line)&&line.length<40) isFeatureHeader=true;
+
+        // Special: "Respin-buff" pattern
+        if(/Respin-buff|buff\d/i.test(line)&&line.length<60){
+            // This is a sub-feature, append to current RESPIN feature or create new
+            if(currentFeature&&/respin/i.test(currentFeature.name)){
+                // Add as a rule separator within respin
+                currentFeature.rules.push('【'+line.replace(/[:：]\s*/,'').trim()+'】');
+                inRules=true;inTrigger=false;inEnd=false;
+                continue;
+            }else{
+                isFeatureHeader=true;
+            }
+        }
+
+        if(isFeatureHeader){
+            if(currentFeature) result.features.push(currentFeature);
+            var featureName=line.replace(/[:：]\s*$/,'').replace(/玩法说明/,'').trim();
+            currentFeature={name:featureName,trigger:'',rules:[],endCondition:''};
+            inTrigger=false;inRules=false;inEnd=false;
+            continue;
+        }
+
+        if(!currentFeature) continue;
+
+        // Detect sub-sections within a feature
+        if(/触发条件/.test(line)){inTrigger=true;inRules=false;inEnd=false;continue}
+        if(/玩法说明/.test(line)){inRules=true;inTrigger=false;inEnd=false;continue}
+        if(/结束条件/.test(line)){inEnd=true;inTrigger=false;inRules=false;continue}
+
+        // Collect content
+        var cleanLine=line.replace(/^\d+[、.\s]+/,'').trim();
+        if(!cleanLine) continue;
+
+        if(inTrigger){
+            currentFeature.trigger+=(currentFeature.trigger?'; ':'')+cleanLine;
+        }else if(inEnd){
+            currentFeature.endCondition+=(currentFeature.endCondition?'; ':'')+cleanLine;
+        }else if(inRules||currentFeature.name){
+            // Default: treat as rules
+            currentFeature.rules.push(cleanLine);
+        }
+    }
+    if(currentFeature) result.features.push(currentFeature);
+
+    // Remove features with no meaningful content
+    result.features=result.features.filter(function(f){
+        return f.rules.length>0||f.trigger;
+    });
+
+    return result;
 }
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
