@@ -277,10 +277,19 @@ async function aiParseAndGenerate(){
         structuredContent+='\n';
 
         if(structured.specialIcons.length){
-            structuredContent+='[SPECIAL ICONS]\n';
+            structuredContent+='[SPECIAL ICONS - Functional descriptions only]\n';
             structured.specialIcons.forEach(function(ic){
-                structuredContent+='- '+ic.name+': '+ic.desc+'\n';
+                structuredContent+='- '+ic.name+':';
+                if(ic.functions.length) structuredContent+=' '+ic.functions.join(' | ');
+                else structuredContent+=' (no functional description found)';
+                structuredContent+='\n';
             });
+            if(structured.iconRelations.length){
+                structuredContent+='Icon Relations: ';
+                structured.iconRelations.forEach(function(rel){
+                    structuredContent+=rel.icon+'->'+rel.target+' ';
+                });
+            }
             structuredContent+='\n';
         }
 
@@ -315,6 +324,7 @@ async function aiParseAndGenerate(){
         'RULE 2: Page 1 title fixed as: title="FEATURE", titleEn="FEATURE". Describes all special symbols.\n'+
         'RULE 3: NO "游戏规则/GAME RULES" page.\n'+
         'RULE 4: [WILD] split into separate items (substitution / reels / size / behavior).\n'+
+        '  WILD only substitutes for H and L symbols. WILD does NOT substitute for BONUS, LINK, or SCATTER.\n'+
         '  If WILD only does line-wins, no separate WILD feature page.\n'+
         'RULE 5: NO labels like "触发条件：" or "玩法说明：". Describe rules directly.\n'+
         'RULE 6: NO reconnection/disconnect rules. NO edge cases.\n'+
@@ -364,172 +374,251 @@ async function aiParseAndGenerate(){
 
 // ========== STRUCTURAL PARSER ==========
 function structuralParse(allLines){
-    var result={combo:'',jackpots:[],specialIcons:[],normalIcons:[],features:[]};
+    var result={combo:'',jackpots:[],specialIcons:[],normalIcons:[],features:[],iconRelations:[]};
     var fullText=allLines.join('\n');
 
-    // Extract combo/架构
+    // ---- 1. Basic info extraction ----
     var comboMatch=fullText.match(/玩法组合[：:]\s*(.+)/);
     if(comboMatch) result.combo=comboMatch[1].trim();
 
-    // Extract jackpots
-    var jpMatch=fullText.match(/jackpot[^，。\n]*(?:GRAND|MAJOR|MINOR|MINI)[^。\n]*/i);
-    if(jpMatch){
-        var jpText=jpMatch[0];
-        ['GRAND','MAJOR','MINOR','MINI'].forEach(function(j){if(jpText.toUpperCase().includes(j))result.jackpots.push(j)});
+    // Jackpots - ordered high to low
+    ['GRAND','MAJOR','MINOR','MINI'].forEach(function(j){
+        // Make sure MINI doesn't match MINOR
+        if(j==='MINI'){
+            if(/\bMINI\b/.test(fullText)&&!/MINI[A-Z]/.test(fullText.replace(/MINOR/g,''))) result.jackpots.push(j);
+        }else{
+            if(fullText.includes(j)) result.jackpots.push(j);
+        }
+    });
+
+    // ---- 2. Icon extraction with FUNCTIONAL descriptions ----
+    var designKeywords=['超框','底色','颜色','设计','外观','动画','表现','拟人','质感','特殊设计','无框','固有色'];
+    function isDesignDesc(text){
+        return designKeywords.some(function(k){return text.includes(k)})&&!text.includes('触发')&&!text.includes('替代')&&!text.includes('出现在')&&!text.includes('携带');
     }
-    if(!result.jackpots.length){
-        // Try Chinese pattern
-        if(fullText.includes('GRAND'))result.jackpots.push('GRAND');
-        if(fullText.includes('MAJOR'))result.jackpots.push('MAJOR');
-        if(fullText.includes('MINOR'))result.jackpots.push('MINOR');
-        if(fullText.includes('MINI')&&!fullText.match(/MINI[A-Z]/))result.jackpots.push('MINI');
+    function isFunctionalDesc(text){
+        var funcKeys=['触发','替代','代替','出现在','仅在','仅出现','携带','收集','落地','掉落','变为','可替代','参与连线','集满'];
+        return funcKeys.some(function(k){return text.includes(k)});
     }
 
-    // Extract special icons
     var iconSection=false;
-    var currentIcon=null;
-    var specialKeywords=['BONUS','SCATTER','WILD','LINK','wild','scatter','bonus','link'];
+    var iconHeaderLine=-1;
+    var iconNames=[];
+    var specialKeywords=['BONUS','SCATTER','WILD','LINK','wild','scatter','bonus','link','frame'];
+
     for(var i=0;i<allLines.length;i++){
         var line=allLines[i];
-        if(line.includes('特殊图标')||line.includes('特殊图标列表')){iconSection=true;continue}
-        if(line.includes('普通图标')){iconSection=false;
-            // Capture normal icons
-            var normMatch=line.match(/H\d|L\d/g);
-            if(normMatch) result.normalIcons=result.normalIcons.concat(normMatch);
-            // Scan next lines for H/L patterns
-            for(var ni=i+1;ni<Math.min(i+10,allLines.length);ni++){
-                var nline=allLines[ni];
-                if(nline.match(/H\d|L\d/)){
-                    var hls=nline.match(/[HL]\d/g);
-                    if(hls) result.normalIcons=result.normalIcons.concat(hls);
-                }
-            }
-            result.normalIcons=[...new Set(result.normalIcons)];
+        if(line.includes('特殊图标列表')||line.includes('特殊图标')){
+            iconSection=true;iconHeaderLine=i;
+            // Try to extract icon names from this line or next line
+            var nextLines=allLines.slice(i,Math.min(i+3,allLines.length)).join(' ');
+            specialKeywords.forEach(function(kw){
+                var regex=new RegExp(kw+'\\d*','gi');
+                var matches=nextLines.match(regex);
+                if(matches) matches.forEach(function(m){
+                    var upper=m.toUpperCase();
+                    if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
+                });
+            });
+            continue;
+        }
+        if(iconSection&&(line.includes('普通图标')||line.includes('图标等级'))){
+            iconSection=false;
             continue;
         }
         if(iconSection){
-            // Look for icon names in the line
+            // Extract more icon names
             specialKeywords.forEach(function(kw){
-                var regex=new RegExp(kw+'\\d*','gi');
+                var regex=new RegExp('\\b'+kw+'\\d*\\b','gi');
                 var matches=line.match(regex);
-                if(matches){
-                    matches.forEach(function(m){
-                        var existing=result.specialIcons.find(function(s){return s.name.toUpperCase()===m.toUpperCase()});
-                        if(!existing){
-                            result.specialIcons.push({name:m.toUpperCase(),desc:''});
-                        }
-                    });
-                }
+                if(matches) matches.forEach(function(m){
+                    var upper=m.toUpperCase();
+                    if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
+                });
             });
-            // Check for 设计要点 descriptions
-            if(line.includes('设计要点')||line.match(/^\d+[、.]/)){
-                var lastIcon=result.specialIcons[result.specialIcons.length-1];
-                if(lastIcon&&!lastIcon.desc) lastIcon.desc=line;
-                else if(lastIcon) lastIcon.desc+='; '+line;
-            }
         }
     }
 
-    // Also scan for icon descriptions from 设计要点 rows
+    // Build special icons with functional descriptions only
+    iconNames.forEach(function(name){
+        result.specialIcons.push({name:name,functions:[],relations:[]});
+    });
+
+    // Scan full document for functional descriptions of each icon
     for(var i=0;i<allLines.length;i++){
         var line=allLines[i];
-        specialKeywords.forEach(function(kw){
-            if(line.toUpperCase().includes(kw)&&(line.includes('设计要点')||line.includes('仅'))){
-                var iconName=kw.toUpperCase();
-                var numMatch=line.match(new RegExp(kw+'(\\d+)','i'));
-                if(numMatch) iconName=kw.toUpperCase()+numMatch[1];
-                var existing=result.specialIcons.find(function(s){return s.name===iconName});
-                if(existing&&!existing.desc) existing.desc=line;
-                else if(!existing) result.specialIcons.push({name:iconName,desc:line});
+        if(!line.trim()) continue;
+        // Skip pure design lines
+        if(isDesignDesc(line)&&!isFunctionalDesc(line)) continue;
+
+        result.specialIcons.forEach(function(icon){
+            var namePattern=new RegExp('\\[?'+icon.name+'\\]?','i');
+            if(namePattern.test(line)&&isFunctionalDesc(line)){
+                var cleanLine=line.replace(/^\d+[、.\s：:]+/,'').trim();
+                if(cleanLine&&icon.functions.indexOf(cleanLine)===-1){
+                    icon.functions.push(cleanLine);
+                }
             }
         });
+
+        // Detect icon relations (bonus1 -> 收集区1)
+        var relMatch=line.match(/(bonus\d+|BONUS\d+).*(?:收集|对应).*(收集区\d+|玩法\d+|RESPIN\d*)/i);
+        if(relMatch){
+            result.iconRelations.push({icon:relMatch[1].toUpperCase(),target:relMatch[2]});
+        }
     }
 
-    // Extract features - identify by section headers
-    var featureKeywords=[
-        /(?:BASE|base).*(?:玩法|WILD|wild)/,
-        /(?:RESPIN|respin|Respin).*玩法/,
-        /(?:FREE|free|Free)\s*(?:GAMES|games|Games|SPIN|spin)/,
-        /(?:转盘|WHEEL|wheel|Wheel).*玩法/,
-        /(?:收集|COLLECT|collect|升级|UPGRADE).*玩法/,
-        /(?:JACKPOT|jackpot|Jackpot).*玩法/,
-        /(?:PICK|pick|Pick).*玩法/,
-        /(?:LINK|link|Link)\s*(?:GAME|game|Game)/,
-        /Respin-buff/i,
-        /(?:super|SUPER|Super)\s*(?:转盘|WHEEL|RESPIN|FREE)/i
+    // Add WILD default substitution rule if not already captured
+    var wildIcon=result.specialIcons.find(function(ic){return ic.name==='WILD'||ic.name==='WILD1'});
+    if(wildIcon){
+        var hasSubRule=wildIcon.functions.some(function(f){return f.includes('替代')||f.includes('代替')||f.includes('substitut')});
+        if(!hasSubRule){
+            // Default: WILD substitutes for H and L symbols only
+            wildIcon.functions.unshift('[WILD]可替代所有H图标和L图标，不可替代[BONUS]、[LINK]、[SCATTER]');
+        }
+    }
+
+    // Normal icons
+    var normSet=new Set();
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        if(line.includes('普通图标')){
+            var hls=line.match(/[HL]\d/g);
+            if(hls) hls.forEach(function(h){normSet.add(h)});
+            for(var ni=i+1;ni<Math.min(i+5,allLines.length);ni++){
+                var nline=allLines[ni];
+                var nhls=nline.match(/[HL]\d/g);
+                if(nhls) nhls.forEach(function(h){normSet.add(h)});
+            }
+            break;
+        }
+    }
+    result.normalIcons=Array.from(normSet).sort();
+
+    // ---- 3. Feature extraction with buff separation ----
+    var featureHeaders=[
+        {pattern:/BASE.*(?:玩法|WILD|wild)/i, priority:1},
+        {pattern:/base下.*WILD|WILD.*变整列|整列wild/i, priority:2},
+        {pattern:/RESPIN.*玩法|RESPIN\s*GAME/i, priority:1},
+        {pattern:/Respin-buff\d|Respin.*buff/i, priority:2},
+        {pattern:/FREE\s*(?:GAMES?|SPIN)/i, priority:1},
+        {pattern:/转盘.*玩法|WHEEL/i, priority:1},
+        {pattern:/普通转盘/i, priority:2},
+        {pattern:/收集.*玩法|升级.*玩法|UPGRADE|COLLECT/i, priority:1},
+        {pattern:/JACKPOT.*玩法/i, priority:1},
+        {pattern:/PICK.*玩法/i, priority:1},
+        {pattern:/LINK\s*GAME/i, priority:1},
+        {pattern:/super.*转盘|SUPER.*WHEEL/i, priority:2},
+        {pattern:/super.*RESPIN|SUPER.*FREE/i, priority:2}
     ];
-    var genericFeaturePattern=/^[\s]*(?:[\w\s]+玩法|[\w\s]*(?:RESPIN|FREE|WHEEL|PICK|LINK|JACKPOT|BONUS|SUPER)[\w\s]*)[：:]*\s*$/i;
+
+    var skipPatterns=[/极限情况/,/断线重连/,/美术.*重点/,/美术设计/,/设计要点/,/参考图标/,/分值/,/实体机/,/竞品/,/图标等级/,/图标设计[：:]/,/重点图标/,/图标列表/,/普通图标/];
 
     var currentFeature=null;
     var inTrigger=false;
     var inRules=false;
     var inEnd=false;
-    var skipPatterns=[/极限情况/,/断线重连/,/美术/,/设计要点/,/参考图标/,/分值/,/实体机/,/竞品/,/图标等级/,/图标设计/,/重点图标/];
+    var inSkipBlock=false;
+    var wheelRewards=[];
 
     for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        if(!line.trim()) continue;
+        var line=allLines[i].trim();
+        if(!line) continue;
 
-        // Skip lines matching skip patterns
+        // Check skip patterns - enter skip mode
         var shouldSkip=false;
         skipPatterns.forEach(function(p){if(p.test(line))shouldSkip=true});
         if(shouldSkip){
-            inTrigger=false;inRules=false;inEnd=false;
-            // Skip until next section
+            inSkipBlock=true;inTrigger=false;inRules=false;inEnd=false;
             continue;
         }
 
-        // Check if this line starts a new feature section
-        var isFeatureHeader=false;
-        featureKeywords.forEach(function(kw){if(kw.test(line))isFeatureHeader=true});
-        if(!isFeatureHeader&&genericFeaturePattern.test(line)&&line.length<40) isFeatureHeader=true;
+        // Exit skip block when hitting a new feature header
+        var matchedHeader=null;
+        featureHeaders.forEach(function(fh){
+            if(fh.pattern.test(line)&&line.length<80) matchedHeader=fh;
+        });
 
-        // Special: "Respin-buff" pattern
-        if(/Respin-buff|buff\d/i.test(line)&&line.length<60){
-            // This is a sub-feature, append to current RESPIN feature or create new
-            if(currentFeature&&/respin/i.test(currentFeature.name)){
-                // Add as a rule separator within respin
-                currentFeature.rules.push('【'+line.replace(/[:：]\s*/,'').trim()+'】');
-                inRules=true;inTrigger=false;inEnd=false;
+        // Also detect generic feature headers
+        if(!matchedHeader&&/^[A-Za-z\u4e00-\u9fff\s]+(?:玩法|GAME)[：:\s]*$/i.test(line)&&line.length<50){
+            matchedHeader={pattern:null,priority:1};
+        }
+
+        if(matchedHeader){
+            inSkipBlock=false;
+            // Save previous feature
+            if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
+                result.features.push(currentFeature);
+            }
+            var featureName=line.replace(/[:：]\s*$/,'').replace(/^\s*玩法说明[：:]\s*/,'').trim();
+            currentFeature={name:featureName,trigger:'',rules:[],endCondition:'',wheelRewards:[]};
+            inTrigger=false;inRules=false;inEnd=false;
+            continue;
+        }
+
+        if(inSkipBlock) continue;
+        if(!currentFeature) continue;
+
+        // Sub-section detection
+        if(/^触发条件[：:]?\s*$/.test(line)||line==='触发条件：'){inTrigger=true;inRules=false;inEnd=false;continue}
+        if(/^玩法说明[：:]?\s*$/.test(line)||line==='玩法说明：'){inRules=true;inTrigger=false;inEnd=false;continue}
+        if(/^结束条件[：:]?\s*$/.test(line)||line==='结束条件：'){inEnd=true;inTrigger=false;inRules=false;continue}
+
+        // Detect "Respin-buff" as a NEW separate feature
+        var buffMatch=line.match(/^Respin-buff(\d+)[：:]\s*(.+)/i);
+        if(buffMatch){
+            // Save current feature first
+            if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
+                result.features.push(currentFeature);
+            }
+            currentFeature={name:'RESPIN - BUFF'+buffMatch[1]+' ('+buffMatch[2].trim()+')',trigger:'',rules:[],endCondition:'',wheelRewards:[]};
+            inRules=true;inTrigger=false;inEnd=false;
+            continue;
+        }
+
+        // Detect wheel reward list items (e.g. "2X 双棋盘" or "GRAND")
+        if(currentFeature.name.includes('转盘')||currentFeature.name.includes('WHEEL')){
+            if(/^\d+X\s|^[A-Z]+\s*$/.test(line)||(line.match(/[+＋]/)&&line.match(/[XxＸ]/i))){
+                currentFeature.wheelRewards.push(line);
                 continue;
-            }else{
-                isFeatureHeader=true;
             }
         }
 
-        if(isFeatureHeader){
-            if(currentFeature) result.features.push(currentFeature);
-            var featureName=line.replace(/[:：]\s*$/,'').replace(/玩法说明/,'').trim();
-            currentFeature={name:featureName,trigger:'',rules:[],endCondition:''};
-            inTrigger=false;inRules=false;inEnd=false;
-            continue;
-        }
-
-        if(!currentFeature) continue;
-
-        // Detect sub-sections within a feature
-        if(/触发条件/.test(line)){inTrigger=true;inRules=false;inEnd=false;continue}
-        if(/玩法说明/.test(line)){inRules=true;inTrigger=false;inEnd=false;continue}
-        if(/结束条件/.test(line)){inEnd=true;inTrigger=false;inRules=false;continue}
-
-        // Collect content
-        var cleanLine=line.replace(/^\d+[、.\s]+/,'').trim();
+        // Clean line - remove leading numbers/bullets
+        var cleanLine=line.replace(/^[\d]+[、.\s）)]+/,'').trim();
         if(!cleanLine) continue;
 
+        // Filter out pure design descriptions
+        if(isDesignDesc(cleanLine)&&!isFunctionalDesc(cleanLine)) continue;
+
+        // Collect into appropriate section
         if(inTrigger){
-            currentFeature.trigger+=(currentFeature.trigger?'; ':'')+cleanLine;
+            if(currentFeature.trigger) currentFeature.trigger+='\n'+cleanLine;
+            else currentFeature.trigger=cleanLine;
         }else if(inEnd){
-            currentFeature.endCondition+=(currentFeature.endCondition?'; ':'')+cleanLine;
-        }else if(inRules||currentFeature.name){
-            // Default: treat as rules
+            if(currentFeature.endCondition) currentFeature.endCondition+='\n'+cleanLine;
+            else currentFeature.endCondition=cleanLine;
+        }else{
+            // Default: rules (also when inRules=true or just after header)
             currentFeature.rules.push(cleanLine);
         }
     }
-    if(currentFeature) result.features.push(currentFeature);
+    // Push last feature
+    if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
+        result.features.push(currentFeature);
+    }
 
-    // Remove features with no meaningful content
+    // ---- 4. Post-processing ----
+    // Remove empty features
     result.features=result.features.filter(function(f){
-        return f.rules.length>0||f.trigger;
+        return f.rules.length>0||f.trigger||f.wheelRewards.length>0;
+    });
+
+    // Merge wheel rewards into rules for AI prompt
+    result.features.forEach(function(f){
+        if(f.wheelRewards.length>0){
+            f.rules.push('转盘奖励列表：'+f.wheelRewards.join(' | '));
+        }
     });
 
     return result;
