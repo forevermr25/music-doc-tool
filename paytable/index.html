@@ -413,6 +413,11 @@ async function aiParseAndGenerate(){
         'RULE 8: Output order MUST match document order. Never rearrange feature pages.\n'+
         '  FEATURE first, PAYS second, then features in document order, PAY LINES last.\n\n'+
         paylineInstruction+'\n'+
+        '=== FINAL WARNINGS ===\n'+
+        '- NEVER use "等", "etc.", "and more", "various" to summarize. List ALL specific items.\n'+
+        '- You MUST generate one page for EVERY feature listed in [FEATURES] section above. Count them.\n'+
+        '- If the document has N features, you must output N feature pages (plus FEATURE, PAYS, PAY LINES).\n'+
+        '- Missing a feature page is a critical failure.\n\n'+
         '=== FORMAT ===\n'+
         'Return ONLY valid JSON:\n'+
         '{"pages":[{"title":"中文","titleEn":"ENGLISH FEATURE NAME","items":[{"cn":"* 中文","en":"* English"}]}]}';
@@ -448,9 +453,19 @@ async function aiParseAndGenerate(){
                 });
             }
             paytableData.pages=result.pages;
+            // Post-process: check if AI missed features
+            var featurePageCount=result.pages.filter(function(p){
+                var t=(p.titleEn||'').toUpperCase();
+                return t!=='FEATURE'&&t!=='PAYS'&&!t.includes('PAY LINE');
+            }).length;
+            var expectedFeatures=structured.features.length;
+            var warningMsg='';
+            if(featurePageCount<expectedFeatures){
+                warningMsg=' ⚠️ 注意：识别到'+expectedFeatures+'个玩法但只生成了'+featurePageCount+'个玩法页，可能有遗漏，建议重新生成。';
+            }
             renderIconUploadArea();
             renderPreview();
-            st.textContent='✅ 生成完成！（识别到'+structured.features.length+'个玩法）';st.className='ai-status done';
+            st.textContent='✅ 生成完成！（识别到'+expectedFeatures+'个玩法，生成'+featurePageCount+'个玩法页）'+warningMsg;st.className='ai-status done';
             showToast('✨ Paytable内容已生成');
             goStep(2);
         }else{st.textContent='⚠️ AI返回格式异常，请重试';st.className='ai-status error'}
