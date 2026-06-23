@@ -489,13 +489,18 @@ function structuralParse(allLines){
     for(var i=0;i<allLines.length;i++){
         var line=allLines[i];
         if(!line.trim()) continue;
-        // Skip pure design lines
-        if(isDesignDesc(line)&&!isFunctionalDesc(line)) continue;
 
         result.specialIcons.forEach(function(icon){
-            var namePattern=new RegExp('\\[?'+icon.name+'\\]?','i');
-            if(namePattern.test(line)&&isFunctionalDesc(line)){
+            // Match icon name in line (case insensitive, with or without brackets)
+            var nameVariants=[icon.name, icon.name.toLowerCase()];
+            var found=nameVariants.some(function(v){return line.includes(v)});
+            if(!found) return;
+
+            // Accept functional descriptions OR trigger-related lines
+            if(isFunctionalDesc(line)||/触发|trigger/i.test(line)){
                 var cleanLine=line.replace(/^\d+[、.\s：:]+/,'').trim();
+                // Skip pure design lines
+                if(isDesignDesc(cleanLine)&&!isFunctionalDesc(cleanLine)) return;
                 if(cleanLine&&icon.functions.indexOf(cleanLine)===-1){
                     icon.functions.push(cleanLine);
                 }
@@ -509,13 +514,51 @@ function structuralParse(allLines){
         }
     }
 
+    // Also scan feature triggers to find SCATTER/BONUS trigger rules
+    // This catches cases like "3个及以上SCATTER触发转盘" in feature sections
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        if(!line.trim()) continue;
+        // Look for trigger patterns mentioning special icons
+        result.specialIcons.forEach(function(icon){
+            var nameLC=icon.name.toLowerCase();
+            var lineLC=line.toLowerCase();
+            if(lineLC.includes(nameLC)&&(/个.*触发|触发.*玩法|or more.*trigger/i.test(line))){
+                var cleanLine=line.replace(/^\d+[、.\s：:]+/,'').trim();
+                if(cleanLine&&icon.functions.indexOf(cleanLine)===-1){
+                    icon.functions.push(cleanLine);
+                }
+            }
+        });
+    }
+
     // Add WILD default substitution rule if not already captured
-    var wildIcon=result.specialIcons.find(function(ic){return ic.name==='WILD'||ic.name==='WILD1'});
+    var wildIcon=result.specialIcons.find(function(ic){return ic.name==='WILD'||ic.name.includes('WILD')});
     if(wildIcon){
-        var hasSubRule=wildIcon.functions.some(function(f){return f.includes('替代')||f.includes('代替')||f.includes('substitut')});
+        var hasSubRule=wildIcon.functions.some(function(f){return f.includes('替代')||f.includes('代替')||f.includes('substitut')||f.includes('替换')});
         if(!hasSubRule){
-            // Default: WILD substitutes for H and L symbols only
-            wildIcon.functions.unshift('[WILD]可替代所有H图标和L图标，不可替代[BONUS]、[LINK]、[SCATTER]');
+            // Build exclusion list from all non-WILD special icons
+            var excludeList=result.specialIcons.filter(function(ic){return!ic.name.includes('WILD')}).map(function(ic){return'['+ic.name+']'});
+            if(excludeList.length){
+                wildIcon.functions.unshift('[WILD]可替代除'+excludeList.join('、')+'外的所有图标');
+            }else{
+                wildIcon.functions.unshift('[WILD]可替代所有H图标和L图标');
+            }
+        }
+        // Add reel info if found in functions or design notes
+        var hasReelInfo=wildIcon.functions.some(function(f){return/\d.*列|reel/i.test(f)});
+        if(!hasReelInfo){
+            // Scan for wild reel info in all lines
+            for(var wi=0;wi<allLines.length;wi++){
+                var wline=allLines[wi].toLowerCase();
+                if(wline.includes('wild')&&(/[2345].*列|2.*3.*4.*5/i.test(allLines[wi]))){
+                    var reelLine=allLines[wi].replace(/^\d+[、.\s：:]+/,'').trim();
+                    if(reelLine&&wildIcon.functions.indexOf(reelLine)===-1){
+                        wildIcon.functions.push(reelLine);
+                        break;
+                    }
+                }
+            }
         }
     }
 
