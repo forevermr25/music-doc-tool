@@ -323,6 +323,10 @@ async function aiParseAndGenerate(){
                     structuredContent+='Rules:\n';
                     feat.rules.forEach(function(r){structuredContent+='  '+r+'\n'});
                 }
+                if(feat.wheelRewards&&feat.wheelRewards.length){
+                    structuredContent+='Wheel Rewards (list ALL of these specifically):\n';
+                    feat.wheelRewards.forEach(function(wr){structuredContent+='  '+wr+'\n'});
+                }
                 if(feat.endCondition) structuredContent+='End: '+feat.endCondition+'\n';
             });
         }
@@ -363,11 +367,17 @@ async function aiParseAndGenerate(){
         '  - FREE GAMES page (if scatter triggers free spins)\n'+
         '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
         '  - BUFF RESPIN page (if collection triggers enhanced respin) OR describe buffs within RESPIN page\n'+
-        '  - WHEEL page (if there is a wheel/spinner feature)\n\n'+
-        'RULE 7: Buff descriptions must use the ORIGINAL names and specific mechanics from the doc:\n'+
+        '  - WHEEL page (if there is a wheel/spinner feature)\n'+
+        '  - SUPER WHEEL / UPGRADE WHEEL page (if there is an upgraded version of the wheel)\n'+
+        '  - If doc mentions a "收集玩法" or "升级转盘" or "super转盘", it MUST be a separate page\n'+
+        '  - WHEEL rewards must list SPECIFIC items from the doc (e.g. "2X双棋盘", "3X加次数+加钱", "GRAND", "MINI")\n'+
+        '  - Do NOT generalize wheel rewards as "various bonuses". List them specifically.\n\n'+
+        'RULE 7: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
+        '  BAD: "* 转盘奖励列表包含双倍奖金、增加次数等选项" (too vague!)\n'+
+        '  GOOD: "* 转盘奖励包括：2X双棋盘、2X加次数、2X加钱、3X双棋盘、GRAND、MAJOR、MINOR、MINI"\n'+
         '  BAD: "* Extra buff → adds bonus symbols"\n'+
         '  GOOD: "* [BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n'+
-        '  Keep each buff to 1-2 sentences but include the SPECIFIC mechanic, not generic description.\n\n'+
+        '  Each buff/reward = specific mechanic from the doc, not generic summary.\n\n'+
         'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
         '=== PAGE STRUCTURE ===\n\n'+
         'PAGE 1: FEATURE / FEATURE (required)\n'+
