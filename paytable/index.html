@@ -308,6 +308,9 @@ async function aiParseAndGenerate(){
             structured.normalIcons.forEach(function(ic){
                 structuredContent+='- '+ic+'\n';
             });
+            if(!structured.hasPayoutValues){
+                structuredContent+='** PAYOUT VALUES: NOT FOUND IN DOCUMENT. All values are "/" or empty. You MUST output "数值待定" / "Values TBD" for ALL symbols. Do NOT invent values. **\n';
+            }
             structuredContent+='\n';
         }
 
@@ -399,6 +402,18 @@ async function aiParseAndGenerate(){
                         {cn:'* 赢钱额乘以投注倍数',en:'* Wins are multiplied by the bet multiplier.'}
                     ]});
                 }
+            }
+            // Post-process: force "数值待定" on PAYS page if no payout values in document
+            if(!structured.hasPayoutValues){
+                result.pages.forEach(function(p){
+                    if((p.titleEn||'').toUpperCase()==='PAYS'||(p.title||'').includes('赔付')){
+                        var correctItems=[];
+                        structured.normalIcons.forEach(function(ic){
+                            correctItems.push({cn:'* '+ic+': 数值待定',en:'* '+ic+': Values TBD'});
+                        });
+                        if(correctItems.length) p.items=correctItems;
+                    }
+                });
             }
             paytableData.pages=result.pages;
             renderIconUploadArea();
@@ -607,6 +622,26 @@ function structuralParse(allLines){
         }
     }
     result.normalIcons=Array.from(normSet).sort();
+
+    // ---- Detect if payout values exist in document ----
+    result.hasPayoutValues=false;
+    result.payoutData=[];
+    for(var i=0;i<allLines.length;i++){
+        var line=allLines[i];
+        // Look for payout patterns like "5 - 120" or "5-120" or specific value rows
+        if(/\d\s*[-–]\s*\d/.test(line)&&/[HL]\d|H\d|L\d/.test(allLines[Math.max(0,i-3)]||'')){
+            result.hasPayoutValues=true;
+            break;
+        }
+        // Also check for "分值" rows with actual numbers
+        if(line.includes('分值')&&i+1<allLines.length){
+            var nextLine=allLines[i+1]||'';
+            if(/\d+\s*[-–]\s*\d+/.test(nextLine)){
+                result.hasPayoutValues=true;
+                break;
+            }
+        }
+    }
 
     // ---- 3. Feature extraction with buff separation ----
     var featureHeaders=[
