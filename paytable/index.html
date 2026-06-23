@@ -80,8 +80,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
 <p class="subtitle">导入玩法文档 · AI智能解析 · 中英对照 · 一键导出</p>
 <div class="step-nav">
 <button class="step-btn active" onclick="goStep(1)">① 导入文档</button>
-<button class="step-btn" onclick="goStep(2)">② 编辑内容</button>
-<button class="step-btn" onclick="goStep(3)">③ 预览导出</button>
+<button class="step-btn" onclick="goStep(2)">② 预览导出</button>
 </div>
 
 <div class="step-panel active" id="step1">
@@ -116,15 +115,6 @@ select option{background:#1a1a2e;color:#e0e0e0}
 
 <div class="step-panel" id="step2">
 <div class="card">
-<div class="card-title">📝 Paytable内容编辑</div>
-<div class="info-tip">以下内容由AI根据玩法文档生成，左侧中文/右侧英文翻译。你可以直接编辑修改。</div>
-<div id="editArea"></div>
-<button class="btn-add" onclick="addFeaturePage()" style="margin-top:12px">+ 添加新页面</button>
-</div>
-</div>
-
-<div class="step-panel" id="step3">
-<div class="card">
 <div class="card-title">👁️ 文档预览</div>
 <div class="preview-wrap" id="previewWrap"></div>
 </div>
@@ -141,7 +131,7 @@ var parsedRaw=null;
 function goStep(n){
     document.querySelectorAll('.step-btn').forEach(function(b,i){b.classList.toggle('active',i===n-1)});
     document.querySelectorAll('.step-panel').forEach(function(p,i){p.classList.toggle('active',i===n-1)});
-    if(n===3)renderPreview();
+    if(n===2)renderPreview();
 }
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
 
@@ -320,8 +310,8 @@ async function aiParseAndGenerate(){
         try{result=JSON.parse(raw)}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)result=JSON.parse(m[0])}
         if(result&&result.pages){
             paytableData.pages=result.pages;
-            renderEditArea();
-            st.textContent='✅ 解析完成！请在"编辑内容"步骤中检查和修改';st.className='ai-status done';
+            renderPreview();
+            st.textContent='✅ 生成完成！';st.className='ai-status done';
             showToast('✨ Paytable内容已生成');
             goStep(2);
         }else{st.textContent='⚠️ AI返回格式异常，请重试';st.className='ai-status error'}
@@ -330,32 +320,6 @@ async function aiParseAndGenerate(){
 }
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-function renderEditArea(){
-    var html='';
-    paytableData.pages.forEach(function(page,pi){
-        html+='<div class="page-section"><div class="page-header">';
-        html+='<span>'+(page.title||'第'+(pi+1)+'页')+' / '+(page.titleEn||'Page '+(pi+1))+'</span>';
-        html+='<button class="btn-danger" onclick="event.stopPropagation();removePage('+pi+')">删除</button></div>';
-        html+='<div class="page-content" id="pc_'+pi+'">';
-        page.items.forEach(function(item,ii){
-            html+='<div class="feature-block"><div class="ft-title">条目 '+(ii+1);
-            html+=' <button class="btn-danger" onclick="removeItem('+pi+','+ii+')" style="margin-left:8px">删</button></div>';
-            html+='<textarea class="editable-area" rows="2" onchange="updateItem('+pi+','+ii+',\'cn\',this.value)" placeholder="中文内容">'+escHtml(item.cn||'')+'</textarea>';
-            html+='<textarea class="editable-area" rows="2" style="margin-top:4px;color:#8892b0;font-style:italic" onchange="updateItem('+pi+','+ii+',\'en\',this.value)" placeholder="English content">'+escHtml(item.en||'')+'</textarea>';
-            html+='</div>';
-        });
-        html+='<button class="btn-add" onclick="addItem('+pi+')">+ 添加条目</button>';
-        html+='</div></div>';
-    });
-    document.getElementById('editArea').innerHTML=html;
-}
-
-function removePage(pi){paytableData.pages.splice(pi,1);renderEditArea()}
-function removeItem(pi,ii){paytableData.pages[pi].items.splice(ii,1);renderEditArea()}
-function updateItem(pi,ii,field,val){paytableData.pages[pi].items[ii][field]=val}
-function addItem(pi){paytableData.pages[pi].items.push({cn:'',en:''});renderEditArea()}
-function addFeaturePage(){paytableData.pages.push({title:'新页面',titleEn:'New Page',items:[{cn:'',en:''}]});renderEditArea()}
 
 function renderPreview(){
     var html='';
