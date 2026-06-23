@@ -232,23 +232,46 @@ async function aiParseAndGenerate(){
     var st=document.getElementById('aiStatus');
     try{
         st.textContent='🔄 正在分析玩法文档内容...';st.className='ai-status generating';
-        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,3000);
-        var prompt='你是一名老虎机(slot machine)游戏paytable文档策划专家。请根据以下玩法文档内容，生成paytable需求文档的结构化内容。\n\n'+
-        '关卡信息：品牌='+brand+'，名称='+name+(board?'，棋盘='+board:'')+(lines?'，线数='+lines:'')+'\n\n'+
-        '玩法文档摘要：\n'+excerpt+'\n\n'+
-        '请按照paytable文档的标准格式输出，包含以下页面：\n'+
-        '1. FEATURE页：描述所有特殊图标(WILD, SCATTER, BONUS等)的功能规则，用"* "开头\n'+
-        '2. PAYS页：描述所有图标的赔付值(高分H1-H4和低分L1-L5)，格式为"5-数值/4-数值/3-数值"\n'+
-        '3. 各Feature玩法详情页(如FREE GAMES, BONUS GAME, RESPIN, WHEEL等)\n'+
-        '4. PAY LINES页：线数和ways信息\n\n'+
-        '【重要格式要求】\n'+
-        '- 每条规则用"* "开头\n'+
-        '- 图标名用[方括号]标记，如[WILD],[SCATTER],[BONUS]\n'+
-        '- 每条规则同时给出中文和英文翻译\n'+
-        '- 英文翻译专业简洁，符合slot game paytable行业标准用语\n'+
-        '- 使用appears on/substitutes for/triggers等标准paytable术语\n\n'+
-        '严格返回JSON(不要markdown代码块)：\n'+
-        '{"pages":[{"title":"中文页面标题","titleEn":"English Page Title","items":[{"cn":"中文内容","en":"English content"}]}]}';
+        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,5000);
+        var prompt='Act as a slots game planner and paytable document expert. Generate a structured paytable document based on the gameplay document below. Use professional slots terminology to ensure short, clarity and readability.\n\n'+
+        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Lines='+lines:'')+'\n\n'+
+        'Gameplay Document Content:\n'+excerpt+'\n\n'+
+        '【OUTPUT STRUCTURE - Each feature MUST be a separate page with its own title】\n'+
+        'Page 1: GAME RULES (总则/游戏规则)\n'+
+        '  - Grid layout, bet lines, general win rules\n'+
+        '  - Example: "All symbols pay from left to right on adjacent reels starting from the leftmost reel."\n\n'+
+        'Page 2: FEATURE (特殊图标功能)\n'+
+        '  - Each special symbol (WILD, SCATTER, BONUS) with its function\n'+
+        '  - WILD: "This symbol is WILD and substitutes for all symbols except [SCATTER/BONUS]."\n'+
+        '  - SCATTER: "3 or more [SCATTER] scattered anywhere triggers Free Games."\n'+
+        '  - BONUS: "This is the BONUS symbol. It appears on all reels."\n\n'+
+        'Page 3: PAYS (赔付表)\n'+
+        '  - All symbol payouts in format: "8 - value / 7 - value / 6 - value / 5 - value / 4 - value / 3 - value"\n'+
+        '  - Group by High (H1-H5) and Low (L1-L6) symbols\n\n'+
+        'Page 4+: Each gameplay feature gets its OWN separate page:\n'+
+        '  - FREE GAMES / RESPIN / LINK GAME / WHEEL / PICK / JACKPOT etc.\n'+
+        '  - Each page must have a clear FEATURE NAME as title\n'+
+        '  - Describe trigger conditions, gameplay mechanics, end conditions in detail\n'+
+        '  - Include buff effects, collection mechanics, multiplier rules\n'+
+        '  - Be specific about reconnection rules and edge cases\n\n'+
+        'Last Page: PAY LINES (赔付线)\n'+
+        '  - Line count and configuration\n\n'+
+        '【LANGUAGE STYLE】\n'+
+        '- Chinese: 简洁明确的玩法描述，从玩法文档中提取关键规则\n'+
+        '- English: Professional slot game paytable language - SHORT sentences, use:\n'+
+        '  * "appears on", "substitutes for", "triggers", "scattered anywhere"\n'+
+        '  * "awards X free spins", "resets to X", "locks in place"\n'+
+        '  * "multiplier applies to", "collects", "upgrades to"\n'+
+        '  * Avoid verbose explanations - keep it concise like real paytables\n\n'+
+        '【DETAIL REQUIREMENTS】\n'+
+        '- Extract ALL gameplay rules from the document for each feature\n'+
+        '- Include trigger conditions (触发条件)\n'+
+        '- Include gameplay mechanics (玩法说明) with ALL details\n'+
+        '- Include end conditions (结束条件)\n'+
+        '- Include edge cases and limits (极限情况/断线重连)\n'+
+        '- Each bullet point "* " is one rule, be thorough\n\n'+
+        '【FORMAT】Each item uses "* " prefix. Symbol names in [brackets].\n'+
+        'Return strict JSON (no markdown): {"pages":[{"title":"中文页面标题","titleEn":"ENGLISH PAGE TITLE","items":[{"cn":"* 中文规则描述","en":"* English rule description"}]}]}';
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
         var raw=await callAI(prompt);
         var result=null;
