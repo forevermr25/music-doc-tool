@@ -232,46 +232,64 @@ async function aiParseAndGenerate(){
     var st=document.getElementById('aiStatus');
     try{
         st.textContent='🔄 正在分析玩法文档内容...';st.className='ai-status generating';
-        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,5000);
+        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,6000);
         var prompt='Act as a slots game planner and paytable document expert. Generate a structured paytable document based on the gameplay document below. Use professional slots terminology to ensure short, clarity and readability.\n\n'+
-        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Lines='+lines:'')+'\n\n'+
+        'Game Info: Brand='+brand+', Name='+name+(board?', Grid='+board:'')+(lines?', Lines/Ways='+lines:'')+'\n\n'+
         'Gameplay Document Content:\n'+excerpt+'\n\n'+
-        '【OUTPUT STRUCTURE - Each feature MUST be a separate page with its own title】\n'+
-        'Page 1: GAME RULES (总则/游戏规则)\n'+
-        '  - Grid layout, bet lines, general win rules\n'+
-        '  - Example: "All symbols pay from left to right on adjacent reels starting from the leftmost reel."\n\n'+
-        'Page 2: FEATURE (特殊图标功能)\n'+
-        '  - Each special symbol (WILD, SCATTER, BONUS) with its function\n'+
-        '  - WILD: "This symbol is WILD and substitutes for all symbols except [SCATTER/BONUS]."\n'+
-        '  - SCATTER: "3 or more [SCATTER] scattered anywhere triggers Free Games."\n'+
-        '  - BONUS: "This is the BONUS symbol. It appears on all reels."\n\n'+
-        'Page 3: PAYS (赔付表)\n'+
-        '  - All symbol payouts in format: "8 - value / 7 - value / 6 - value / 5 - value / 4 - value / 3 - value"\n'+
-        '  - Group by High (H1-H5) and Low (L1-L6) symbols\n\n'+
-        'Page 4+: Each gameplay feature gets its OWN separate page:\n'+
-        '  - FREE GAMES / RESPIN / LINK GAME / WHEEL / PICK / JACKPOT etc.\n'+
-        '  - Each page must have a clear FEATURE NAME as title\n'+
-        '  - Describe trigger conditions, gameplay mechanics, end conditions in detail\n'+
-        '  - Include buff effects, collection mechanics, multiplier rules\n'+
-        '  - Be specific about reconnection rules and edge cases\n\n'+
-        'Last Page: PAY LINES (赔付线)\n'+
-        '  - Line count and configuration\n\n'+
-        '【LANGUAGE STYLE】\n'+
-        '- Chinese: 简洁明确的玩法描述，从玩法文档中提取关键规则\n'+
-        '- English: Professional slot game paytable language - SHORT sentences, use:\n'+
-        '  * "appears on", "substitutes for", "triggers", "scattered anywhere"\n'+
-        '  * "awards X free spins", "resets to X", "locks in place"\n'+
-        '  * "multiplier applies to", "collects", "upgrades to"\n'+
-        '  * Avoid verbose explanations - keep it concise like real paytables\n\n'+
-        '【DETAIL REQUIREMENTS】\n'+
-        '- Extract ALL gameplay rules from the document for each feature\n'+
-        '- Include trigger conditions (触发条件)\n'+
-        '- Include gameplay mechanics (玩法说明) with ALL details\n'+
-        '- Include end conditions (结束条件)\n'+
-        '- Include edge cases and limits (极限情况/断线重连)\n'+
-        '- Each bullet point "* " is one rule, be thorough\n\n'+
-        '【FORMAT】Each item uses "* " prefix. Symbol names in [brackets].\n'+
-        'Return strict JSON (no markdown): {"pages":[{"title":"中文页面标题","titleEn":"ENGLISH PAGE TITLE","items":[{"cn":"* 中文规则描述","en":"* English rule description"}]}]}';
+        '=== OUTPUT RULES ===\n'+
+        'Generate a COMPLETE paytable document. Each feature/section is its OWN page.\n'+
+        'The output MUST follow real slot machine paytable format (like NetEnt, Pragmatic Play, L&W).\n\n'+
+        '=== PAGE STRUCTURE (generate ALL applicable pages) ===\n\n'+
+        'PAGE 1: GAME RULES / 游戏规则\n'+
+        'Content rules:\n'+
+        '* Grid size and basic win direction (e.g. "3-reel, 5-column video slot with 243 ways to win")\n'+
+        '* All symbols pay left to right on adjacent reels\n'+
+        '* Jackpot tiers if applicable (list all: GRAND, MAJOR, MINOR, MINI)\n'+
+        '* Collection area overview if applicable\n\n'+
+        'PAGE 2: FEATURE / 特殊图标\n'+
+        'Content rules - describe EACH special symbol:\n'+
+        '* [WILD] - substitution rules, appearance rules, special behavior (e.g. expanding, sticky)\n'+
+        '* [SCATTER] - trigger conditions, where it appears\n'+
+        '* [BONUS1/2/3] - what each triggers, appearance on reels, carried values\n'+
+        '* [LINK] - where it appears, what it carries\n'+
+        '* Use format: "* [SYMBOL_NAME] description of function"\n\n'+
+        'PAGE 3: PAYS / 赔付表\n'+
+        'Content rules:\n'+
+        '* List all paying symbols with their payouts\n'+
+        '* Format: "H1: 5-value 4-value 3-value" (use placeholder values if not in doc)\n'+
+        '* Separate High symbols (H1-H5) and Low symbols (L1-L5/L6)\n'+
+        '* Note: if doc says no specific values, write "数值待定/Values TBD"\n\n'+
+        'PAGE 4+: EACH FEATURE GETS ITS OWN PAGE\n'+
+        'Generate a SEPARATE page for EACH of these features found in the document:\n'+
+        '- BASE GAME WILD feature (if has special wild behavior)\n'+
+        '- RESPIN / LINK GAME (with ALL buff variants as sub-sections)\n'+
+        '- FREE GAMES / FREE SPINS\n'+
+        '- WHEEL / SPINNER feature\n'+
+        '- COLLECTION / UPGRADE feature\n'+
+        '- JACKPOT feature\n'+
+        '- Any other unique feature\n\n'+
+        'For EACH feature page, include ALL of these sections:\n'+
+        '* TRIGGER: How the feature is triggered (be specific with symbol counts)\n'+
+        '* RULES: Step-by-step gameplay mechanics, extracted DIRECTLY from the gameplay doc\n'+
+        '* BUFF/VARIANT details: If there are multiple modes (buff1, buff2, buff3), describe EACH\n'+
+        '* END CONDITION: When/how the feature ends\n'+
+        '* RECONNECTION: Disconnect/reconnect behavior\n\n'+
+        'LAST PAGE: PAY LINES / 赔付线\n'+
+        '* Number of lines/ways\n'+
+        '* Configuration note\n\n'+
+        '=== LANGUAGE STYLE (CRITICAL) ===\n'+
+        'Chinese (cn field): 从玩法文档直接提取关键规则，保持原文的描述方式，简洁明确\n'+
+        'English (en field): Professional paytable English - CONCISE like real paytables:\n'+
+        '  "appears on all reels" / "substitutes for all symbols except [X]"\n'+
+        '  "3 or more scattered anywhere triggers..." / "awards X spins"\n'+
+        '  "locks in place" / "resets spin count to X" / "collects all [X] values"\n'+
+        '  "when all positions filled, awards GRAND" / "multiplier applies to total win"\n'+
+        '  Keep each bullet to 1-2 SHORT sentences maximum.\n\n'+
+        '=== FORMAT ===\n'+
+        'Each item: "* " prefix for bullets. Symbol names in [BRACKETS].\n'+
+        'Return ONLY valid JSON (absolutely no markdown, no ```): \n'+
+        '{"pages":[{"title":"中文标题","titleEn":"ENGLISH TITLE","items":[{"cn":"* 中文描述","en":"* English description"}]}]}\n\n'+
+        'IMPORTANT: Generate at least 6-10 pages covering ALL features thoroughly. Do NOT merge features into one page.';
         st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
         var raw=await callAI(prompt);
         var result=null;
@@ -316,17 +334,24 @@ function addItem(pi){paytableData.pages[pi].items.push({cn:'',en:''});renderEdit
 function addFeaturePage(){paytableData.pages.push({title:'新页面',titleEn:'New Page',items:[{cn:'',en:''}]});renderEditArea()}
 
 function renderPreview(){
-    var html='<table class="preview-table"><thead><tr><th style="width:50px">页码</th><th>中文内容</th><th>英文翻译 (Translation)</th></tr></thead><tbody>';
+    var html='';
     paytableData.pages.forEach(function(page,pi){
-        html+='<tr style="background:rgba(247,151,30,.06)"><td style="font-weight:700;color:#ffd200">'+(pi+1)+'</td>';
-        html+='<td style="font-weight:700;color:#ffd200">'+(page.title||'')+'</td>';
-        html+='<td style="font-weight:700;color:#ffd200;font-style:italic">'+(page.titleEn||'')+'</td></tr>';
+        html+='<div style="margin-bottom:16px;border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden">';
+        html+='<div style="padding:10px 14px;background:rgba(247,151,30,.1);display:flex;justify-content:space-between;align-items:center">';
+        html+='<span style="font-weight:700;color:#ffd200;font-size:.9rem">第'+(pi+1)+'页 / Page '+(pi+1)+'</span>';
+        html+='</div>';
+        html+='<div style="padding:12px 14px;background:rgba(255,255,255,.02);text-align:center;border-bottom:1px solid rgba(255,255,255,.06)">';
+        html+='<div style="font-weight:700;color:#ccd6f6;font-size:.95rem">'+(page.title||'')+'</div>';
+        html+='<div style="font-weight:600;color:#8892b0;font-size:.85rem;font-style:italic;margin-top:2px">'+(page.titleEn||'')+'</div>';
+        html+='</div>';
+        html+='<table class="preview-table" style="margin:0"><thead><tr><th style="width:50%">中文内容</th><th style="width:50%">English Translation</th></tr></thead><tbody>';
         page.items.forEach(function(item){
-            html+='<tr><td></td><td style="color:#e0e0e0;white-space:pre-wrap">'+escHtml(item.cn||'')+'</td>';
-            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic">'+escHtml(item.en||'')+'</td></tr>';
+            html+='<tr><td style="color:#e0e0e0;white-space:pre-wrap;font-size:.82rem;line-height:1.5">'+escHtml(item.cn||'')+'</td>';
+            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic;font-size:.82rem;line-height:1.5">'+escHtml(item.en||'')+'</td></tr>';
         });
+        html+='</tbody></table></div>';
     });
-    html+='</tbody></table>';
+    if(!html) html='<div style="text-align:center;padding:40px;color:#8892b0">暂无内容，请先在步骤②中编辑</div>';
     document.getElementById('previewWrap').innerHTML=html;
 }
 
@@ -335,50 +360,71 @@ async function exportExcel(){
     try{
         var wb=new ExcelJS.Workbook();
         var ws=wb.addWorksheet('paytable_市场');
-        ws.columns=[{width:5},{width:22},{width:45},{width:45},{width:5},{width:22},{width:45},{width:45}];
+        ws.columns=[{width:4},{width:50},{width:4},{width:50}];
         var bf={name:'Microsoft YaHei',size:11};
         var bld={name:'Microsoft YaHei',size:11,bold:true};
         var tf={name:'Microsoft YaHei',size:14,bold:true};
+        var pageTf={name:'Microsoft YaHei',size:16,bold:true};
+        var redFont={name:'Microsoft YaHei',size:10,color:{argb:'FFFF0000'}};
         var al={vertical:'middle',horizontal:'left',wrapText:true};
+        var alc={vertical:'middle',horizontal:'center',wrapText:true};
         var r=1;
-        ws.mergeCells('B'+r+':D'+r);
-        ws.getCell('B'+r).value=paytableData.brand+paytableData.name+'：paytable需求';
-        ws.getCell('B'+r).font=tf;ws.getRow(r).height=28;r++;
-        ws.getCell('F'+r).value='翻译（增删改查此列翻译）';
-        ws.getCell('F'+r).font={name:'Microsoft YaHei',size:10,color:{argb:'FFFF0000'}};r++;
+
+        // Document title
+        ws.mergeCells('A'+r+':B'+r);
+        ws.getCell('A'+r).value=paytableData.brand+paytableData.name+'：paytable需求';
+        ws.getCell('A'+r).font=pageTf;
+        ws.mergeCells('C'+r+':D'+r);
+        ws.getCell('C'+r).value='翻译（增删改查此列翻译）';
+        ws.getCell('C'+r).font=redFont;
+        ws.getRow(r).height=30;r++;r++;
 
         paytableData.pages.forEach(function(page,pi){
-            ws.mergeCells('B'+r+':D'+r);
-            ws.getCell('B'+r).value='--- 第'+(pi+1)+'页 ---';
-            ws.getCell('B'+r).font=bld;
-            ws.mergeCells('F'+r+':H'+r);
-            ws.getCell('F'+r).value='--- Page '+(pi+1)+' ---';
-            ws.getCell('F'+r).font=bld;
-            ws.getRow(r).height=22;r++;
-            ws.mergeCells('B'+r+':D'+r);
-            ws.getCell('B'+r).value=page.title||'';
-            ws.getCell('B'+r).font=tf;
-            ws.mergeCells('F'+r+':H'+r);
-            ws.getCell('F'+r).value=page.titleEn||'';
-            ws.getCell('F'+r).font=tf;
-            ws.getRow(r).height=24;r++;
+            // Page separator with page number
+            ws.mergeCells('A'+r+':B'+r);
+            ws.getCell('A'+r).value='第'+(pi+1)+'页';
+            ws.getCell('A'+r).font=bld;
+            ws.getCell('A'+r).alignment=alc;
+            ws.getCell('A'+r).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};
+            ws.mergeCells('C'+r+':D'+r);
+            ws.getCell('C'+r).value='Page '+(pi+1);
+            ws.getCell('C'+r).font=bld;
+            ws.getCell('C'+r).alignment=alc;
+            ws.getCell('C'+r).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};
+            ws.getRow(r).height=20;r++;
+
+            // Page title (feature name)
+            ws.mergeCells('A'+r+':B'+r);
+            ws.getCell('A'+r).value=page.title||'';
+            ws.getCell('A'+r).font=tf;
+            ws.getCell('A'+r).alignment=alc;
+            ws.mergeCells('C'+r+':D'+r);
+            ws.getCell('C'+r).value=page.titleEn||'';
+            ws.getCell('C'+r).font=tf;
+            ws.getCell('C'+r).alignment=alc;
+            ws.getRow(r).height=26;r++;
+
+            // Items (each rule)
             page.items.forEach(function(item){
-                var cnLines=(item.cn||'').split('\n');
-                var enLines=(item.en||'').split('\n');
+                var cnText=item.cn||'';
+                var enText=item.en||'';
+                var cnLines=cnText.split('\n');
+                var enLines=enText.split('\n');
                 var maxL=Math.max(cnLines.length,enLines.length,1);
-                ws.mergeCells('B'+r+':D'+r);
-                ws.getCell('B'+r).value=item.cn||'';
+
+                ws.getCell('B'+r).value=cnText;
                 ws.getCell('B'+r).font=bf;
                 ws.getCell('B'+r).alignment=al;
-                ws.mergeCells('F'+r+':H'+r);
-                ws.getCell('F'+r).value=item.en||'';
-                ws.getCell('F'+r).font=bf;
-                ws.getCell('F'+r).alignment=al;
-                ws.getRow(r).height=Math.max(20,maxL*16);
+                ws.getCell('D'+r).value=enText;
+                ws.getCell('D'+r).font=bf;
+                ws.getCell('D'+r).alignment=al;
+                ws.getRow(r).height=Math.max(18,maxL*15);
                 r++;
             });
-            r++;
+            // Blank row between pages
+            ws.getRow(r).height=10;r++;
         });
+
         var buf=await wb.xlsx.writeBuffer();
         var filename=paytableData.brand+paytableData.name+'：paytable需求文档.xlsx';
         saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),filename);
