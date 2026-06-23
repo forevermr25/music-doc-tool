@@ -4,6 +4,7 @@ echo 启动后请访问: http://localhost:8080
 echo.
 echo 配音配乐: http://localhost:8080
 echo 玩法文档: http://localhost:8080/gameplay/
+echo Paytable: http://localhost:8080/paytable/
 echo.
 echo 按 Ctrl+C 可停止服务器
 echo ========================================

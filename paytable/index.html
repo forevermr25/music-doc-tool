@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老虎机Paytable需求文档生成器</title>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:28px 14px;color:#e0e0e0}
+.container{max-width:1100px;margin:0 auto}
+h1{text-align:center;font-size:1.8rem;margin-bottom:8px;background:linear-gradient(90deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:#8892b0;margin-bottom:24px;font-size:0.9rem}
+.step-nav{display:flex;justify-content:center;gap:4px;margin-bottom:22px;flex-wrap:wrap}
+.step-btn{padding:10px 18px;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,.05);color:#8892b0;border:1px solid rgba(255,255,255,.1);transition:all .3s;font-family:inherit}
+.step-btn:hover{color:#ccd6f6;border-color:rgba(247,151,30,.3)}
+.step-btn.active{background:linear-gradient(135deg,#f7971e,#ffd200);color:#1a1a2e;border-color:transparent}
+.step-panel{display:none}.step-panel.active{display:block}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;margin-bottom:18px;backdrop-filter:blur(10px)}
+.card-title{font-size:1rem;font-weight:600;color:#ccd6f6;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+.form-group{margin-bottom:16px}
+.form-row{display:flex;gap:12px}.form-row .form-group{flex:1}
+label{display:block;font-size:.84rem;font-weight:600;margin-bottom:5px;color:#ccd6f6}
+input[type="text"],input[type="number"],textarea,select{width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#e0e0e0;font-size:.88rem;font-family:inherit;transition:border-color .3s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#f7971e;box-shadow:0 0 0 2px rgba(247,151,30,.12)}
+textarea{min-height:80px;resize:vertical;line-height:1.5}
+select{cursor:pointer;appearance:none;padding-right:28px}
+select option{background:#1a1a2e;color:#e0e0e0}
+.info-tip{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.15);border-radius:7px;margin-bottom:14px;font-size:.8rem;color:#8892b0;line-height:1.5}
+.info-tip::before{content:'💡';flex-shrink:0}
+.btn-primary{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:#fff;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(102,126,234,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none;margin:0 auto}
+.btn-primary.loading .spinner{display:inline-block}.btn-primary.loading .btn-text{display:none}
+.btn-export{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;border-radius:10px;color:#1a1a2e;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s;margin-top:12px}
+.btn-export:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(247,151,30,.3)}
+.btn-export:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-add{padding:6px 12px;background:rgba(247,151,30,.1);border:1px solid rgba(247,151,30,.25);border-radius:6px;color:#ffd200;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-add:hover{background:rgba(247,151,30,.2)}
+.btn-danger{padding:4px 8px;background:rgba(245,87,108,.08);border:1px solid rgba(245,87,108,.2);border-radius:4px;color:#ff6b6b;font-size:.72rem;cursor:pointer;font-family:inherit}
+.btn-danger:hover{background:rgba(245,87,108,.15)}
+.ai-status{font-size:.78rem;color:#8892b0;margin-top:8px;min-height:1.2em}
+.ai-status.generating{color:#a78bfa}.ai-status.error{color:#ff6b6b}.ai-status.done{color:#27ae60}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<style>
+.success-toast{position:fixed;top:18px;right:18px;padding:14px 20px;background:rgba(39,174,96,.95);color:#fff;border-radius:8px;font-weight:600;transform:translateX(120%);transition:transform .4s ease;z-index:1000;font-size:.88rem}
+.success-toast.show{transform:translateX(0)}
+.upload-area{border:2px dashed rgba(255,255,255,.15);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
+.upload-area:hover,.upload-area.dragover{border-color:#f7971e;background:rgba(247,151,30,.05)}
+.upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-area .icon{font-size:2.5rem;margin-bottom:10px}
+.upload-area .text{font-size:.9rem;color:#ccd6f6;margin-bottom:4px}
+.upload-area .hint{font-size:.78rem;color:#8892b0}
+.file-info{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);border-radius:8px;margin-top:12px;font-size:.85rem;color:#27ae60}
+.parsed-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
+.summary-item{padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px}
+.summary-item .lbl{font-size:.72rem;color:#8892b0;margin-bottom:3px}
+.summary-item .val{font-size:.9rem;font-weight:600;color:#ffd200}
+.page-section{margin-bottom:14px;border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.page-header{padding:10px 14px;background:rgba(247,151,30,.08);font-weight:600;color:#ffd200;font-size:.84rem;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+.page-content{padding:14px}
+.feature-block{background:rgba(255,255,255,.02);border-left:3px solid rgba(247,151,30,.4);padding:10px 14px;margin-bottom:10px;border-radius:0 6px 6px 0}
+.feature-block .ft-title{font-weight:600;color:#ccd6f6;font-size:.84rem;margin-bottom:4px}
+.editable-area{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px 10px;min-height:30px;outline:none;font-size:.82rem;line-height:1.5;color:#e0e0e0;transition:all .2s;width:100%;font-family:inherit}
+.editable-area:focus{border-color:#f7971e;background:rgba(255,255,255,.06)}
+.preview-wrap{max-height:650px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:8px}
+.preview-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.preview-table th{padding:8px 10px;background:rgba(247,151,30,.1);border:1px solid rgba(255,255,255,.08);color:#ffd200;font-weight:600;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:2}
+.preview-table td{padding:6px 10px;border:1px solid rgba(255,255,255,.06);vertical-align:top}
+.preview-table tr:hover{background:rgba(255,255,255,.02)}
+@media(max-width:768px){body{padding:16px 8px}.form-row{flex-direction:column;gap:0}.step-nav{gap:2px}.step-btn{padding:8px 10px;font-size:.76rem}.parsed-summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎰 老虎机Paytable需求文档生成器</h1>
+<p class="subtitle">导入玩法文档 · AI智能解析 · 中英对照 · 一键导出</p>
+<div class="step-nav">
+<button class="step-btn active" onclick="goStep(1)">① 导入文档</button>
+<button class="step-btn" onclick="goStep(2)">② 编辑内容</button>
+<button class="step-btn" onclick="goStep(3)">③ 预览导出</button>
+</div>
+
+<div class="step-panel active" id="step1">
+<div class="card">
+<div class="card-title">📂 导入玩法文档</div>
+<div class="info-tip">上传玩法文档(.xlsx)，系统将自动解析关卡名称、图标信息、玩法规则等内容，并通过AI生成中英对照的Paytable文档。</div>
+<div class="upload-area" id="uploadArea">
+<div class="icon">📄</div>
+<div class="text">点击或拖拽上传玩法文档</div>
+<div class="hint">支持 .xlsx / .xls 格式</div>
+<input type="file" accept=".xlsx,.xls" onchange="handleFileUpload(this)">
+</div>
+<div id="fileInfoArea"></div>
+<div id="parsedArea"></div>
+</div>
+<div class="card">
+<div class="card-title">⚙️ 基本设置</div>
+<div class="form-row">
+<div class="form-group"><label>品牌</label><select id="f_brand"><option>CTS</option><option>JMS</option><option>JFS</option></select></div>
+<div class="form-group"><label>关卡名称</label><input type="text" id="f_name" placeholder="从文档自动提取"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>棋盘布局</label><input type="text" id="f_board" placeholder="如: 3X5、5X3"></div>
+<div class="form-group"><label>线数/Ways</label><input type="text" id="f_lines" placeholder="如: 25线、243ways"></div>
+</div>
+</div>
+<button class="btn-primary" id="parseBtn" onclick="aiParseAndGenerate()">
+<span class="btn-text">🤖 AI 解析并生成Paytable</span><span class="spinner"></span>
+</button>
+<div class="ai-status" id="aiStatus"></div>
+</div>
+
+<div class="step-panel" id="step2">
+<div class="card">
+<div class="card-title">📝 Paytable内容编辑</div>
+<div class="info-tip">以下内容由AI根据玩法文档生成，左侧中文/右侧英文翻译。你可以直接编辑修改。</div>
+<div id="editArea"></div>
+<button class="btn-add" onclick="addFeaturePage()" style="margin-top:12px">+ 添加新页面</button>
+</div>
+</div>
+
+<div class="step-panel" id="step3">
+<div class="card">
+<div class="card-title">👁️ 文档预览</div>
+<div class="preview-wrap" id="previewWrap"></div>
+</div>
+<button class="btn-export" onclick="exportExcel()">📥 一键导出Paytable文档 (.xlsx)</button>
+</div>
+</div>
+<div class="success-toast" id="toast"></div>
+
+<script>
+'use strict';
+var paytableData={brand:'CTS',name:'',board:'',lines:'',pages:[]};
+var parsedRaw=null;
+
+function goStep(n){
+    document.querySelectorAll('.step-btn').forEach(function(b,i){b.classList.toggle('active',i===n-1)});
+    document.querySelectorAll('.step-panel').forEach(function(p,i){p.classList.toggle('active',i===n-1)});
+    if(n===3)renderPreview();
+}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
+
+var aiReady=false,puterLoading=false;
+function loadPuterJS(){
+    return new Promise(function(resolve,reject){
+        if(aiReady){resolve();return}
+        if(puterLoading){var w=setInterval(function(){if(aiReady){clearInterval(w);resolve()}},300);setTimeout(function(){clearInterval(w);reject(new Error('加载超时'))},30000);return}
+        puterLoading=true;
+        var s=document.createElement('script');s.src='https://js.puter.com/v2/';
+        s.onload=function(){var e=0;var t=setInterval(function(){e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);resolve()}if(e>=30000){clearInterval(t);puterLoading=false;reject(new Error('Puter.js初始化超时'))}},500)};
+        s.onerror=function(){puterLoading=false;reject(new Error('Puter.js加载失败'))};
+        document.head.appendChild(s);
+    });
+}
+async function callAI(prompt){
+    await loadPuterJS();
+    var r=await puter.ai.chat(prompt,{model:'gpt-4o-mini',temperature:0.7});
+    if(typeof r==='string')return r;
+    if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(function(x){return x.text||x}).join('');return c}
+    if(r&&r.text)return r.text;
+    return String(r);
+}
+
+async function handleFileUpload(input){
+    var file=input.files[0];if(!file)return;
+    document.getElementById('fileInfoArea').innerHTML='<div class="file-info">📎 已选择: '+file.name+' ('+Math.round(file.size/1024)+'KB)</div>';
+    try{
+        var wb=new ExcelJS.Workbook();
+        var buf=await file.arrayBuffer();
+        await wb.xlsx.load(buf);
+        parsedRaw=parseWorkbook(wb);
+        showParsedSummary();
+        var match=file.name.match(/(?:CTS|JFS|JMS)\s*(.+?)[:：]/);
+        if(match)document.getElementById('f_name').value=match[1].trim();
+        var brandMatch=file.name.match(/(CTS|JFS|JMS)/);
+        if(brandMatch)document.getElementById('f_brand').value=brandMatch[1];
+    }catch(e){
+        document.getElementById('fileInfoArea').innerHTML='<div class="file-info" style="color:#ff6b6b;border-color:rgba(245,87,108,.3);background:rgba(245,87,108,.1)">❌ 解析失败: '+e.message+'</div>';
+    }
+}
+
+function parseWorkbook(wb){
+    var data={sheets:[],allText:[]};
+    wb.eachSheet(function(ws){
+        var sheetData={name:ws.name,rows:[]};
+        ws.eachRow(function(row,rowNum){
+            var rowData=[];
+            row.eachCell({includeEmpty:true},function(cell,colNum){
+                var val='';
+                if(cell.value){
+                    if(typeof cell.value==='object'&&cell.value.richText){
+                        val=cell.value.richText.map(function(rt){return rt.text||''}).join('');
+                    }else if(typeof cell.value==='object'&&cell.value.text){
+                        val=cell.value.text;
+                    }else{val=String(cell.value)}
+                }
+                rowData.push(val.trim());
+            });
+            sheetData.rows.push(rowData);
+            data.allText.push(rowData.filter(Boolean).join(' '));
+        });
+        data.sheets.push(sheetData);
+    });
+    return data;
+}
+
+function showParsedSummary(){
+    if(!parsedRaw)return;
+    var totalRows=0;parsedRaw.sheets.forEach(function(s){totalRows+=s.rows.length});
+    var html='<div class="parsed-summary">';
+    html+='<div class="summary-item"><div class="lbl">工作表数</div><div class="val">'+parsedRaw.sheets.length+'</div></div>';
+    html+='<div class="summary-item"><div class="lbl">总行数</div><div class="val">'+totalRows+'</div></div>';
+    html+='<div class="summary-item"><div class="lbl">文本内容</div><div class="val">'+parsedRaw.allText.filter(Boolean).length+' 行</div></div>';
+    html+='</div>';
+    document.getElementById('parsedArea').innerHTML=html;
+}
+
+async function aiParseAndGenerate(){
+    var name=document.getElementById('f_name').value.trim();
+    var brand=document.getElementById('f_brand').value;
+    var board=document.getElementById('f_board').value.trim();
+    var lines=document.getElementById('f_lines').value.trim();
+    if(!name){alert('请输入关卡名称');return}
+    if(!parsedRaw||parsedRaw.allText.length===0){alert('请先上传玩法文档');return}
+    paytableData.brand=brand;paytableData.name=name;paytableData.board=board;paytableData.lines=lines;
+    var btn=document.getElementById('parseBtn');btn.classList.add('loading');btn.disabled=true;
+    var st=document.getElementById('aiStatus');
+    try{
+        st.textContent='🔄 正在分析玩法文档内容...';st.className='ai-status generating';
+        var excerpt=parsedRaw.allText.filter(Boolean).join('\n').substring(0,3000);
+        var prompt='你是一名老虎机(slot machine)游戏paytable文档策划专家。请根据以下玩法文档内容，生成paytable需求文档的结构化内容。\n\n'+
+        '关卡信息：品牌='+brand+'，名称='+name+(board?'，棋盘='+board:'')+(lines?'，线数='+lines:'')+'\n\n'+
+        '玩法文档摘要：\n'+excerpt+'\n\n'+
+        '请按照paytable文档的标准格式输出，包含以下页面：\n'+
+        '1. FEATURE页：描述所有特殊图标(WILD, SCATTER, BONUS等)的功能规则，用"* "开头\n'+
+        '2. PAYS页：描述所有图标的赔付值(高分H1-H4和低分L1-L5)，格式为"5-数值/4-数值/3-数值"\n'+
+        '3. 各Feature玩法详情页(如FREE GAMES, BONUS GAME, RESPIN, WHEEL等)\n'+
+        '4. PAY LINES页：线数和ways信息\n\n'+
+        '【重要格式要求】\n'+
+        '- 每条规则用"* "开头\n'+
+        '- 图标名用[方括号]标记，如[WILD],[SCATTER],[BONUS]\n'+
+        '- 每条规则同时给出中文和英文翻译\n'+
+        '- 英文翻译专业简洁，符合slot game paytable行业标准用语\n'+
+        '- 使用appears on/substitutes for/triggers等标准paytable术语\n\n'+
+        '严格返回JSON(不要markdown代码块)：\n'+
+        '{"pages":[{"title":"中文页面标题","titleEn":"English Page Title","items":[{"cn":"中文内容","en":"English content"}]}]}';
+        st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
+        var raw=await callAI(prompt);
+        var result=null;
+        try{result=JSON.parse(raw)}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)result=JSON.parse(m[0])}
+        if(result&&result.pages){
+            paytableData.pages=result.pages;
+            renderEditArea();
+            st.textContent='✅ 解析完成！请在"编辑内容"步骤中检查和修改';st.className='ai-status done';
+            showToast('✨ Paytable内容已生成');
+            goStep(2);
+        }else{st.textContent='⚠️ AI返回格式异常，请重试';st.className='ai-status error'}
+    }catch(err){st.textContent='❌ '+err.message;st.className='ai-status error'}
+    finally{btn.classList.remove('loading');btn.disabled=false}
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function renderEditArea(){
+    var html='';
+    paytableData.pages.forEach(function(page,pi){
+        html+='<div class="page-section"><div class="page-header">';
+        html+='<span>'+(page.title||'第'+(pi+1)+'页')+' / '+(page.titleEn||'Page '+(pi+1))+'</span>';
+        html+='<button class="btn-danger" onclick="event.stopPropagation();removePage('+pi+')">删除</button></div>';
+        html+='<div class="page-content" id="pc_'+pi+'">';
+        page.items.forEach(function(item,ii){
+            html+='<div class="feature-block"><div class="ft-title">条目 '+(ii+1);
+            html+=' <button class="btn-danger" onclick="removeItem('+pi+','+ii+')" style="margin-left:8px">删</button></div>';
+            html+='<textarea class="editable-area" rows="2" onchange="updateItem('+pi+','+ii+',\'cn\',this.value)" placeholder="中文内容">'+escHtml(item.cn||'')+'</textarea>';
+            html+='<textarea class="editable-area" rows="2" style="margin-top:4px;color:#8892b0;font-style:italic" onchange="updateItem('+pi+','+ii+',\'en\',this.value)" placeholder="English content">'+escHtml(item.en||'')+'</textarea>';
+            html+='</div>';
+        });
+        html+='<button class="btn-add" onclick="addItem('+pi+')">+ 添加条目</button>';
+        html+='</div></div>';
+    });
+    document.getElementById('editArea').innerHTML=html;
+}
+
+function removePage(pi){paytableData.pages.splice(pi,1);renderEditArea()}
+function removeItem(pi,ii){paytableData.pages[pi].items.splice(ii,1);renderEditArea()}
+function updateItem(pi,ii,field,val){paytableData.pages[pi].items[ii][field]=val}
+function addItem(pi){paytableData.pages[pi].items.push({cn:'',en:''});renderEditArea()}
+function addFeaturePage(){paytableData.pages.push({title:'新页面',titleEn:'New Page',items:[{cn:'',en:''}]});renderEditArea()}
+
+function renderPreview(){
+    var html='<table class="preview-table"><thead><tr><th style="width:50px">页码</th><th>中文内容</th><th>英文翻译 (Translation)</th></tr></thead><tbody>';
+    paytableData.pages.forEach(function(page,pi){
+        html+='<tr style="background:rgba(247,151,30,.06)"><td style="font-weight:700;color:#ffd200">'+(pi+1)+'</td>';
+        html+='<td style="font-weight:700;color:#ffd200">'+(page.title||'')+'</td>';
+        html+='<td style="font-weight:700;color:#ffd200;font-style:italic">'+(page.titleEn||'')+'</td></tr>';
+        page.items.forEach(function(item){
+            html+='<tr><td></td><td style="color:#e0e0e0;white-space:pre-wrap">'+escHtml(item.cn||'')+'</td>';
+            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic">'+escHtml(item.en||'')+'</td></tr>';
+        });
+    });
+    html+='</tbody></table>';
+    document.getElementById('previewWrap').innerHTML=html;
+}
+
+async function exportExcel(){
+    if(!paytableData.pages.length){alert('没有可导出的内容，请先生成Paytable');return}
+    try{
+        var wb=new ExcelJS.Workbook();
+        var ws=wb.addWorksheet('paytable_市场');
+        ws.columns=[{width:5},{width:22},{width:45},{width:45},{width:5},{width:22},{width:45},{width:45}];
+        var bf={name:'Microsoft YaHei',size:11};
+        var bld={name:'Microsoft YaHei',size:11,bold:true};
+        var tf={name:'Microsoft YaHei',size:14,bold:true};
+        var al={vertical:'middle',horizontal:'left',wrapText:true};
+        var r=1;
+        ws.mergeCells('B'+r+':D'+r);
+        ws.getCell('B'+r).value=paytableData.brand+paytableData.name+'：paytable需求';
+        ws.getCell('B'+r).font=tf;ws.getRow(r).height=28;r++;
+        ws.getCell('F'+r).value='翻译（增删改查此列翻译）';
+        ws.getCell('F'+r).font={name:'Microsoft YaHei',size:10,color:{argb:'FFFF0000'}};r++;
+
+        paytableData.pages.forEach(function(page,pi){
+            ws.mergeCells('B'+r+':D'+r);
+            ws.getCell('B'+r).value='--- 第'+(pi+1)+'页 ---';
+            ws.getCell('B'+r).font=bld;
+            ws.mergeCells('F'+r+':H'+r);
+            ws.getCell('F'+r).value='--- Page '+(pi+1)+' ---';
+            ws.getCell('F'+r).font=bld;
+            ws.getRow(r).height=22;r++;
+            ws.mergeCells('B'+r+':D'+r);
+            ws.getCell('B'+r).value=page.title||'';
+            ws.getCell('B'+r).font=tf;
+            ws.mergeCells('F'+r+':H'+r);
+            ws.getCell('F'+r).value=page.titleEn||'';
+            ws.getCell('F'+r).font=tf;
+            ws.getRow(r).height=24;r++;
+            page.items.forEach(function(item){
+                var cnLines=(item.cn||'').split('\n');
+                var enLines=(item.en||'').split('\n');
+                var maxL=Math.max(cnLines.length,enLines.length,1);
+                ws.mergeCells('B'+r+':D'+r);
+                ws.getCell('B'+r).value=item.cn||'';
+                ws.getCell('B'+r).font=bf;
+                ws.getCell('B'+r).alignment=al;
+                ws.mergeCells('F'+r+':H'+r);
+                ws.getCell('F'+r).value=item.en||'';
+                ws.getCell('F'+r).font=bf;
+                ws.getCell('F'+r).alignment=al;
+                ws.getRow(r).height=Math.max(20,maxL*16);
+                r++;
+            });
+            r++;
+        });
+        var buf=await wb.xlsx.writeBuffer();
+        var filename=paytableData.brand+paytableData.name+'：paytable需求文档.xlsx';
+        saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),filename);
+        showToast('✅ Paytable文档已下载！');
+    }catch(err){alert('导出失败：'+err.message)}
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    var ua=document.getElementById('uploadArea');
+    if(ua){
+        ua.addEventListener('dragover',function(e){e.preventDefault();ua.classList.add('dragover')});
+        ua.addEventListener('dragleave',function(){ua.classList.remove('dragover')});
+        ua.addEventListener('drop',function(e){e.preventDefault();ua.classList.remove('dragover');
+            var f=e.dataTransfer.files[0];if(f){var dt=new DataTransfer();dt.items.add(f);ua.querySelector('input').files=dt.files;handleFileUpload(ua.querySelector('input'))}
+        });
+    }
+});
+</script>
+</body>
+</html>
