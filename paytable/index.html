@@ -366,12 +366,12 @@ async function aiParseAndGenerate(){
         'RULE 6: For games with multiple features, create SEPARATE pages:\n'+
         '  - FREE GAMES page (if scatter triggers free spins)\n'+
         '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
-        '  - BUFF RESPIN page (if collection triggers enhanced respin) OR describe buffs within RESPIN page\n'+
-        '  - WHEEL page (if there is a wheel/spinner feature)\n'+
-        '  - SUPER WHEEL / UPGRADE WHEEL page (if there is an upgraded version of the wheel)\n'+
-        '  - If doc mentions a "收集玩法" or "升级转盘" or "super转盘", it MUST be a separate page\n'+
-        '  - WHEEL rewards must list SPECIFIC items from the doc (e.g. "2X双棋盘", "3X加次数+加钱", "GRAND", "MINI")\n'+
-        '  - Do NOT generalize wheel rewards as "various bonuses". List them specifically.\n\n'+
+        '  - BUFF RESPIN page (if collection triggers enhanced respin)\n'+
+        '  - WHEEL page (normal wheel - list ALL specific reward items from the doc)\n'+
+        '  - SUPER WHEEL / UPGRADE page - MANDATORY if doc has "收集玩法"/"升级转盘"/"super转盘"\n'+
+        '    Must describe: unlock condition (e.g. "普通转盘触发5次后升级"), upgrade details (e.g. "2X全部升级为3X")\n'+
+        '  - NEVER merge normal wheel and super wheel into one page.\n'+
+        '  - NEVER generalize wheel rewards as "various bonuses". List the SPECIFIC items.\n\n'+
         'RULE 7: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
         '  BAD: "* 转盘奖励列表包含双倍奖金、增加次数等选项" (too vague!)\n'+
         '  GOOD: "* 转盘奖励包括：2X双棋盘、2X加次数、2X加钱、3X双棋盘、GRAND、MAJOR、MINOR、MINI"\n'+
@@ -659,15 +659,15 @@ function structuralParse(allLines){
         {pattern:/base下.*WILD|WILD.*变整列|整列wild/i, priority:2},
         {pattern:/RESPIN.*玩法|RESPIN\s*GAME/i, priority:1},
         {pattern:/Respin-buff\d|Respin.*buff/i, priority:2},
-        {pattern:/FREE\s*(?:GAMES?|SPIN)/i, priority:1},
-        {pattern:/转盘.*玩法|WHEEL/i, priority:1},
-        {pattern:/普通转盘/i, priority:2},
-        {pattern:/收集.*玩法|升级.*玩法|UPGRADE|COLLECT/i, priority:1},
+        {pattern:/FREE\s*(?:GAMES?|SPIN)|FG.*玩法/i, priority:1},
+        {pattern:/普通转盘.*玩法|普通.*WHEEL/i, priority:1},
+        {pattern:/转盘.*玩法|WHEEL.*(?:玩法|feature)/i, priority:1},
+        {pattern:/收集.*玩法|升级.*(?:转盘|玩法)|UPGRADE|super.*转盘|SUPER.*WHEEL/i, priority:1},
         {pattern:/JACKPOT.*玩法/i, priority:1},
         {pattern:/PICK.*玩法/i, priority:1},
         {pattern:/LINK\s*GAME/i, priority:1},
-        {pattern:/super.*转盘|SUPER.*WHEEL/i, priority:2},
-        {pattern:/super.*RESPIN|SUPER.*FREE/i, priority:2}
+        {pattern:/super.*RESPIN|SUPER.*FREE/i, priority:2},
+        {pattern:/高低.*[Bb]et|高低bet/i, priority:1}
     ];
 
     var skipPatterns=[/极限情况/,/断线重连/,/美术.*重点/,/美术设计/,/设计要点/,/参考图标/,/分值/,/实体机/,/竞品/,/图标等级/,/图标设计[：:]/,/重点图标/,/图标列表/,/普通图标/];
