@@ -447,11 +447,36 @@ function structuralParse(allLines){
     var iconNames=[];
     var specialKeywords=['BONUS','SCATTER','WILD','LINK','wild','scatter','bonus','link','frame'];
 
+    // BASELINE: Always scan full document for core slot icon types (scatter/bonus/wild/link)
+    // These are fundamental slot icons that must be detected regardless of document structure
+    var coreIconTypes=['SCATTER','BONUS','WILD','LINK'];
+    var fullTextUpper=fullText.toUpperCase();
+    coreIconTypes.forEach(function(core){
+        // Match core type with optional number suffix or prefix (e.g. BONUS1, 整列WILD, SUPER LINK)
+        var regex=new RegExp('(?:^|[\\s，,、;；\\[\\]【】])(?:[\\u4e00-\\u9fff]*)?'+core+'\\d*(?=[\\s，,、;；\\[\\]【】]|$)','gm');
+        var matches=fullTextUpper.match(regex);
+        if(matches){
+            matches.forEach(function(m){
+                var cleaned=m.replace(/[\s，,、;；\[\]【】\u4e00-\u9fff]/g,'').trim();
+                if(cleaned&&iconNames.indexOf(cleaned)===-1) iconNames.push(cleaned);
+            });
+        }
+        // Also try simpler pattern for common formats
+        var simpleRegex=new RegExp(core+'\\d*','gi');
+        var simpleMatches=fullText.match(simpleRegex);
+        if(simpleMatches){
+            simpleMatches.forEach(function(m){
+                var upper=m.toUpperCase();
+                if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
+            });
+        }
+    });
+
+    // Also scan the icon section specifically for additional names (frame, special variants, etc.)
     for(var i=0;i<allLines.length;i++){
         var line=allLines[i];
         if(line.includes('特殊图标列表')||line.includes('特殊图标')){
             iconSection=true;iconHeaderLine=i;
-            // Try to extract icon names from this line or next line
             var nextLines=allLines.slice(i,Math.min(i+3,allLines.length)).join(' ');
             specialKeywords.forEach(function(kw){
                 var regex=new RegExp(kw+'\\d*','gi');
@@ -468,7 +493,6 @@ function structuralParse(allLines){
             continue;
         }
         if(iconSection){
-            // Extract more icon names
             specialKeywords.forEach(function(kw){
                 var regex=new RegExp('\\b'+kw+'\\d*\\b','gi');
                 var matches=line.match(regex);
@@ -479,6 +503,13 @@ function structuralParse(allLines){
             });
         }
     }
+
+    // Deduplicate: if we have both "WILD" and "WILD1", keep both. 
+    // But remove generic "BONUS" if specific BONUS1/2/3 exist
+    var hasNumberedBonus=iconNames.some(function(n){return/^BONUS\d+$/.test(n)});
+    if(hasNumberedBonus) iconNames=iconNames.filter(function(n){return n!=='BONUS'});
+    var hasNumberedLink=iconNames.some(function(n){return/^LINK\d+$/.test(n)});
+    if(hasNumberedLink) iconNames=iconNames.filter(function(n){return n!=='LINK'});
 
     // Build special icons with functional descriptions only
     iconNames.forEach(function(name){
