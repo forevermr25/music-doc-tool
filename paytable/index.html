@@ -315,7 +315,10 @@ async function aiParseAndGenerate(){
         }
 
         if(structured.features.length){
+            var buffCount=structured.features.filter(function(f){return/buff/i.test(f.name)}).length;
             structuredContent+='[FEATURES - Output pages in THIS EXACT ORDER. Do NOT reorder or merge.]\n';
+            structuredContent+='Total features: '+structured.features.length+'. You MUST generate '+structured.features.length+' feature pages.\n';
+            if(buffCount>0) structuredContent+='Buff features detected: '+buffCount+'. Each buff MUST be described with its specific mechanic.\n';
             structured.features.forEach(function(feat,i){
                 structuredContent+='\n--- FEATURE '+(i+1)+': '+feat.name+' ---\n';
                 if(feat.trigger) structuredContent+='Trigger: '+feat.trigger+'\n';
@@ -409,8 +412,13 @@ async function aiParseAndGenerate(){
         'RULE 6: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
         '  BAD: "Extra buff adds bonus"\n'+
         '  GOOD: "[BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n\n'+
-        'RULE 7: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
-        'RULE 8: Output order MUST match document order. Never rearrange feature pages.\n'+
+        'RULE 7: BUFF RULE - If document contains buff/variant mechanics for a feature:\n'+
+        '  - They MUST appear in the output, either as a separate BUFF page or within the main feature page.\n'+
+        '  - Each buff MUST be described with its SPECIFIC mechanic (1-2 sentences per buff).\n'+
+        '  - Use the exact buff name from the doc (e.g. "Buff1-加次数", "Buff2-双棋盘", "Buff3-加钱").\n'+
+        '  - If there are 3 buffs, there must be 3 buff descriptions in the output. No exceptions.\n\n'+
+        'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
+        'RULE 9: Output order MUST match document order. Never rearrange feature pages.\n'+
         '  FEATURE first, PAYS second, then features in document order, PAY LINES last.\n\n'+
         paylineInstruction+'\n'+
         '=== FINAL WARNINGS ===\n'+
