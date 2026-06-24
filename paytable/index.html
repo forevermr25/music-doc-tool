@@ -339,6 +339,48 @@ async function aiParseAndGenerate(){
         var prompt='Act as a slots game planner. Write a player-facing paytable document.\n\n'+
         'Game Info: Brand='+brand+', Name='+name+', Grid='+board+', Ways/Lines='+lines+'\n\n'+
         structuredContent+'\n\n'+
+        '=== PAGE MAPPING RULE (HIGHEST PRIORITY) ===\n'+
+        'The output page structure MUST follow the gameplay document structure exactly.\n'+
+        'Do NOT create, merge, split, reorder, or remove feature pages.\n\n'+
+        'Page order is fixed:\n'+
+        'PAGE 1: FEATURE\n'+
+        'PAGE 2: PAYS\n'+
+        'PAGE 3+: One page for each feature listed in the [FEATURES] section.\n'+
+        'LAST PAGE: PAY LINES\n\n'+
+        'FEATURE PAGE RULE:\n'+
+        'The page title MUST always be: title="FEATURE" titleEn="FEATURE"\n'+
+        'This page contains: WILD descriptions, SCATTER descriptions, BONUS descriptions, LINK descriptions, Trigger summaries\n'+
+        'Do NOT generate custom feature names for this page.\n\n'+
+        'PAYS PAGE RULE:\n'+
+        'The page title MUST always be: title="PAYS" titleEn="PAYS"\n'+
+        'Only symbol payouts belong on this page. Do NOT place feature rules here.\n\n'+
+        'FEATURE DETAIL PAGE RULE:\n'+
+        'For every feature in [FEATURES], keep the exact document order.\n'+
+        'Example: [FEATURES] FEATURE 1: BASE玩法, FEATURE 2: RESPIN玩法, FEATURE 3: 普通转盘玩法, FEATURE 4: 收集玩法\n'+
+        'Output: FEATURE → PAYS → BASE玩法 → RESPIN玩法 → 普通转盘玩法 → 收集玩法 → PAY LINES\n'+
+        'Never change the order.\n\n'+
+        'FEATURE NAME RULE:\n'+
+        'The feature page title must correspond to the original feature.\n'+
+        'If the gameplay document already provides a feature name: Use that feature name.\n'+
+        'Example: 收集玩法, 普通转盘玩法, 超级转盘玩法, Train玩法 — Do not rename.\n\n'+
+        'AUTO NAMING RULE:\n'+
+        'Only generate a custom player-facing feature name when:\n'+
+        '  - The feature does not have a meaningful name, OR\n'+
+        '  - The feature is named generically as: 玩法1, 玩法2, Feature A, Feature B\n'+
+        'In these cases: Generate titleEn = thematic feature name (e.g. Scarab Respin, Treasure Vault)\n'+
+        'title = original Chinese feature name\n\n'+
+        'FEATURE CONTENT RULE:\n'+
+        'One feature page = one gameplay feature.\n'+
+        'All mechanics belonging to that feature must remain on the same page.\n'+
+        'Include: Trigger, Core Rules, Buffs, Upgrade Effects, Reward Variants, Wheel Rewards, End Conditions\n'+
+        'Do NOT create separate pages for: Buffs, Reward Variants, Upgrade Levels, Wheel Rewards, Collection Rewards\n'+
+        'These belong to the parent feature page.\n'+
+        'Example: RESPIN玩法 contains Buff1, Buff2, Buff3 → Output as ONE page with all buffs inside.\n'+
+        'NOT: RESPIN玩法 / BUFF1 / BUFF2 / BUFF3 as separate pages.\n\n'+
+        'FEATURE COUNT VALIDATION:\n'+
+        'Count the number of features in [FEATURES].\n'+
+        'If [FEATURES] contains N features: Output MUST contain FEATURE + PAYS + N Feature Pages + PAY LINES.\n'+
+        'Missing a feature page is a critical failure.\n\n'+
         '=== LAYER 1: FEATURE IDENTIFICATION ===\n'+
         'Before writing, identify every gameplay mechanic and classify into:\n'+
         '- Base Game / Free Games / Hold & Spin / Collection / Progression\n'+
