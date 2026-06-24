@@ -274,16 +274,30 @@
             </div>
             <div class="card">
                 <button class="btn-primary" id="v_genBtn" type="button" onclick="voiceGenerate()">
-                    <span class="btn-text">🤖 AI 智能生成</span><span class="spinner"></span>
+                    <span class="btn-text">🤖 AI 智能生成（双模型对比）</span><span class="spinner"></span>
                 </button>
                 <div class="ai-status" id="v_status"></div>
-                <button class="btn-export" id="v_exportBtn" type="button" onclick="voiceExport()">📥 导出配音需求文档</button>
             </div>
-            <div class="card" id="v_previewCard" style="display:none;">
-                <div class="card-title">📋 配音内容预览 <span class="generated-tag">AI 生成</span></div>
-                <div class="preview-table-wrapper">
-                    <table class="preview-table"><thead><tr><th>序号</th><th>中文配音内容</th><th>英文配音内容</th><th>应用场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
-                    <tbody id="v_tbody"></tbody></table>
+            <div id="v_previewCard" style="display:none;">
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <!-- Claude 结果 -->
+                    <div class="card" style="flex:1; min-width:300px;">
+                        <div class="card-title">🟣 Claude 版本</div>
+                        <div class="preview-table-wrapper">
+                            <table class="preview-table"><thead><tr><th>序号</th><th>中文</th><th>英文</th><th>场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
+                            <tbody id="v_tbody_claude"></tbody></table>
+                        </div>
+                        <button class="btn-export" style="margin-top:12px;" onclick="voiceExport('claude')">📥 导出 Claude 版本</button>
+                    </div>
+                    <!-- GPT 结果 -->
+                    <div class="card" style="flex:1; min-width:300px;">
+                        <div class="card-title">🟢 GPT 版本</div>
+                        <div class="preview-table-wrapper">
+                            <table class="preview-table"><thead><tr><th>序号</th><th>中文</th><th>英文</th><th>场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
+                            <tbody id="v_tbody_gpt"></tbody></table>
+                        </div>
+                        <button class="btn-export" style="margin-top:12px;" onclick="voiceExport('gpt')">📥 导出 GPT 版本</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -364,9 +378,10 @@
             document.head.appendChild(s);
         });
     }
-    async function callAI(prompt) {
+    async function callAI(prompt, model) {
         await loadPuterJS();
-        var r = await puter.ai.chat(prompt, {model:'gpt-4o-mini', temperature:0.8});
+        var m = model || 'gpt-4o-mini';
+        var r = await puter.ai.chat(prompt, {model: m, temperature:0.8});
         if (typeof r === 'string') return r;
         if (r && r.message && r.message.content) { var c = r.message.content; if (Array.isArray(c)) return c.map(function(x){return x.text||x;}).join(''); return c; }
         if (r && r.text) return r.text;
@@ -390,7 +405,7 @@
         '旁白解说': ['浑厚大气', '沉稳专业']
     };
     var JACKPOT_MAP = {'MINI弹板弹出':'MINI JACKPOT','MINOR弹板弹出':'MINOR JACKPOT','MAJOR弹板弹出':'MAJOR JACKPOT','MAXI弹板弹出':'MAXI JACKPOT','MEGA弹板弹出':'MEGA JACKPOT','GRAND弹板弹出':'GRAND JACKPOT'};
-    var voiceEntries = [], voiceCustomScenes = [], voiceCustomId = 0;
+    var voiceEntries = {claude:[], gpt:[]}, voiceCustomScenes = [], voiceCustomId = 0;
 
     function isJackpot(s) { return JACKPOT_MAP.hasOwnProperty(s); }
     function getJackpotText(s) { return JACKPOT_MAP[s] || null; }
@@ -431,37 +446,40 @@
     function voiceToneChange(el) {}
 
     function voiceRenderTable() {
-        var tbody = document.getElementById('v_tbody'); var card = document.getElementById('v_previewCard');
-        tbody.innerHTML = '';
-        if (voiceEntries.length === 0) { card.style.display = 'none'; return; }
+        var card = document.getElementById('v_previewCard');
+        var hasClaude = voiceEntries.claude && voiceEntries.claude.length > 0;
+        var hasGpt = voiceEntries.gpt && voiceEntries.gpt.length > 0;
+        if (!hasClaude && !hasGpt) { card.style.display = 'none'; return; }
         card.style.display = '';
-        voiceEntries.forEach(function(entry, i) {
+        voiceRenderOneTable('v_tbody_claude', voiceEntries.claude || [], 'claude');
+        voiceRenderOneTable('v_tbody_gpt', voiceEntries.gpt || [], 'gpt');
+    }
+
+    function voiceRenderOneTable(tbodyId, entries, modelKey) {
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        entries.forEach(function(entry, i) {
             var tr = document.createElement('tr');
-            // 序号
             tr.innerHTML = '<td class="seq-cell">'+(i+1)+'</td>';
-            // 中文配音（可编辑）
             var tdCn = document.createElement('td');
-            var inCn = document.createElement('input'); inCn.type='text'; inCn.className='editable-cell'; inCn.value=entry.chinese||''; inCn.maxLength=200; inCn.dataset.index=i; inCn.dataset.field='chinese';
-            inCn.addEventListener('input',function(e){voiceEntries[i].chinese=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
+            var inCn = document.createElement('input'); inCn.type='text'; inCn.className='editable-cell'; inCn.value=entry.chinese||''; inCn.maxLength=200;
+            inCn.addEventListener('input',function(e){voiceEntries[modelKey][i].chinese=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
             if(!entry.chinese||!entry.chinese.trim()) inCn.classList.add('warning');
             tdCn.appendChild(inCn); tr.appendChild(tdCn);
-            // 英文配音（可编辑）
             var tdEn = document.createElement('td');
-            var inEn = document.createElement('input'); inEn.type='text'; inEn.className='editable-cell'; inEn.value=entry.english||''; inEn.maxLength=500; inEn.dataset.index=i; inEn.dataset.field='english';
-            inEn.addEventListener('input',function(e){voiceEntries[i].english=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
+            var inEn = document.createElement('input'); inEn.type='text'; inEn.className='editable-cell'; inEn.value=entry.english||''; inEn.maxLength=500;
+            inEn.addEventListener('input',function(e){voiceEntries[modelKey][i].english=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
             if(!entry.english||!entry.english.trim()) inEn.classList.add('warning');
             tdEn.appendChild(inEn); tr.appendChild(tdEn);
-            // 应用场景
             var tdScene = document.createElement('td'); tdScene.textContent = entry.scene; tr.appendChild(tdScene);
-            // 音色人物（可编辑）
             var tdChar = document.createElement('td');
-            var inChar = document.createElement('input'); inChar.type='text'; inChar.className='editable-cell'; inChar.value=entry.voiceCharacter||''; inChar.style.minWidth='100px';
-            inChar.addEventListener('input',function(e){voiceEntries[i].voiceCharacter=e.target.value;});
+            var inChar = document.createElement('input'); inChar.type='text'; inChar.className='editable-cell'; inChar.value=entry.voiceCharacter||''; inChar.style.minWidth='80px';
+            inChar.addEventListener('input',function(e){voiceEntries[modelKey][i].voiceCharacter=e.target.value;});
             tdChar.appendChild(inChar); tr.appendChild(tdChar);
-            // 音色描述（可编辑）
             var tdTone = document.createElement('td');
-            var inTone = document.createElement('input'); inTone.type='text'; inTone.className='editable-cell'; inTone.value=entry.voiceTone||''; inTone.style.minWidth='100px';
-            inTone.addEventListener('input',function(e){voiceEntries[i].voiceTone=e.target.value;});
+            var inTone = document.createElement('input'); inTone.type='text'; inTone.className='editable-cell'; inTone.value=entry.voiceTone||''; inTone.style.minWidth='80px';
+            inTone.addEventListener('input',function(e){voiceEntries[modelKey][i].voiceTone=e.target.value;});
             tdTone.appendChild(inTone); tr.appendChild(tdTone);
             tbody.appendChild(tr);
         });
@@ -656,34 +674,39 @@
         var btn = document.getElementById('v_genBtn'); btn.classList.add('loading'); btn.disabled = true;
         var st = document.getElementById('v_status');
         try {
-            st.textContent = '🔄 正在连接AI服务...'; st.className = 'ai-status generating';
+            st.textContent = '🔄 正在同时调用 Claude 和 GPT...'; st.className = 'ai-status generating';
             var normal = scenes.filter(function(s){return !isJackpot(s.scene);});
             var jp = scenes.filter(function(s){return isJackpot(s.scene);});
-            var all = [];
 
+            // 构建prompt（两个模型用同一个prompt）
+            var prompt = '';
             if (normal.length > 0) {
-                st.textContent = '🔄 正在生成配音内容（'+normal.length+'条）...';
                 var scenesText = normal.map(function(s,i){
                     var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
                     return (i+1)+'. '+s.scene+' → '+charNames.join(' + ');
                 }).join('\n');
                 var charsDesc = chars.map(function(c,i){ return '角色'+(i+1)+'：'+c.character+'（'+c.gender+'，'+c.toneDesc+'）'; }).join('\n');
 
-                var prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
+                prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
                     '故事氛围为：'+atmo+'\n\n' +
                     '配音角色设定：\n'+charsDesc+'\n\n' +
                     '节点及对应角色（如果一个节点标注了多个角色，表示该节点由多个角色一起说同一句台词）：\n'+scenesText+'\n\n' +
-                    '【严格字数限制】英文配音必须控制在8个英文单词以内！这是硬性限制，超出则无法在游戏中播放完。\n\n' +
-                    '【主题相关性】每句台词都必须包含与【'+theme+'】主题直接相关的意象或词汇，禁止通用台词。\n\n' +
-                    '【重要】每个节点只输出一条台词，即使有多个角色一起说也只输出一条。\n\n' +
-                    '具体规则：\n' +
-                    '1. 台词以角色的第一视角说出\n' +
-                    '2. 英文严格限制在3-8个单词，是主要配音输出\n' +
-                    '3. 中文是英文的意译（不超过10个汉字）\n' +
-                    '4. 每句必须嵌入主题相关词汇\n\n' +
+                    '【严格字数限制】英文配音必须控制在8个英文单词以内！\n' +
+                    '【主题相关性】每句台词都必须包含与【'+theme+'】主题直接相关的意象或词汇，禁止通用台词。\n' +
+                    '【重要】每个节点只输出一条台词。\n\n' +
+                    '具体规则：\n1. 台词以角色第一视角说出\n2. 英文3-8个单词\n3. 中文意译不超过10字\n4. 必须嵌入主题相关词汇\n\n' +
                     '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","chinese":"中文","english":"English(≤8词)"}]';
+            }
 
-                var raw = await callAI(prompt);
+            // 并行调用两个模型
+            st.textContent = '🔄 Claude + GPT 双模型生成中...';
+            var claudePromise = prompt ? callAI(prompt, 'claude-sonnet-4-20250514').catch(function(e){return '[]';}) : Promise.resolve('[]');
+            var gptPromise = prompt ? callAI(prompt, 'gpt-4o-mini').catch(function(e){return '[]';}) : Promise.resolve('[]');
+            var results = await Promise.all([claudePromise, gptPromise]);
+
+            // 解析结果并构建entries
+            function parseAndBuild(raw) {
+                var all = [];
                 var result = null;
                 try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
                 normal.forEach(function(s) {
@@ -694,9 +717,6 @@
                     var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
                     all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:voiceToneStr, chinese:f?f.chinese:'', english:f?f.english:''});
                 });
-            }
-            if (jp.length > 0) {
-                st.textContent = '🔄 正在处理JACKPOT...';
                 jp.forEach(function(s) {
                     var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
                     var toneDescs = s.charIdxList.map(function(ci){ return (chars[ci]||chars[0]).toneDesc; });
@@ -704,21 +724,26 @@
                     var cn = getJackpotText(s.scene);
                     all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:toneDescs.join(' / '), chinese:cn, english:cn});
                 });
+                return all;
             }
-            voiceEntries = all;
+
+            voiceEntries.claude = parseAndBuild(results[0]);
+            voiceEntries.gpt = parseAndBuild(results[1]);
             voiceRenderTable();
-            st.textContent = '✅ 生成完成！可编辑内容后导出文档'; st.className = 'ai-status done';
-            showToast('✨ AI 已生成配音内容');
+            st.textContent = '✅ 双模型生成完成！左边Claude，右边GPT'; st.className = 'ai-status done';
+            showToast('✨ Claude + GPT 双版本已生成');
         } catch (err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
         finally { btn.classList.remove('loading'); btn.disabled = false; }
     }
 
-    async function voiceExport() {
-        if (!voiceEntries.length) { alert('没有可导出的配音内容，请先生成'); return; }
+    async function voiceExport(modelKey) {
+        var entries = voiceEntries[modelKey] || [];
+        if (!entries.length) { alert('没有可导出的配音内容，请先生成'); return; }
         var theme = document.getElementById('v_theme').value.trim();
         var atmo = document.getElementById('v_atmosphere').value.trim();
         var chars = window._aiVoiceChars || [];
         var charImages = window._aiVoiceImages || [];
+        var modelLabel = modelKey === 'claude' ? 'Claude' : 'GPT';
         try {
             var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet('配音需求');
             ws.columns = [{width:8},{width:26},{width:36},{width:28},{width:18},{width:18},{width:18}];
@@ -773,7 +798,7 @@
             hdr.forEach(function(h,i){var c=hr.getCell(i+1); c.value=h; c.font=bld; c.alignment={vertical:'middle',horizontal:'center',wrapText:true}; c.border=bd; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE8D44D'}};});
 
             // Row 7+: 数据行
-            voiceEntries.forEach(function(e,i){
+            entries.forEach(function(e,i){
                 var row=ws.getRow(dataStartRow+1+i); row.height=20;
                 [i+1, e.chinese||'', e.english||'', e.scene, e.voiceCharacter||'', e.voiceTone||'', ''].forEach(function(v,j){
                     var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;
@@ -782,8 +807,8 @@
             });
 
             var buf = await wb.xlsx.writeBuffer();
-            saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配音需求文档.xlsx');
-            showToast('✅ 配音文档已下载！');
+            saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配音需求文档('+modelLabel+').xlsx');
+            showToast('✅ '+modelLabel+' 版本文档已下载！');
         } catch(err) { alert('导出失败：'+err.message); }
     }
 
