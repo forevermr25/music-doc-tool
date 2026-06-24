@@ -7,1101 +7,4330 @@
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:28px 14px;color:#e0e0e0}
-.container{max-width:1100px;margin:0 auto}
-h1{text-align:center;font-size:1.8rem;margin-bottom:8px;background:linear-gradient(90deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.subtitle{text-align:center;color:#8892b0;margin-bottom:24px;font-size:0.9rem}
-.step-nav{display:flex;justify-content:center;gap:4px;margin-bottom:22px;flex-wrap:wrap}
-.step-btn{padding:10px 18px;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,.05);color:#8892b0;border:1px solid rgba(255,255,255,.1);transition:all .3s;font-family:inherit}
-.step-btn:hover{color:#ccd6f6;border-color:rgba(247,151,30,.3)}
-.step-btn.active{background:linear-gradient(135deg,#f7971e,#ffd200);color:#1a1a2e;border-color:transparent}
-.step-panel{display:none}.step-panel.active{display:block}
-.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;margin-bottom:18px;backdrop-filter:blur(10px)}
-.card-title{font-size:1rem;font-weight:600;color:#ccd6f6;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
-.form-group{margin-bottom:16px}
-.form-row{display:flex;gap:12px}.form-row .form-group{flex:1}
-label{display:block;font-size:.84rem;font-weight:600;margin-bottom:5px;color:#ccd6f6}
-input[type="text"],input[type="number"],textarea,select{width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#e0e0e0;font-size:.88rem;font-family:inherit;transition:border-color .3s}
-input:focus,textarea:focus,select:focus{outline:none;border-color:#f7971e;box-shadow:0 0 0 2px rgba(247,151,30,.12)}
-textarea{min-height:80px;resize:vertical;line-height:1.5}
-select{cursor:pointer;appearance:none;padding-right:28px}
-select option{background:#1a1a2e;color:#e0e0e0}
-.info-tip{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.15);border-radius:7px;margin-bottom:14px;font-size:.8rem;color:#8892b0;line-height:1.5}
-.info-tip::before{content:'💡';flex-shrink:0}
-.btn-primary{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:#fff;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(102,126,234,.3)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-primary .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none;margin:0 auto}
-.btn-primary.loading .spinner{display:inline-block}.btn-primary.loading .btn-text{display:none}
-.btn-export{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;border-radius:10px;color:#1a1a2e;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s;margin-top:12px}
-.btn-export:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(247,151,30,.3)}
-.btn-export:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-add{padding:6px 12px;background:rgba(247,151,30,.1);border:1px solid rgba(247,151,30,.25);border-radius:6px;color:#ffd200;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-add:hover{background:rgba(247,151,30,.2)}
-.btn-danger{padding:4px 8px;background:rgba(245,87,108,.08);border:1px solid rgba(245,87,108,.2);border-radius:4px;color:#ff6b6b;font-size:.72rem;cursor:pointer;font-family:inherit}
-.btn-danger:hover{background:rgba(245,87,108,.15)}
-.ai-status{font-size:.78rem;color:#8892b0;margin-top:8px;min-height:1.2em}
-.ai-status.generating{color:#a78bfa}.ai-status.error{color:#ff6b6b}.ai-status.done{color:#27ae60}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-<style>
-.success-toast{position:fixed;top:18px;right:18px;padding:14px 20px;background:rgba(39,174,96,.95);color:#fff;border-radius:8px;font-weight:600;transform:translateX(120%);transition:transform .4s ease;z-index:1000;font-size:.88rem}
-.success-toast.show{transform:translateX(0)}
-.upload-area{border:2px dashed rgba(255,255,255,.15);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
-.upload-area:hover,.upload-area.dragover{border-color:#f7971e;background:rgba(247,151,30,.05)}
-.upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-area .icon{font-size:2.5rem;margin-bottom:10px}
-.upload-area .text{font-size:.9rem;color:#ccd6f6;margin-bottom:4px}
-.upload-area .hint{font-size:.78rem;color:#8892b0}
-.file-info{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);border-radius:8px;margin-top:12px;font-size:.85rem;color:#27ae60}
-.parsed-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
-.summary-item{padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px}
-.summary-item .lbl{font-size:.72rem;color:#8892b0;margin-bottom:3px}
-.summary-item .val{font-size:.9rem;font-weight:600;color:#ffd200}
-.page-section{margin-bottom:14px;border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
-.page-header{padding:10px 14px;background:rgba(247,151,30,.08);font-weight:600;color:#ffd200;font-size:.84rem;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
-.page-content{padding:14px}
-.feature-block{background:rgba(255,255,255,.02);border-left:3px solid rgba(247,151,30,.4);padding:10px 14px;margin-bottom:10px;border-radius:0 6px 6px 0}
-.feature-block .ft-title{font-weight:600;color:#ccd6f6;font-size:.84rem;margin-bottom:4px}
-.editable-area{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px 10px;min-height:30px;outline:none;font-size:.82rem;line-height:1.5;color:#e0e0e0;transition:all .2s;width:100%;font-family:inherit}
-.editable-area:focus{border-color:#f7971e;background:rgba(255,255,255,.06)}
-.preview-wrap{max-height:650px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:8px}
-.preview-table{width:100%;border-collapse:collapse;font-size:.8rem}
-.preview-table th{padding:8px 10px;background:rgba(247,151,30,.1);border:1px solid rgba(255,255,255,.08);color:#ffd200;font-weight:600;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:2}
-.preview-table td{padding:6px 10px;border:1px solid rgba(255,255,255,.06);vertical-align:top}
-.preview-table tr:hover{background:rgba(255,255,255,.02)}
-@media(max-width:768px){body{padding:16px 8px}.form-row{flex-direction:column;gap:0}.step-nav{gap:2px}.step-btn{padding:8px 10px;font-size:.76rem}.parsed-summary{grid-template-columns:1fr 1fr}}
-.icon-upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
-.icon-upload-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;text-align:center;transition:border-color .3s}
-.icon-upload-item:hover{border-color:rgba(247,151,30,.4)}
-.icon-upload-item .icon-name{font-size:.78rem;font-weight:600;color:#ffd200;margin-bottom:6px}
-.icon-upload-item .icon-drop{width:100%;height:80px;border:2px dashed rgba(255,255,255,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all .3s}
-.icon-upload-item .icon-drop:hover,.icon-upload-item .icon-drop.dragover{border-color:#f7971e;background:rgba(247,151,30,.05)}
-.icon-upload-item .icon-drop img{max-width:100%;max-height:76px;object-fit:contain}
-.icon-upload-item .icon-drop .placeholder{font-size:.7rem;color:#8892b0;text-align:center}
-.icon-upload-item .icon-drop input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.icon-upload-item.has-image .icon-drop{border-style:solid;border-color:rgba(39,174,96,.4)}
-.preview-icon-img{display:inline-block;width:40px;height:40px;object-fit:contain;vertical-align:middle;margin:0 4px;border-radius:4px;background:rgba(255,255,255,.05)}
+/* === Reset & Base === */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  padding: 28px 14px;
+  color: #e0e0e0;
+}
+
+/* === Container === */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* === Golden Gradient Title === */
+h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #f7971e, #ffd200);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  text-align: center;
+  color: #8892b0;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+}
+
+/* === Step Navigation === */
+.step-nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.step-btn {
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, .05);
+  color: #8892b0;
+  transition: all .3s;
+  font-family: inherit;
+}
+
+.step-btn:hover {
+  color: #ccd6f6;
+  border-color: rgba(247, 151, 30, .3);
+}
+
+.step-btn.active {
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a2e;
+  border-color: transparent;
+}
+
+/* === Step Panels === */
+.step-panel {
+  display: none;
+}
+
+.step-panel.active {
+  display: block;
+}
+
+/* === Loading Indicator === */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-indicator .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, .1);
+  border-top-color: #f7971e;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-indicator .text {
+  font-size: .9rem;
+  color: #8892b0;
+}
+
+/* === Toast Notification === */
+.success-toast {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  padding: 14px 20px;
+  background: rgba(39, 174, 96, .95);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  transform: translateX(120%);
+  transition: transform .4s ease;
+  z-index: 1000;
+  font-size: .88rem;
+}
+
+.success-toast.show {
+  transform: translateX(0);
+}
+
+/* === Error Message === */
+.error-message {
+  color: #ff6b6b;
+  font-size: .82rem;
+  margin-top: 6px;
+}
+
+.system-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #ff6b6b;
+  font-size: .9rem;
+}
+
+/* === Upload Area === */
+.upload-area {
+  border: 2px dashed rgba(255, 255, 255, .2);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .3s, background .3s;
+  background: rgba(255, 255, 255, .03);
+  margin-bottom: 20px;
+}
+
+.upload-area:hover {
+  border-color: rgba(247, 151, 30, .4);
+  background: rgba(255, 255, 255, .05);
+}
+
+.upload-area.drag-over {
+  border-color: #ffd200;
+  background: rgba(255, 210, 0, .08);
+  box-shadow: 0 0 16px rgba(255, 210, 0, .15);
+}
+
+.upload-icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  font-size: .95rem;
+  color: #ccd6f6;
+  margin-bottom: 6px;
+}
+
+.upload-hint {
+  font-size: .8rem;
+  color: #8892b0;
+}
+
+.upload-filename {
+  margin-top: 12px;
+  font-size: .85rem;
+  color: #64ffda;
+  word-break: break-all;
+}
+
+/* === Form Grid === */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: .78rem;
+  color: #8892b0;
+  margin-bottom: 5px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .06);
+  color: #e0e0e0;
+  font-size: .85rem;
+  font-family: inherit;
+  transition: border-color .3s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(247, 151, 30, .5);
+}
+
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892b0'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+/* === Document Summary === */
+.doc-summary {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, .04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: .75rem;
+  color: #8892b0;
+}
+
+.summary-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #64ffda;
+}
+
+/* === Generate Section === */
+.generate-section {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.generate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 36px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a2e;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .3s;
+  font-family: inherit;
+  min-width: 220px;
+  min-height: 46px;
+}
+
+.generate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(247, 151, 30, .35);
+}
+
+.generate-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(26, 26, 46, .3);
+  border-top-color: #1a1a2e;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.ai-status {
+  margin-top: 12px;
+  font-size: .82rem;
+  color: #8892b0;
+  min-height: 20px;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  body {
+    padding: 16px 8px;
+  }
+  .step-nav {
+    gap: 2px;
+  }
+  .step-btn {
+    padding: 8px 10px;
+    font-size: .76rem;
+  }
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .doc-summary {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1400px;
+  }
+  h1 {
+    font-size: 2.2rem;
+  }
+}
+
+/* === Icon Grid === */
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.icon-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(255, 255, 255, .2);
+  border-radius: 8px;
+  padding: 10px 6px;
+  min-height: 110px;
+  cursor: pointer;
+  transition: border-color .3s, background .3s, box-shadow .3s;
+  background: rgba(255, 255, 255, .03);
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-slot:hover {
+  border-color: rgba(247, 151, 30, .4);
+  background: rgba(255, 255, 255, .05);
+}
+
+.icon-slot.drag-over {
+  border-color: #ffd200;
+  background: rgba(255, 210, 0, .08);
+  box-shadow: 0 0 12px rgba(255, 210, 0, .15);
+}
+
+.icon-slot.has-image {
+  border-color: #27ae60;
+  border-style: solid;
+  background: rgba(39, 174, 96, .06);
+}
+
+.icon-slot.error {
+  border-color: #ff6b6b;
+  border-style: solid;
+  background: rgba(255, 107, 107, .06);
+  animation: shake .4s ease;
+}
+
+.icon-slot img {
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.icon-slot .icon-name {
+  font-size: .72rem;
+  color: #8892b0;
+  text-align: center;
+  word-break: break-all;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.icon-slot .icon-placeholder {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+  opacity: .5;
+}
+
+.icon-slot .icon-error-msg {
+  font-size: .65rem;
+  color: #ff6b6b;
+  text-align: center;
+  margin-top: 4px;
+  max-width: 100%;
+}
+
+/* === Export Button === */
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 36px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a2e;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .3s;
+  font-family: inherit;
+  min-width: 220px;
+  min-height: 46px;
+  margin-top: 16px;
+}
+
+.export-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(247, 151, 30, .35);
+}
+
+.export-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* === Step 2 Layout === */
+.step2-section-title {
+  font-size: .95rem;
+  color: #ccd6f6;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.preview-panel-container {
+  max-height: 650px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, .02);
+  margin-bottom: 16px;
+}
+
+.step2-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8892b0;
+  font-size: .88rem;
+}
+
+.step2-export-section {
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* === Preview Panel Styles === */
+.preview-page {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+
+.preview-page-header {
+  font-size: .82rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #f7971e, #ffd200);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.preview-page-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ccd6f6;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.preview-content {
+  font-size: .85rem;
+  color: #e0e0e0;
+  line-height: 1.7;
+}
+
+.preview-feature-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, .02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, .05);
+}
+
+.preview-feature-icon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+  gap: 6px;
+}
+
+.preview-feature-icon-group img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.preview-feature-icon-group .icon-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: #ffd200;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.preview-feature-desc {
+  flex: 1;
+  font-size: .84rem;
+  color: #e0e0e0;
+  line-height: 1.7;
+}
+
+.preview-pays-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.preview-pays-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  min-width: 100px;
+}
+
+.preview-pays-icon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.preview-pays-icon-placeholder {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, .05);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: .7rem;
+  color: #8892b0;
+  text-align: center;
+  word-break: break-all;
+}
+
+.preview-payout-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+.preview-payout-row input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .06);
+  color: #e0e0e0;
+  font-size: .78rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.preview-payout-row input:focus {
+  outline: none;
+  border-color: rgba(247, 151, 30, .5);
+}
+
+.preview-payout-add, .preview-payout-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .05);
+  color: #8892b0;
+  font-size: .72rem;
+  cursor: pointer;
+  transition: all .2s;
+  margin: 2px;
+}
+
+.preview-payout-add:hover {
+  border-color: #27ae60;
+  color: #27ae60;
+  background: rgba(39, 174, 96, .1);
+}
+
+.preview-payout-remove:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, .1);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: .82rem;
+}
+
+.preview-table th, .preview-table td {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  text-align: left;
+  color: #e0e0e0;
+}
+
+.preview-table th {
+  background: rgba(255, 255, 255, .06);
+  font-weight: 600;
+  color: #ccd6f6;
+}
+
+.preview-table td {
+  background: rgba(255, 255, 255, .02);
+}
+
+.preview-editable {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .04);
+  color: #e0e0e0;
+  font-size: .83rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  margin-top: 8px;
+  transition: border-color .3s;
+}
+
+.preview-editable:focus {
+  outline: none;
+  border-color: rgba(247, 151, 30, .4);
+}
+
+.jackpot-label {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: .8rem;
+  color: #fff;
+  vertical-align: middle;
+}
+
+.jackpot-grand {
+  background: #e74c3c;
+}
+
+.jackpot-major {
+  background: #f39c12;
+}
+
+.jackpot-minor {
+  background: #27ae60;
+}
+
+.jackpot-mini {
+  background: #3498db;
+}
+
+.preview-inline-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  vertical-align: middle;
+  border-radius: 3px;
+}
+
+.preview-pays-row-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* === Animations === */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>🎰 老虎机Paytable需求文档生成器</h1>
-<p class="subtitle">导入玩法文档 · AI智能解析 · 中英对照 · 一键导出</p>
-<div class="step-nav">
-<button class="step-btn active" onclick="goStep(1)">① 导入文档</button>
-<button class="step-btn" onclick="goStep(2)">② 预览导出</button>
+  <h1>老虎机Paytable需求文档生成器</h1>
+  <p class="subtitle">导入玩法文档 · AI智能解析 · 中英对照 · 一键导出</p>
+
+  <div class="step-nav">
+    <button class="step-btn" id="stepBtn1" onclick="goStep(1)">① 导入文档</button>
+    <button class="step-btn" id="stepBtn2" onclick="goStep(2)">② 预览导出</button>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="loading-indicator" id="loadingIndicator">
+    <div class="spinner"></div>
+    <div class="text">正在加载页面资源...</div>
+  </div>
+
+  <!-- Step Panels Container -->
+  <div id="stepPanelsContainer" style="display:none;">
+    <div class="step-panel" id="step1">
+      <!-- Upload Area -->
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">拖拽 .xlsx / .xls 玩法文档到此处</div>
+        <div class="upload-hint">或点击此区域选择文件</div>
+        <div class="upload-filename" id="uploadFilename"></div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+      </div>
+
+      <!-- Form Fields -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="brandSelect">品牌</label>
+          <select id="brandSelect">
+            <option value="CTS" selected>CTS</option>
+            <option value="JFS">JFS</option>
+            <option value="JMS">JMS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="gameNameInput">游戏名称</label>
+          <input type="text" id="gameNameInput" placeholder="游戏名称">
+        </div>
+        <div class="form-group">
+          <label for="boardLayoutInput">版面布局</label>
+          <input type="text" id="boardLayoutInput" placeholder="如: 3X5、5X3">
+        </div>
+        <div class="form-group">
+          <label for="linesInput">线/Ways</label>
+          <input type="text" id="linesInput" placeholder="如: 25线、243ways">
+        </div>
+      </div>
+
+      <!-- Document Summary (hidden initially) -->
+      <div class="doc-summary" id="docSummary" style="display:none;">
+        <div class="summary-item">
+          <span class="summary-label">工作表</span>
+          <span class="summary-value" id="summarySheets">0</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">总行数</span>
+          <span class="summary-value" id="summaryRows">0</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">文本行数</span>
+          <span class="summary-value" id="summaryTextLines">0</span>
+        </div>
+      </div>
+
+      <!-- Generate Button & Status -->
+      <div class="generate-section">
+        <button class="generate-btn" id="generateBtn">
+          <span class="btn-text" id="btnText">🚀 生成Paytable文档</span>
+          <span class="btn-spinner" id="btnSpinner" style="display:none;"></span>
+        </button>
+        <div class="ai-status" id="aiStatus"></div>
+      </div>
+    </div>
+
+    <div class="step-panel" id="step2">
+      <!-- Icon Upload Grid -->
+      <div class="step2-section-title">📷 图标图片上传</div>
+      <div id="iconUploadGrid"></div>
+
+      <!-- Preview Panel -->
+      <div class="step2-section-title">📄 文档预览</div>
+      <div class="preview-panel-container" id="previewPanel">
+        <div class="step2-empty-state" id="previewEmptyState">暂无内容，请先在步骤①中生成Paytable文档。</div>
+      </div>
+
+      <!-- Export Button -->
+      <div class="step2-export-section">
+        <button class="export-btn" id="exportBtn">📥 导出Excel文档</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Error (hidden by default) -->
+  <div class="system-error" id="systemError" style="display:none;">
+    ⚠️ 系统加载失败，请刷新页面重试。
+  </div>
 </div>
 
-<div class="step-panel active" id="step1">
-<div class="card">
-<div class="card-title">📂 导入玩法文档</div>
-<div class="info-tip">上传玩法文档(.xlsx)，系统将自动解析关卡名称、图标信息、玩法规则等内容，并通过AI生成中英对照的Paytable文档。</div>
-<div class="upload-area" id="uploadArea">
-<div class="icon">📄</div>
-<div class="text">点击或拖拽上传玩法文档</div>
-<div class="hint">支持 .xlsx / .xls 格式</div>
-<input type="file" accept=".xlsx,.xls" onchange="handleFileUpload(this)">
-</div>
-<div id="fileInfoArea"></div>
-<div id="parsedArea"></div>
-</div>
-<div class="card">
-<div class="card-title">⚙️ 基本设置</div>
-<div class="form-row">
-<div class="form-group"><label>品牌</label><select id="f_brand"><option>CTS</option><option>JMS</option><option>JFS</option></select></div>
-<div class="form-group"><label>关卡名称</label><input type="text" id="f_name" placeholder="从文档自动提取"></div>
-</div>
-<div class="form-row">
-<div class="form-group"><label>棋盘布局</label><input type="text" id="f_board" placeholder="如: 3X5、5X3"></div>
-<div class="form-group"><label>线数/Ways</label><input type="text" id="f_lines" placeholder="如: 25线、243ways"></div>
-</div>
-</div>
-<button class="btn-primary" id="parseBtn" onclick="aiParseAndGenerate()">
-<span class="btn-text">🤖 AI 解析并生成Paytable</span><span class="spinner"></span>
-</button>
-<div class="ai-status" id="aiStatus"></div>
-</div>
-
-<div class="step-panel" id="step2">
-<div class="card">
-<div class="card-title">🖼️ 图标图片</div>
-<div class="info-tip">根据文档识别的图标列表，点击或拖拽添加对应图片。图片将嵌入到导出的Excel文档中。</div>
-<div id="iconUploadArea"></div>
-</div>
-<div class="card">
-<div class="card-title">👁️ 文档预览</div>
-<div class="preview-wrap" id="previewWrap"></div>
-</div>
-<button class="btn-export" onclick="exportExcel()">📥 一键导出Paytable文档 (.xlsx)</button>
-</div>
-</div>
+<!-- Toast Notification -->
 <div class="success-toast" id="toast"></div>
 
 <script>
 'use strict';
-var paytableData={brand:'CTS',name:'',board:'',lines:'',pages:[]};
-var parsedRaw=null;
-var iconImages={}; // {iconName: base64DataUrl}
 
-function goStep(n){
-    document.querySelectorAll('.step-btn').forEach(function(b,i){b.classList.toggle('active',i===n-1)});
-    document.querySelectorAll('.step-panel').forEach(function(p,i){p.classList.toggle('active',i===n-1)});
-    if(n===2){renderIconUploadArea();renderPreview()}
-}
-function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
+/**
+ * Application State
+ * Global state object holding all runtime data for the generator.
+ */
+var AppState = {
+  brand: 'CTS',
+  gameName: '',
+  boardLayout: '',
+  lines: '',
+  rawWorkbook: null,
+  structuredData: null,
+  pages: [],
+  iconImages: {},
+  currentStep: 1,
+  isGenerating: false,
+  aiStatus: ''
+};
 
-var aiReady=false,puterLoading=false;
-function loadPuterJS(){
-    return new Promise(function(resolve,reject){
-        if(aiReady){resolve();return}
-        if(puterLoading){var w=setInterval(function(){if(aiReady){clearInterval(w);resolve()}},300);setTimeout(function(){clearInterval(w);reject(new Error('加载超时'))},30000);return}
-        puterLoading=true;
-        var s=document.createElement('script');s.src='https://js.puter.com/v2/';
-        s.onload=function(){var e=0;var t=setInterval(function(){e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);resolve()}if(e>=30000){clearInterval(t);puterLoading=false;reject(new Error('Puter.js初始化超时'))}},500)};
-        s.onerror=function(){puterLoading=false;reject(new Error('Puter.js加载失败'))};
-        document.head.appendChild(s);
-    });
-}
-async function callAI(prompt){
-    await loadPuterJS();
-    var r=await puter.ai.chat(prompt,{model:'gpt-4o',temperature:0.7});
-    if(typeof r==='string')return r;
-    if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(function(x){return x.text||x}).join('');return c}
-    if(r&&r.text)return r.text;
-    return String(r);
+/**
+ * Step Navigation
+ * Switches between step panels and updates active button state.
+ */
+function goStep(n) {
+  var btns = document.querySelectorAll('.step-btn');
+  var panels = document.querySelectorAll('.step-panel');
+  btns.forEach(function(b, i) { b.classList.toggle('active', i === n - 1); });
+  panels.forEach(function(p, i) { p.classList.toggle('active', i === n - 1); });
+  AppState.currentStep = n;
+
+  // When navigating to Step 2, refresh preview if content exists
+  if (n === 2 && AppState.pages && AppState.pages.length > 0) {
+    render(AppState.pages, AppState.iconImages);
+  }
 }
 
-async function handleFileUpload(input){
-    var file=input.files[0];if(!file)return;
-    document.getElementById('fileInfoArea').innerHTML='<div class="file-info">📎 已选择: '+file.name+' ('+Math.round(file.size/1024)+'KB)</div>';
-    try{
-        var wb=new ExcelJS.Workbook();
-        var buf=await file.arrayBuffer();
-        await wb.xlsx.load(buf);
-        parsedRaw=parseWorkbook(wb);
-        showParsedSummary();
-        var match=file.name.match(/(?:CTS|JFS|JMS)\s*(.+?)[:：]/);
-        if(match)document.getElementById('f_name').value=match[1].trim();
-        var brandMatch=file.name.match(/(CTS|JFS|JMS)/);
-        if(brandMatch)document.getElementById('f_brand').value=brandMatch[1];
-    }catch(e){
-        document.getElementById('fileInfoArea').innerHTML='<div class="file-info" style="color:#ff6b6b;border-color:rgba(245,87,108,.3);background:rgba(245,87,108,.1)">❌ 解析失败: '+e.message+'</div>';
+/**
+ * Toast Notification
+ * Displays a success message for 3 seconds in fixed top-right position.
+ */
+function showToast(message) {
+  var t = document.getElementById('toast');
+  t.textContent = message;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+/**
+ * Show Error Message
+ * Creates or updates an error message element below a given parent element.
+ */
+function showError(element, message) {
+  if (!element) return;
+  // Look for existing error element
+  var existing = element.querySelector('.error-message');
+  if (message) {
+    if (!existing) {
+      existing = document.createElement('div');
+      existing.className = 'error-message';
+      element.appendChild(existing);
     }
+    existing.textContent = message;
+    existing.style.display = 'block';
+  } else {
+    // Clear error
+    if (existing) {
+      existing.style.display = 'none';
+      existing.textContent = '';
+    }
+  }
 }
 
-function parseWorkbook(wb){
-    var data={sheets:[],allText:[]};
-    wb.eachSheet(function(ws){
-        var sheetData={name:ws.name,rows:[]};
-        ws.eachRow(function(row,rowNum){
-            var rowData=[];
-            row.eachCell({includeEmpty:true},function(cell,colNum){
-                var val='';
-                if(cell.value){
-                    if(typeof cell.value==='object'&&cell.value.richText){
-                        val=cell.value.richText.map(function(rt){return rt.text||''}).join('');
-                    }else if(typeof cell.value==='object'&&cell.value.text){
-                        val=cell.value.text;
-                    }else{val=String(cell.value)}
-                }
-                rowData.push(val.trim());
-            });
-            sheetData.rows.push(rowData);
-            data.allText.push(rowData.filter(Boolean).join(' '));
+/**
+ * Validate File
+ * Checks that the file has a .xlsx or .xls extension (case-insensitive).
+ * Returns { valid: true } or { valid: false, error: "..." }
+ */
+function validateFile(file) {
+  if (!file || !file.name) {
+    return { valid: false, error: '未选择文件' };
+  }
+  var name = file.name.toLowerCase();
+  var dotIndex = name.lastIndexOf('.');
+  if (dotIndex === -1) {
+    return { valid: false, error: '仅支持 .xlsx 和 .xls 格式' };
+  }
+  var ext = name.substring(dotIndex);
+  if (ext === '.xlsx' || ext === '.xls') {
+    return { valid: true };
+  }
+  return { valid: false, error: '仅支持 .xlsx 和 .xls 格式' };
+}
+
+/**
+ * Extract Filename Metadata
+ * Parses brand identifier (CTS/JFS/JMS) and game name from filename.
+ * Expects format: "BRAND游戏名：..." or "BRAND 游戏名：..."
+ * Returns { brand, gameName } or { brand: null, gameName: null } if no match.
+ */
+function extractFilenameMetadata(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return { brand: null, gameName: null };
+  }
+  // Match brand at start (case-insensitive), optional space, then game name, then colon (fullwidth or halfwidth)
+  var match = filename.match(/^(CTS|JFS|JMS)\s*(.*?)[：:]/i);
+  if (!match) {
+    return { brand: null, gameName: null };
+  }
+  var brand = match[1].toUpperCase();
+  var gameName = match[2].trim();
+  if (!gameName) {
+    return { brand: null, gameName: null };
+  }
+  return { brand: brand, gameName: gameName };
+}
+
+/**
+ * Handle File Upload
+ * Reads the file as ArrayBuffer, parses with ExcelJS, extracts all worksheet data.
+ * Stores result in AppState.rawWorkbook and updates the summary display.
+ */
+function handleFileUpload(file) {
+  var uploadArea = document.getElementById('uploadArea');
+  // Clear previous errors
+  showError(uploadArea, '');
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var buffer = e.target.result;
+    var workbook = new ExcelJS.Workbook();
+
+    workbook.xlsx.load(buffer).then(function() {
+      // Successfully parsed the workbook
+      processWorkbook(workbook, file.name, false);
+    }).catch(function(err) {
+      // Main parse failed - attempt partial recovery
+      // Try to see if any data was partially read
+      try {
+        var hasData = false;
+        workbook.eachSheet(function(ws) {
+          if (ws.rowCount > 0) hasData = true;
         });
-        data.sheets.push(sheetData);
+        if (hasData) {
+          // Partial recovery: some sheets are readable
+          processWorkbook(workbook, file.name, true);
+        } else {
+          showError(uploadArea, '文件无法读取或不包含数据');
+        }
+      } catch (innerErr) {
+        showError(uploadArea, '文件无法读取或不包含数据');
+      }
     });
-    return data;
+  };
+
+  reader.onerror = function() {
+    showError(uploadArea, '文件无法读取或不包含数据');
+  };
+
+  reader.readAsArrayBuffer(file);
 }
 
-function showParsedSummary(){
-    if(!parsedRaw)return;
-    var totalRows=0;parsedRaw.sheets.forEach(function(s){totalRows+=s.rows.length});
-    var html='<div class="parsed-summary">';
-    html+='<div class="summary-item"><div class="lbl">工作表数</div><div class="val">'+parsedRaw.sheets.length+'</div></div>';
-    html+='<div class="summary-item"><div class="lbl">总行数</div><div class="val">'+totalRows+'</div></div>';
-    html+='<div class="summary-item"><div class="lbl">文本内容</div><div class="val">'+parsedRaw.allText.filter(Boolean).length+' 行</div></div>';
-    html+='</div>';
-    document.getElementById('parsedArea').innerHTML=html;
+/**
+ * Process Workbook
+ * Iterates worksheets and extracts row/cell data into structured format.
+ * @param {ExcelJS.Workbook} workbook - The parsed workbook
+ * @param {string} filename - Original filename
+ * @param {boolean} isPartial - Whether this is a partial recovery
+ */
+function processWorkbook(workbook, filename, isPartial) {
+  var uploadArea = document.getElementById('uploadArea');
+  var sheets = [];
+  var totalRows = 0;
+  var allText = [];
+
+  workbook.eachSheet(function(worksheet) {
+    var sheetData = [];
+    worksheet.eachRow(function(row, rowNumber) {
+      var rowValues = [];
+      row.eachCell(function(cell) {
+        var cellText = getCellText(cell);
+        if (cellText) {
+          rowValues.push(cellText);
+          allText.push(cellText);
+        }
+      });
+      if (rowValues.length > 0) {
+        sheetData.push(rowValues);
+        totalRows++;
+      }
+    });
+    sheets.push({
+      name: worksheet.name,
+      rows: sheetData
+    });
+  });
+
+  // Check if no data at all
+  if (totalRows === 0) {
+    showError(uploadArea, '文件不包含数据');
+    return;
+  }
+
+  // Store in AppState
+  AppState.rawWorkbook = {
+    filename: filename,
+    sheets: sheets,
+    totalRows: totalRows,
+    allText: allText,
+    sheetCount: sheets.length
+  };
+
+  // Auto-populate brand and game name from filename metadata
+  var metadata = extractFilenameMetadata(filename);
+  if (metadata.brand) {
+    document.getElementById('brandSelect').value = metadata.brand;
+    document.getElementById('gameNameInput').value = metadata.gameName;
+    AppState.brand = metadata.brand;
+    AppState.gameName = metadata.gameName;
+  }
+
+  // Display filename
+  displayFileName(filename);
+
+  // Show partial recovery warning if applicable
+  if (isPartial) {
+    showError(uploadArea, '');
+    showToast('⚠️ 部分数据已恢复，可能存在数据不完整');
+  }
+
+  // Update and show summary section
+  var docSummary = document.getElementById('docSummary');
+  var summarySheets = document.getElementById('summarySheets');
+  var summaryRows = document.getElementById('summaryRows');
+  var summaryTextLines = document.getElementById('summaryTextLines');
+
+  if (docSummary) {
+    summarySheets.textContent = sheets.length;
+    summaryRows.textContent = totalRows;
+    summaryTextLines.textContent = allText.length;
+    docSummary.style.display = 'flex';
+  }
 }
 
-async function aiParseAndGenerate(){
-    var name=document.getElementById('f_name').value.trim();
-    var brand=document.getElementById('f_brand').value;
-    var board=document.getElementById('f_board').value.trim();
-    var lines=document.getElementById('f_lines').value.trim();
-    if(!name){alert('请输入关卡名称');return}
-    if(!parsedRaw||parsedRaw.allText.length===0){alert('请先上传玩法文档');return}
-    paytableData.brand=brand;paytableData.name=name;paytableData.board=board;paytableData.lines=lines;
-    var btn=document.getElementById('parseBtn');btn.classList.add('loading');btn.disabled=true;
-    var st=document.getElementById('aiStatus');
-    try{
-        st.textContent='🔄 正在结构化解析玩法文档...';st.className='ai-status generating';
+/**
+ * Get Cell Text
+ * Extracts text content from an ExcelJS cell, handling various value types.
+ */
+function getCellText(cell) {
+  if (!cell || cell.value === null || cell.value === undefined) return '';
+  var val = cell.value;
 
-        // ========== STRUCTURAL PRE-PARSING ==========
-        var allLines=parsedRaw.allText.filter(Boolean);
-        var structured=structuralParse(allLines);
+  // Rich text object
+  if (val.richText) {
+    return val.richText.map(function(part) {
+      return part.text || '';
+    }).join('').trim();
+  }
 
-        // Determine if full-ways game
-        var isFullWays=false;
-        var waysNum=0;
-        var gridMatch=board.match(/(\d+)\s*[xX*]\s*(\d+)/);
-        if(gridMatch){
-            var rows=parseInt(gridMatch[1]);var cols=parseInt(gridMatch[2]);
-            if(rows>cols){var tmp=rows;rows=cols;cols=tmp}
-            var maxWays=Math.pow(rows,cols);
-            var linesVal=lines.replace(/[^0-9]/g,'');
-            waysNum=parseInt(linesVal)||0;
-            if(waysNum===maxWays||(lines.toLowerCase().includes('ways')&&waysNum>0)){isFullWays=true;if(!waysNum)waysNum=maxWays}
-        }
-        // Also detect "满线" keyword
-        if(lines.includes('满线')||lines.includes('满')){
-            isFullWays=true;
-            if(!waysNum&&gridMatch){
-                var rows2=parseInt(gridMatch[1]);var cols2=parseInt(gridMatch[2]);
-                if(rows2>cols2){var t2=rows2;rows2=cols2;cols2=t2}
-                waysNum=Math.pow(rows2,cols2);
-            }
-            if(!waysNum) waysNum=243; // default fallback
-        }
+  // Formula result
+  if (val.result !== undefined) {
+    return String(val.result).trim();
+  }
 
-        var paylineInstruction='';
-        if(isFullWays){
-            paylineInstruction='LAST PAGE: PAY LINES - FULL WAYS game. Use EXACT fixed content:\n'+
-            'cn: "* '+waysNum+' Ways to win!" / "* 无赔付线" / "* 匹配图标在连续转轴的任何位置赔付" / "* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘" / "* 只赔付最高的中奖组合" / "* 赢钱额乘以投注倍数"\n'+
-            'en: "* '+waysNum+' Ways to win!" / "* No paylines." / "* Matching symbols pay in any position on consecutive reels." / "* Matching winning symbols on the same reel multiply the win by the number matched." / "* Only the highest winning combination is paid." / "* Wins are multiplied by the bet multiplier."\n';
-        }else{
-            paylineInstruction='LAST PAGE: PAY LINES - State payline count and configuration.\n';
-        }
+  // Hyperlink
+  if (val.text) {
+    return String(val.text).trim();
+  }
 
-        // Build structured prompt with pre-parsed sections
-        var structuredContent='=== PRE-PARSED DOCUMENT STRUCTURE ===\n\n';
-        structuredContent+='[BASIC INFO]\n';
-        structuredContent+='关卡名: '+name+'\n';
-        structuredContent+='棋盘: '+board+'\n';
-        structuredContent+='线数: '+lines+'\n';
-        if(structured.combo) structuredContent+='玩法组合: '+structured.combo+'\n';
-        if(structured.jackpots.length) structuredContent+='Jackpot档位: '+structured.jackpots.join(', ')+'\n';
-        structuredContent+='\n';
-
-        if(structured.specialIcons.length){
-            structuredContent+='[SPECIAL ICONS - Functional descriptions only]\n';
-            structured.specialIcons.forEach(function(ic){
-                structuredContent+='- '+ic.name+':';
-                if(ic.functions.length) structuredContent+=' '+ic.functions.join(' | ');
-                else structuredContent+=' (no functional description found)';
-                structuredContent+='\n';
-            });
-            if(structured.iconRelations.length){
-                structuredContent+='Icon Relations: ';
-                structured.iconRelations.forEach(function(rel){
-                    structuredContent+=rel.icon+'->'+rel.target+' ';
-                });
-            }
-            structuredContent+='\n';
-        }
-
-        if(structured.normalIcons.length){
-            structuredContent+='[NORMAL ICONS]\n';
-            structured.normalIcons.forEach(function(ic){
-                structuredContent+='- '+ic+'\n';
-            });
-            if(!structured.hasPayoutValues){
-                structuredContent+='** PAYOUT VALUES: NOT FOUND IN DOCUMENT. All values are "/" or empty. You MUST output "数值待定" / "Values TBD" for ALL symbols. Do NOT invent values. **\n';
-            }
-            structuredContent+='\n';
-        }
-
-        if(structured.features.length){
-            var buffCount=structured.features.filter(function(f){return/buff/i.test(f.name)}).length;
-            structuredContent+='[FEATURES - Output pages in THIS EXACT ORDER. Do NOT reorder or merge.]\n';
-            structuredContent+='Total features: '+structured.features.length+'. You MUST generate '+structured.features.length+' feature pages.\n';
-            if(buffCount>0) structuredContent+='Buff features detected: '+buffCount+'. Each buff MUST be described with its specific mechanic.\n';
-            structured.features.forEach(function(feat,i){
-                structuredContent+='\n--- FEATURE '+(i+1)+': '+feat.name+' ---\n';
-                if(feat.trigger) structuredContent+='Trigger: '+feat.trigger+'\n';
-                if(feat.rules.length){
-                    structuredContent+='Rules:\n';
-                    feat.rules.forEach(function(r){structuredContent+='  '+r+'\n'});
-                }
-                if(feat.wheelRewards&&feat.wheelRewards.length){
-                    structuredContent+='Wheel Rewards (list ALL of these specifically):\n';
-                    feat.wheelRewards.forEach(function(wr){structuredContent+='  '+wr+'\n'});
-                }
-                if(feat.endCondition) structuredContent+='End: '+feat.endCondition+'\n';
-            });
-        }
-
-        st.textContent='🔄 AI正在生成Paytable内容（首次使用需授权）...';
-
-        var prompt='Act as a slots game planner. Write a player-facing paytable document.\n\n'+
-        'Game Info: Brand='+brand+', Name='+name+', Grid='+board+', Ways/Lines='+lines+'\n\n'+
-        structuredContent+'\n\n'+
-        '=== PAGE MAPPING RULE (HIGHEST PRIORITY) ===\n'+
-        'The output page structure MUST follow the gameplay document structure exactly.\n'+
-        'Do NOT create, merge, split, reorder, or remove feature pages.\n\n'+
-        'Page order is fixed:\n'+
-        'PAGE 1: FEATURE\n'+
-        'PAGE 2: PAYS\n'+
-        'PAGE 3+: One page for each feature listed in the [FEATURES] section.\n'+
-        'LAST PAGE: PAY LINES\n\n'+
-        'FEATURE PAGE RULE:\n'+
-        'The page title MUST always be: title="FEATURE" titleEn="FEATURE"\n'+
-        'This page contains: WILD descriptions, SCATTER descriptions, BONUS descriptions, LINK descriptions, Trigger summaries\n'+
-        'Do NOT generate custom feature names for this page.\n\n'+
-        'PAYS PAGE RULE:\n'+
-        'The page title MUST always be: title="PAYS" titleEn="PAYS"\n'+
-        'Only symbol payouts belong on this page. Do NOT place feature rules here.\n\n'+
-        'FEATURE DETAIL PAGE RULE:\n'+
-        'For every feature in [FEATURES], keep the exact document order.\n'+
-        'Example: [FEATURES] FEATURE 1: BASE玩法, FEATURE 2: RESPIN玩法, FEATURE 3: 普通转盘玩法, FEATURE 4: 收集玩法\n'+
-        'Output: FEATURE → PAYS → BASE玩法 → RESPIN玩法 → 普通转盘玩法 → 收集玩法 → PAY LINES\n'+
-        'Never change the order.\n\n'+
-        'FEATURE NAME RULE:\n'+
-        'The feature page title must correspond to the original feature.\n'+
-        'If the gameplay document already provides a feature name: Use that feature name.\n'+
-        'Example: 收集玩法, 普通转盘玩法, 超级转盘玩法, Train玩法 — Do not rename.\n\n'+
-        'AUTO NAMING RULE:\n'+
-        'Only generate a custom player-facing feature name when:\n'+
-        '  - The feature does not have a meaningful name, OR\n'+
-        '  - The feature is named generically as: 玩法1, 玩法2, Feature A, Feature B\n'+
-        'In these cases: Generate titleEn = thematic feature name (e.g. Scarab Respin, Treasure Vault)\n'+
-        'title = original Chinese feature name\n\n'+
-        'FEATURE CONTENT RULE:\n'+
-        'One feature page = one gameplay feature.\n'+
-        'All mechanics belonging to that feature must remain on the same page.\n'+
-        'Include: Trigger, Core Rules, Buffs, Upgrade Effects, Reward Variants, Wheel Rewards, End Conditions\n'+
-        'Do NOT create separate pages for: Buffs, Reward Variants, Upgrade Levels, Wheel Rewards, Collection Rewards\n'+
-        'These belong to the parent feature page.\n'+
-        'Example: RESPIN玩法 contains Buff1, Buff2, Buff3 → Output as ONE page with all buffs inside.\n'+
-        'NOT: RESPIN玩法 / BUFF1 / BUFF2 / BUFF3 as separate pages.\n\n'+
-        'FEATURE COUNT VALIDATION:\n'+
-        'Count the number of features in [FEATURES].\n'+
-        'If [FEATURES] contains N features: Output MUST contain FEATURE + PAYS + N Feature Pages + PAY LINES.\n'+
-        'Missing a feature page is a critical failure.\n\n'+
-        '=== LAYER 1: FEATURE IDENTIFICATION ===\n'+
-        'Before writing, identify every gameplay mechanic and classify into:\n'+
-        '- Base Game / Free Games / Hold & Spin / Collection / Progression\n'+
-        '- Upgrade / Wheel / Super Wheel / Buff / Jackpot / Train\n'+
-        '- Multiplier / Symbol Transformation / Persistent Feature / Mission Feature\n'+
-        '- Custom Feature (if none of the above fit)\n'+
-        'Analyze: Theme, Core Gameplay Loop, Player Objective, Reward Structure.\n\n'+
-        '=== LAYER 2: FEATURE NAMING ENGINE ===\n'+
-        'Every feature page MUST have a player-facing feature name.\n'+
-        'Step 1: Check if feature matches industry-standard slot names:\n'+
-        '  Hold & Spin, Collection Feature, Free Games, Wheel Feature,\n'+
-        '  Multiplier Feature, Upgrade Feature, Train Feature, etc.\n'+
-        'Step 2: If game theme provides stronger immersion, generate themed name.\n'+
-        '  Examples: Egypt Hold&Spin→"Scarab Respin", Chinese Collection→"Fortune Gathering"\n'+
-        'Step 3: For unique mechanics, generate custom name (2-4 words, commercial style, theme relevant).\n'+
-        'Use this name as page titleEn. Chinese title uses the doc original name or translated version.\n\n'+
-        '=== LAYER 3: PLAYER VISIBILITY FILTER ===\n'+
-        'PLAYER VISIBLE (include):\n'+
-        '  Trigger Conditions, Feature Effects, Collection Requirements, Upgrade Rules,\n'+
-        '  Progression Rules, Buff Results, Jackpot Awards, Multiplier Effects,\n'+
-        '  Wheel Rewards, Symbol Behaviors, End Conditions\n'+
-        'DEVELOPER ONLY (exclude entirely):\n'+
-        '  RTP, Reel Weights, Trigger Probability, Hit Rate, Simulation Data,\n'+
-        '  Internal Variable Names, Config IDs, Server Logic, State Machine Logic,\n'+
-        '  Animation Notes, UI Notes, Art Notes, 断线重连, 极限情况, 数值规避,\n'+
-        '  多触发棋盘顺序, 美术设计, reconnection rules, edge cases\n\n'+
-        '=== LAYER 4: BUFF DOCUMENTATION RULE ===\n'+
-        '<=5 Buffs: Describe every Buff individually with specific mechanic.\n'+
-        '6~15 Buffs: Group by category (Respin/Value/Collector/Upgrade), describe each briefly.\n'+
-        '16+ Buffs: Summarize by category only. Do NOT list every Buff.\n\n'+
-        '=== LAYER 5: PAGE GENERATION ===\n'+
-        'Generate pages in this EXACT order:\n'+
-        'PAGE 1: FEATURE / FEATURE (overview of all special symbols and triggers)\n'+
-        'PAGE 2: PAYS / PAYS (symbol payouts)\n'+
-        'PAGE 3+: Feature Pages (in document order, never rearrange)\n'+
-        'LAST: PAY LINES\n\n'+
-        '=== LAYER 6: ADVANCED FEATURE LIBRARY ===\n'+
-        'Recognize these common mechanics:\n'+
-        '  Collection, Hold & Spin, Lock & Respins, Train, Persistent Reel,\n'+
-        '  Upgrade, Evolution, Progression, Journey, Mission, Wheel, Super Wheel,\n'+
-        '  Jackpot, Buff, Merge, Cluster, Symbol Transformation, Expanding Reel,\n'+
-        '  Growing Reel, Level Up, Multi-Level Bonus, Cash On Reels, Feature Unlock\n\n'+
-        '=== CRITICAL RULES ===\n\n'+
-        'RULE 1: Every sentence MUST start with "* " in both cn and en fields.\n\n'+
-        'RULE 2: Page 1 title FIXED: title="FEATURE", titleEn="FEATURE".\n\n'+
-        'RULE 3: FEATURE page (page 1) must include:\n'+
-        '  a) Each feature trigger condition as a separate bullet:\n'+
-        '    - SCATTER trigger: "* 3个及以上[SCATTER]触发XXX"\n'+
-        '    - BONUS trigger for respin: "* 6个及以上[BONUS]触发RESPIN"\n'+
-        '    - Collection trigger: "* 收集[BONUS1][BONUS2][BONUS3]可触发Buff Respin"\n'+
-        '  b) WILD description split into SEPARATE bullets:\n'+
-        '    - Substitution: list ALL icons WILD cannot substitute (ALL bonus types + scatter + link)\n'+
-        '    - Reels: which reels WILD appears on\n'+
-        '    - Size/shape: if WILD has special size (1x3, expanding, etc.)\n'+
-        '  c) Each BONUS icon type described briefly\n'+
-        '  d) LINK icon if exists\n\n'+
-        'RULE 4: Feature detail pages:\n'+
-        '  - Match trigger to CORRECT feature! SCATTER->Free Games, BONUS count->Respin, Collection->Buff\n'+
-        '  - Do NOT confuse which trigger belongs to which feature\n'+
-        '  - Each feature page: 4~8 bullets covering trigger, core mechanics, end condition\n'+
-        '  - Use EXACT buff names from the gameplay doc. Do NOT invent names.\n\n'+
-        'RULE 5: Separate pages required:\n'+
-        '  - FREE GAMES page (if scatter triggers free spins)\n'+
-        '  - RESPIN FEATURE page (if bonus count triggers respin)\n'+
-        '  - BUFF RESPIN page (if collection triggers enhanced respin)\n'+
-        '  - WHEEL page (list ALL specific reward items from doc)\n'+
-        '  - SUPER WHEEL / UPGRADE page - MANDATORY if doc has "收集玩法"/"升级转盘"/"super转盘"\n'+
-        '    Must describe: unlock condition + upgrade details\n'+
-        '  - NEVER merge normal and super/upgrade into one page\n'+
-        '  - NEVER generalize wheel rewards as "various bonuses". List SPECIFIC items.\n\n'+
-        'RULE 6: Buff/reward descriptions must use ORIGINAL names and SPECIFIC mechanics:\n'+
-        '  BAD: "Extra buff adds bonus"\n'+
-        '  GOOD: "[BONUS5]落地后给棋盘上随机位置增加3个[BONUS4]或给已有[BONUS4]加钱"\n\n'+
-        'RULE 7: BUFF RULE - If document contains buff/variant mechanics for a feature:\n'+
-        '  - They MUST appear in the output, either as a separate BUFF page or within the main feature page.\n'+
-        '  - Each buff MUST be described with its SPECIFIC mechanic (1-2 sentences per buff).\n'+
-        '  - Use the exact buff name from the doc (e.g. "Buff1-加次数", "Buff2-双棋盘", "Buff3-加钱").\n'+
-        '  - If there are 3 buffs, there must be 3 buff descriptions in the output. No exceptions.\n\n'+
-        'RULE 8: NO labels. Never write "触发条件：" or "玩法说明：" or "结束条件：" as prefix.\n\n'+
-        'RULE 9: Output order MUST match document order. Never rearrange feature pages.\n'+
-        '  FEATURE first, PAYS second, then features in document order, PAY LINES last.\n\n'+
-        paylineInstruction+'\n'+
-        '=== FINAL WARNINGS ===\n'+
-        '- NEVER use "等", "etc.", "and more", "various" to summarize. List ALL specific items.\n'+
-        '- You MUST generate one page for EVERY feature listed in [FEATURES] section above. Count them.\n'+
-        '- If the document has N features, you must output N feature pages (plus FEATURE, PAYS, PAY LINES).\n'+
-        '- Missing a feature page is a critical failure.\n\n'+
-        '=== FORMAT ===\n'+
-        'Return ONLY valid JSON:\n'+
-        '{"pages":[{"title":"中文","titleEn":"ENGLISH FEATURE NAME","items":[{"cn":"* 中文","en":"* English"}]}]}';
-
-        var raw=await callAI(prompt);
-        var result=null;
-        try{result=JSON.parse(raw)}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)result=JSON.parse(m[0])}
-        if(result&&result.pages){
-            // Post-process: ensure PAY LINES page for full-ways games
-            if(isFullWays){
-                var hasPayline=result.pages.some(function(p){return(p.titleEn||'').toUpperCase().includes('PAY LINE')||(p.title||'').includes('赔付线')});
-                if(!hasPayline){
-                    result.pages.push({title:'赔付线',titleEn:'PAY LINES',items:[
-                        {cn:'* '+waysNum+' Ways to win!',en:'* '+waysNum+' Ways to win!'},
-                        {cn:'* 无赔付线',en:'* No paylines.'},
-                        {cn:'* 匹配图标在连续转轴的任何位置赔付',en:'* Matching symbols pay in any position on consecutive reels.'},
-                        {cn:'* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘',en:'* Matching winning symbols on the same reel multiply the win by the number matched.'},
-                        {cn:'* 只赔付最高的中奖组合',en:'* Only the highest winning combination is paid.'},
-                        {cn:'* 赢钱额乘以投注倍数',en:'* Wins are multiplied by the bet multiplier.'}
-                    ]});
-                }
-            }
-            // Post-process: force "数值待定" on PAYS page if no payout values in document
-            if(!structured.hasPayoutValues){
-                result.pages.forEach(function(p){
-                    if((p.titleEn||'').toUpperCase()==='PAYS'||(p.title||'').includes('赔付')){
-                        var correctItems=[];
-                        structured.normalIcons.forEach(function(ic){
-                            correctItems.push({cn:'* '+ic+': 数值待定',en:'* '+ic+': Values TBD'});
-                        });
-                        if(correctItems.length) p.items=correctItems;
-                    }
-                });
-            }
-            paytableData.pages=result.pages;
-            // Post-process: check if AI missed features
-            var featurePageCount=result.pages.filter(function(p){
-                var t=(p.titleEn||'').toUpperCase();
-                return t!=='FEATURE'&&t!=='PAYS'&&!t.includes('PAY LINE');
-            }).length;
-            var expectedFeatures=structured.features.length;
-            var warningMsg='';
-            if(featurePageCount<expectedFeatures){
-                warningMsg=' ⚠️ 注意：识别到'+expectedFeatures+'个玩法但只生成了'+featurePageCount+'个玩法页，可能有遗漏，建议重新生成。';
-            }
-            renderIconUploadArea();
-            renderPreview();
-            st.textContent='✅ 生成完成！（识别到'+expectedFeatures+'个玩法，生成'+featurePageCount+'个玩法页）'+warningMsg;st.className='ai-status done';
-            showToast('✨ Paytable内容已生成');
-            goStep(2);
-        }else{st.textContent='⚠️ AI返回格式异常，请重试';st.className='ai-status error'}
-    }catch(err){st.textContent='❌ '+err.message;st.className='ai-status error'}
-    finally{btn.classList.remove('loading');btn.disabled=false}
+  // Plain value
+  var text = String(val).trim();
+  return text;
 }
 
-// ========== STRUCTURAL PARSER ==========
-function structuralParse(allLines){
-    var result={combo:'',jackpots:[],specialIcons:[],normalIcons:[],features:[],iconRelations:[]};
-    var fullText=allLines.join('\n');
+/**
+ * Page Load Initialization
+ * Shows loading indicator until resources are ready, then displays Step 1.
+ */
+function initPage() {
+  var loading = document.getElementById('loadingIndicator');
+  var container = document.getElementById('stepPanelsContainer');
+  var errorEl = document.getElementById('systemError');
+  var step1 = document.getElementById('step1');
+  var step2 = document.getElementById('step2');
 
-    // ---- 1. Basic info extraction ----
-    var comboMatch=fullText.match(/玩法组合[：:]\s*(.+)/);
-    if(comboMatch) result.combo=comboMatch[1].trim();
+  // Check that content panels exist
+  if (!step1 || !step2) {
+    loading.style.display = 'none';
+    errorEl.style.display = 'block';
+    return;
+  }
 
-    // Jackpots - ordered high to low
-    ['GRAND','MAJOR','MINOR','MINI'].forEach(function(j){
-        // Make sure MINI doesn't match MINOR
-        if(j==='MINI'){
-            if(/\bMINI\b/.test(fullText)&&!/MINI[A-Z]/.test(fullText.replace(/MINOR/g,''))) result.jackpots.push(j);
-        }else{
-            if(fullText.includes(j)) result.jackpots.push(j);
-        }
-    });
-
-    // ---- 2. Icon extraction with FUNCTIONAL descriptions ----
-    var designKeywords=['超框','底色','颜色','设计','外观','动画','表现','拟人','质感','特殊设计','无框','固有色'];
-    function isDesignDesc(text){
-        return designKeywords.some(function(k){return text.includes(k)})&&!text.includes('触发')&&!text.includes('替代')&&!text.includes('出现在')&&!text.includes('携带');
-    }
-    function isFunctionalDesc(text){
-        var funcKeys=['触发','替代','代替','出现在','仅在','仅出现','携带','收集','落地','掉落','变为','可替代','参与连线','集满'];
-        return funcKeys.some(function(k){return text.includes(k)});
-    }
-
-    var iconSection=false;
-    var iconHeaderLine=-1;
-    var iconNames=[];
-    var specialKeywords=['BONUS','SCATTER','WILD','LINK','wild','scatter','bonus','link','frame'];
-
-    // BASELINE: Always scan full document for core slot icon types (scatter/bonus/wild/link)
-    // These are fundamental slot icons that must be detected regardless of document structure
-    var coreIconTypes=['SCATTER','BONUS','WILD','LINK'];
-    var fullTextUpper=fullText.toUpperCase();
-    coreIconTypes.forEach(function(core){
-        // Match core type with optional number suffix or prefix (e.g. BONUS1, 整列WILD, SUPER LINK)
-        var regex=new RegExp('(?:^|[\\s，,、;；\\[\\]【】])(?:[\\u4e00-\\u9fff]*)?'+core+'\\d*(?=[\\s，,、;；\\[\\]【】]|$)','gm');
-        var matches=fullTextUpper.match(regex);
-        if(matches){
-            matches.forEach(function(m){
-                var cleaned=m.replace(/[\s，,、;；\[\]【】\u4e00-\u9fff]/g,'').trim();
-                if(cleaned&&iconNames.indexOf(cleaned)===-1) iconNames.push(cleaned);
-            });
-        }
-        // Also try simpler pattern for common formats
-        var simpleRegex=new RegExp(core+'\\d*','gi');
-        var simpleMatches=fullText.match(simpleRegex);
-        if(simpleMatches){
-            simpleMatches.forEach(function(m){
-                var upper=m.toUpperCase();
-                if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
-            });
-        }
-    });
-
-    // Also scan the icon section specifically for additional names (frame, special variants, etc.)
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        if(line.includes('特殊图标列表')||line.includes('特殊图标')){
-            iconSection=true;iconHeaderLine=i;
-            var nextLines=allLines.slice(i,Math.min(i+3,allLines.length)).join(' ');
-            specialKeywords.forEach(function(kw){
-                var regex=new RegExp(kw+'\\d*','gi');
-                var matches=nextLines.match(regex);
-                if(matches) matches.forEach(function(m){
-                    var upper=m.toUpperCase();
-                    if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
-                });
-            });
-            continue;
-        }
-        if(iconSection&&(line.includes('普通图标')||line.includes('图标等级'))){
-            iconSection=false;
-            continue;
-        }
-        if(iconSection){
-            specialKeywords.forEach(function(kw){
-                var regex=new RegExp('\\b'+kw+'\\d*\\b','gi');
-                var matches=line.match(regex);
-                if(matches) matches.forEach(function(m){
-                    var upper=m.toUpperCase();
-                    if(iconNames.indexOf(upper)===-1) iconNames.push(upper);
-                });
-            });
-        }
-    }
-
-    // Deduplicate: if we have both "WILD" and "WILD1", keep both. 
-    // But remove generic "BONUS" if specific BONUS1/2/3 exist
-    var hasNumberedBonus=iconNames.some(function(n){return/^BONUS\d+$/.test(n)});
-    if(hasNumberedBonus) iconNames=iconNames.filter(function(n){return n!=='BONUS'});
-    var hasNumberedLink=iconNames.some(function(n){return/^LINK\d+$/.test(n)});
-    if(hasNumberedLink) iconNames=iconNames.filter(function(n){return n!=='LINK'});
-
-    // Build special icons with functional descriptions only
-    iconNames.forEach(function(name){
-        result.specialIcons.push({name:name,functions:[],relations:[]});
-    });
-
-    // Scan full document for functional descriptions of each icon
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        if(!line.trim()) continue;
-
-        result.specialIcons.forEach(function(icon){
-            // Match icon name in line (case insensitive, with or without brackets)
-            var nameVariants=[icon.name, icon.name.toLowerCase()];
-            var found=nameVariants.some(function(v){return line.includes(v)});
-            if(!found) return;
-
-            // Accept functional descriptions OR trigger-related lines
-            if(isFunctionalDesc(line)||/触发|trigger/i.test(line)){
-                var cleanLine=line.replace(/^\d+[、.\s：:]+/,'').trim();
-                // Skip pure design lines
-                if(isDesignDesc(cleanLine)&&!isFunctionalDesc(cleanLine)) return;
-                if(cleanLine&&icon.functions.indexOf(cleanLine)===-1){
-                    icon.functions.push(cleanLine);
-                }
-            }
-        });
-
-        // Detect icon relations (bonus1 -> 收集区1)
-        var relMatch=line.match(/(bonus\d+|BONUS\d+).*(?:收集|对应).*(收集区\d+|玩法\d+|RESPIN\d*)/i);
-        if(relMatch){
-            result.iconRelations.push({icon:relMatch[1].toUpperCase(),target:relMatch[2]});
-        }
-    }
-
-    // Also scan feature triggers to find SCATTER/BONUS trigger rules
-    // This catches cases like "3个及以上SCATTER触发转盘" in feature sections
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        if(!line.trim()) continue;
-        // Look for trigger patterns mentioning special icons
-        result.specialIcons.forEach(function(icon){
-            var nameLC=icon.name.toLowerCase();
-            var lineLC=line.toLowerCase();
-            if(lineLC.includes(nameLC)&&(/个.*触发|触发.*玩法|or more.*trigger/i.test(line))){
-                var cleanLine=line.replace(/^\d+[、.\s：:]+/,'').trim();
-                if(cleanLine&&icon.functions.indexOf(cleanLine)===-1){
-                    icon.functions.push(cleanLine);
-                }
-            }
-        });
-    }
-
-    // Add WILD default substitution rule if not already captured
-    var wildIcon=result.specialIcons.find(function(ic){return ic.name==='WILD'||ic.name.includes('WILD')});
-    if(wildIcon){
-        var hasSubRule=wildIcon.functions.some(function(f){return f.includes('替代')||f.includes('代替')||f.includes('substitut')||f.includes('替换')});
-        if(!hasSubRule){
-            // Build exclusion list from all non-WILD special icons
-            var excludeList=result.specialIcons.filter(function(ic){return!ic.name.includes('WILD')}).map(function(ic){return'['+ic.name+']'});
-            if(excludeList.length){
-                wildIcon.functions.unshift('[WILD]可替代除'+excludeList.join('、')+'外的所有图标');
-            }else{
-                wildIcon.functions.unshift('[WILD]可替代所有H图标和L图标');
-            }
-        }
-        // Add reel info if found in functions or design notes
-        var hasReelInfo=wildIcon.functions.some(function(f){return/\d.*列|reel/i.test(f)});
-        if(!hasReelInfo){
-            // Scan for wild reel info in all lines
-            for(var wi=0;wi<allLines.length;wi++){
-                var wline=allLines[wi].toLowerCase();
-                if(wline.includes('wild')&&(/[2345].*列|2.*3.*4.*5/i.test(allLines[wi]))){
-                    var reelLine=allLines[wi].replace(/^\d+[、.\s：:]+/,'').trim();
-                    if(reelLine&&wildIcon.functions.indexOf(reelLine)===-1){
-                        wildIcon.functions.push(reelLine);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Normal icons
-    var normSet=new Set();
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        if(line.includes('普通图标')){
-            var hls=line.match(/[HL]\d/g);
-            if(hls) hls.forEach(function(h){normSet.add(h)});
-            for(var ni=i+1;ni<Math.min(i+5,allLines.length);ni++){
-                var nline=allLines[ni];
-                var nhls=nline.match(/[HL]\d/g);
-                if(nhls) nhls.forEach(function(h){normSet.add(h)});
-            }
-            break;
-        }
-    }
-    result.normalIcons=Array.from(normSet).sort();
-
-    // ---- Detect if payout values exist in document ----
-    result.hasPayoutValues=false;
-    result.payoutData=[];
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i];
-        // Look for payout patterns like "5 - 120" or "5-120" or specific value rows
-        if(/\d\s*[-–]\s*\d/.test(line)&&/[HL]\d|H\d|L\d/.test(allLines[Math.max(0,i-3)]||'')){
-            result.hasPayoutValues=true;
-            break;
-        }
-        // Also check for "分值" rows with actual numbers
-        if(line.includes('分值')&&i+1<allLines.length){
-            var nextLine=allLines[i+1]||'';
-            if(/\d+\s*[-–]\s*\d+/.test(nextLine)){
-                result.hasPayoutValues=true;
-                break;
-            }
-        }
-    }
-
-    // ---- 3. Feature extraction with buff separation ----
-    // Known feature name patterns from all existing gameplay documents
-    var knownFeatureNames=['BASE玩法','Base玩法','base玩法','FG玩法','FG-BONUS玩法','FG-JACKPOT玩法','FG-升行玩法','FG1-EXPAND玩法','FG2-REPEAT玩法','FG3-JACKPOT玩法','FireLink玩法','PICK玩法','Respin玩法','SUPER FREE玩法','bonus玩法','bonus连续列玩法','fg通用玩法','free games','free玩法','respin玩法','super转盘玩法','wheel玩法','三小收集区触发free games','三种多福多彩玩法','再触发玩法','地图玩法','大收集区pick玩法','开门玩法','组合触发玩法','转盘玩法','连续列玩法','长线玩法','高低Bet玩法','高低bet玩法','普通respin玩法','普通转盘玩法','收集玩法','升级转盘玩法'];
-    var featureHeaders=[
-        {pattern:/BASE.*(?:玩法|WILD|wild)/i, priority:1},
-        {pattern:/base下.*WILD|WILD.*变整列|整列wild/i, priority:2},
-        {pattern:/RESPIN.*玩法|RESPIN\s*GAME/i, priority:1},
-        {pattern:/Respin-buff\d|Respin.*buff/i, priority:2},
-        {pattern:/FREE\s*(?:GAMES?|SPIN)|FG.*玩法/i, priority:1},
-        {pattern:/普通转盘.*玩法|普通.*WHEEL/i, priority:1},
-        {pattern:/转盘.*玩法|WHEEL.*(?:玩法|feature)/i, priority:1},
-        {pattern:/收集.*玩法|升级.*(?:转盘|玩法)|UPGRADE|super.*转盘|SUPER.*WHEEL/i, priority:1},
-        {pattern:/JACKPOT.*玩法/i, priority:1},
-        {pattern:/PICK.*玩法/i, priority:1},
-        {pattern:/LINK\s*GAME/i, priority:1},
-        {pattern:/super.*RESPIN|SUPER.*FREE/i, priority:2},
-        {pattern:/高低.*[Bb]et|高低bet/i, priority:1}
-    ];
-
-    var skipPatterns=[/极限情况/,/断线重连/,/美术.*重点/,/美术设计/,/设计要点/,/参考图标/,/分值/,/实体机/,/竞品/,/图标等级/,/图标设计[：:]/,/重点图标/,/图标列表/,/普通图标/];
-
-    var currentFeature=null;
-    var inTrigger=false;
-    var inRules=false;
-    var inEnd=false;
-    var inSkipBlock=false;
-    var wheelRewards=[];
-
-    for(var i=0;i<allLines.length;i++){
-        var line=allLines[i].trim();
-        if(!line) continue;
-
-        // Check skip patterns - enter skip mode
-        var shouldSkip=false;
-        skipPatterns.forEach(function(p){if(p.test(line))shouldSkip=true});
-        if(shouldSkip){
-            inSkipBlock=true;inTrigger=false;inRules=false;inEnd=false;
-            continue;
-        }
-
-        // Exit skip block when hitting a new feature header
-        var matchedHeader=null;
-        featureHeaders.forEach(function(fh){
-            if(fh.pattern.test(line)&&line.length<80) matchedHeader=fh;
-        });
-
-        // Also detect generic feature headers and known feature names
-        if(!matchedHeader&&/^[A-Za-z\u4e00-\u9fff\s]+(?:玩法|GAME)[：:\s]*$/i.test(line)&&line.length<50){
-            matchedHeader={pattern:null,priority:1};
-        }
-        // Check against known feature names database
-        if(!matchedHeader){
-            var lineTrimmed=line.replace(/[：:]\s*$/,'').trim();
-            if(knownFeatureNames.some(function(kn){return lineTrimmed===kn||lineTrimmed.includes(kn)||kn.includes(lineTrimmed)})&&line.length<60){
-                matchedHeader={pattern:null,priority:1};
-            }
-        }
-
-        if(matchedHeader){
-            inSkipBlock=false;
-            // Save previous feature
-            if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
-                result.features.push(currentFeature);
-            }
-            var featureName=line.replace(/[:：]\s*$/,'').replace(/^\s*玩法说明[：:]\s*/,'').trim();
-            currentFeature={name:featureName,trigger:'',rules:[],endCondition:'',wheelRewards:[]};
-            inTrigger=false;inRules=false;inEnd=false;
-            continue;
-        }
-
-        if(inSkipBlock) continue;
-        if(!currentFeature) continue;
-
-        // Sub-section detection
-        if(/^触发条件[：:]?\s*$/.test(line)||line==='触发条件：'){inTrigger=true;inRules=false;inEnd=false;continue}
-        if(/^玩法说明[：:]?\s*$/.test(line)||line==='玩法说明：'){inRules=true;inTrigger=false;inEnd=false;continue}
-        if(/^结束条件[：:]?\s*$/.test(line)||line==='结束条件：'){inEnd=true;inTrigger=false;inRules=false;continue}
-
-        // Detect "Respin-buff" as a NEW separate feature
-        var buffMatch=line.match(/^Respin-buff(\d+)[：:]\s*(.+)/i);
-        if(buffMatch){
-            // Save current feature first
-            if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
-                result.features.push(currentFeature);
-            }
-            currentFeature={name:'RESPIN - BUFF'+buffMatch[1]+' ('+buffMatch[2].trim()+')',trigger:'',rules:[],endCondition:'',wheelRewards:[]};
-            inRules=true;inTrigger=false;inEnd=false;
-            continue;
-        }
-
-        // Detect wheel reward list items (e.g. "2X 双棋盘" or "GRAND")
-        if(currentFeature.name.includes('转盘')||currentFeature.name.includes('WHEEL')){
-            if(/^\d+X\s|^[A-Z]+\s*$/.test(line)||(line.match(/[+＋]/)&&line.match(/[XxＸ]/i))){
-                currentFeature.wheelRewards.push(line);
-                continue;
-            }
-        }
-
-        // Clean line - remove leading numbers/bullets
-        var cleanLine=line.replace(/^[\d]+[、.\s）)]+/,'').trim();
-        if(!cleanLine) continue;
-
-        // Filter out pure design descriptions
-        if(isDesignDesc(cleanLine)&&!isFunctionalDesc(cleanLine)) continue;
-
-        // Collect into appropriate section
-        if(inTrigger){
-            if(currentFeature.trigger) currentFeature.trigger+='\n'+cleanLine;
-            else currentFeature.trigger=cleanLine;
-        }else if(inEnd){
-            if(currentFeature.endCondition) currentFeature.endCondition+='\n'+cleanLine;
-            else currentFeature.endCondition=cleanLine;
-        }else{
-            // Default: rules (also when inRules=true or just after header)
-            currentFeature.rules.push(cleanLine);
-        }
-    }
-    // Push last feature
-    if(currentFeature&&(currentFeature.rules.length>0||currentFeature.trigger)){
-        result.features.push(currentFeature);
-    }
-
-    // ---- 4. Post-processing ----
-    // Remove empty features
-    result.features=result.features.filter(function(f){
-        return f.rules.length>0||f.trigger||f.wheelRewards.length>0;
-    });
-
-    // Merge wheel rewards into rules for AI prompt
-    result.features.forEach(function(f){
-        if(f.wheelRewards.length>0){
-            f.rules.push('转盘奖励列表：'+f.wheelRewards.join(' | '));
-        }
-    });
-
-    return result;
+  // Hide loading, show step panels, activate Step 1
+  loading.style.display = 'none';
+  container.style.display = 'block';
+  goStep(1);
 }
 
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-// ========== ICON IMAGE MANAGEMENT ==========
-function detectIconsFromPages(){
-    var icons=new Set();
-    var pattern=/\[([A-Z][A-Z0-9_\s]*)\]/g;
-    paytableData.pages.forEach(function(page){
-        page.items.forEach(function(item){
-            var m;
-            while((m=pattern.exec(item.cn||''))!==null) icons.add(m[1].trim());
-            pattern.lastIndex=0;
-            while((m=pattern.exec(item.en||''))!==null) icons.add(m[1].trim());
-            pattern.lastIndex=0;
-        });
-    });
-    // Also add H1-H5, L1-L6 from PAYS page
-    paytableData.pages.forEach(function(page){
-        if((page.titleEn||'').toUpperCase()==='PAYS'||(page.title||'').includes('赔付')){
-            page.items.forEach(function(item){
-                var hm=(item.cn||'').match(/[HL]\d/g);
-                if(hm) hm.forEach(function(h){icons.add(h)});
-            });
-        }
-    });
-    return Array.from(icons).sort();
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPage);
+} else {
+  initPage();
 }
 
-function renderIconUploadArea(){
-    var icons=detectIconsFromPages();
-    if(!icons.length){
-        document.getElementById('iconUploadArea').innerHTML='<div style="color:#8892b0;font-size:.82rem">未检测到图标引用</div>';
+/**
+ * Step 1: Upload Area Interactions
+ * Drag-and-drop, click-to-upload, validation, and file handling.
+ */
+function initUploadArea() {
+  var area = document.getElementById('uploadArea');
+  var fileInput = document.getElementById('fileInput');
+  if (!area || !fileInput) return;
+
+  // Click to open file picker
+  area.addEventListener('click', function(e) {
+    // Prevent triggering when clicking on the file input itself
+    if (e.target === fileInput) return;
+    fileInput.click();
+  });
+
+  // File input change - validate and handle
+  fileInput.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      var file = e.target.files[0];
+      var validation = validateFile(file);
+      if (!validation.valid) {
+        showError(area, validation.error);
         return;
+      }
+      showError(area, '');
+      handleFileUpload(file);
     }
-    var html='<div class="icon-upload-grid">';
-    icons.forEach(function(name){
-        var hasImg=iconImages[name]?'has-image':'';
-        var imgContent=iconImages[name]?'<img src="'+iconImages[name]+'" alt="'+name+'">':'<div class="placeholder">点击/拖拽<br>添加图片</div>';
-        html+='<div class="icon-upload-item '+hasImg+'" data-icon="'+name+'">';
-        html+='<div class="icon-name">'+name+'</div>';
-        html+='<div class="icon-drop" data-icon="'+name+'" ondragover="iconDragOver(event)" ondragleave="iconDragLeave(event)" ondrop="iconDrop(event,\''+name+'\')">';
-        html+=imgContent;
-        html+='<input type="file" accept="image/*" onchange="iconFileChange(this,\''+name+'\')">';
-        html+='</div></div>';
-    });
-    html+='</div>';
-    document.getElementById('iconUploadArea').innerHTML=html;
+  });
+
+  // Drag-over highlight
+  area.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    area.classList.add('drag-over');
+  });
+
+  area.addEventListener('dragenter', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    area.classList.add('drag-over');
+  });
+
+  area.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    area.classList.remove('drag-over');
+  });
+
+  // Drop handler - validate and handle
+  area.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    area.classList.remove('drag-over');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      var file = e.dataTransfer.files[0];
+      var validation = validateFile(file);
+      if (!validation.valid) {
+        showError(area, validation.error);
+        return;
+      }
+      showError(area, '');
+      handleFileUpload(file);
+    }
+  });
 }
 
-function iconDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover')}
-function iconDragLeave(e){e.currentTarget.classList.remove('dragover')}
-function iconDrop(e,name){
-    e.preventDefault();e.currentTarget.classList.remove('dragover');
-    var file=e.dataTransfer.files[0];
-    if(file&&file.type.startsWith('image/')) readIconFile(file,name);
-}
-function iconFileChange(input,name){
-    var file=input.files[0];
-    if(file) readIconFile(file,name);
-}
-function readIconFile(file,name){
-    var reader=new FileReader();
-    reader.onload=function(ev){
-        iconImages[name]=ev.target.result;
-        renderIconUploadArea();
-        renderPreview();
-    };
-    reader.readAsDataURL(file);
+/**
+ * Display uploaded filename in the upload area.
+ */
+function displayFileName(name) {
+  var el = document.getElementById('uploadFilename');
+  if (el) {
+    el.textContent = '📄 ' + name;
+  }
 }
 
-function renderPreview(){
-    var html='';
-    paytableData.pages.forEach(function(page,pi){
-        html+='<div style="margin-bottom:16px;border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden">';
-        html+='<div style="padding:10px 14px;background:rgba(247,151,30,.1);display:flex;justify-content:space-between;align-items:center">';
-        html+='<span style="font-weight:700;color:#ffd200;font-size:.9rem">第'+(pi+1)+'页 / Page '+(pi+1)+'</span>';
-        html+='</div>';
-        html+='<div style="padding:12px 14px;background:rgba(255,255,255,.02);text-align:center;border-bottom:1px solid rgba(255,255,255,.06)">';
-        html+='<div style="font-weight:700;color:#ccd6f6;font-size:.95rem">'+(page.title||'')+'</div>';
-        html+='<div style="font-weight:600;color:#8892b0;font-size:.85rem;font-style:italic;margin-top:2px">'+(page.titleEn||'')+'</div>';
-        html+='</div>';
-        html+='<table class="preview-table" style="margin:0"><thead><tr><th style="width:50%">中文内容</th><th style="width:50%">English Translation</th></tr></thead><tbody>';
-        page.items.forEach(function(item){
-            html+='<tr><td style="color:#e0e0e0;white-space:pre-wrap;font-size:.82rem;line-height:1.5">'+inlineIcons(escHtml(item.cn||''))+'</td>';
-            html+='<td style="color:#8892b0;white-space:pre-wrap;font-style:italic;font-size:.82rem;line-height:1.5">'+inlineIcons(escHtml(item.en||''))+'</td></tr>';
-        });
-        html+='</tbody></table></div>';
-    });
-    if(!html) html='<div style="text-align:center;padding:40px;color:#8892b0">暂无内容，请先生成Paytable</div>';
-    document.getElementById('previewWrap').innerHTML=html;
+// Initialize upload area after page is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initUploadArea);
+} else {
+  initUploadArea();
 }
 
-// Replace [ICON_NAME] in preview text with inline images if available
-function inlineIcons(text){
-    return text.replace(/\[([A-Z][A-Z0-9_\s]*)\]/g,function(match,name){
-        var trimmed=name.trim();
-        if(iconImages[trimmed]){
-            return '<img class="preview-icon-img" src="'+iconImages[trimmed]+'" title="'+trimmed+'"> ';
+// ============================================================
+// Structural Parser: Special Icon Detection and Processing
+// ============================================================
+
+/**
+ * Identify Special Icons
+ * Detects WILD, SCATTER, BONUS, LINK and numbered variants from document text.
+ * Extracts functional descriptions and filters out design-only lines.
+ * Deduplicates numbered variants (removes generic "BONUS" when BONUS1, BONUS2 exist).
+ *
+ * @param {string} text - Full document text (all lines joined by newlines)
+ * @returns {SpecialIcon[]} Array of { name: string, functions: string[] }
+ */
+function identifySpecialIcons(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  var lines = text.split('\n');
+
+  // Pattern to match special icon names: WILD, SCATTER, BONUS, LINK with optional alphanumeric suffix
+  var iconNamePattern = /\b(WILD|SCATTER|BONUS|LINK)\d*\b/gi;
+
+  // Collect all unique special icon names (case-insensitive, stored as uppercase)
+  var iconNamesSet = {};
+  var match;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    iconNamePattern.lastIndex = 0;
+    while ((match = iconNamePattern.exec(line)) !== null) {
+      var name = match[0].toUpperCase();
+      iconNamesSet[name] = true;
+    }
+  }
+
+  var iconNames = Object.keys(iconNamesSet);
+  if (iconNames.length === 0) return [];
+
+  // Deduplication: remove generic base name when numbered variants exist
+  // e.g., remove "BONUS" when "BONUS1", "BONUS2" exist
+  var baseNames = ['WILD', 'SCATTER', 'BONUS', 'LINK'];
+  for (var b = 0; b < baseNames.length; b++) {
+    var baseName = baseNames[b];
+    var hasNumbered = false;
+    for (var n = 0; n < iconNames.length; n++) {
+      // Check if there's a numbered variant (baseName + at least one digit)
+      if (iconNames[n] !== baseName && iconNames[n].indexOf(baseName) === 0) {
+        var suffix = iconNames[n].substring(baseName.length);
+        if (/^\d+$/.test(suffix)) {
+          hasNumbered = true;
+          break;
         }
-        return match;
-    });
-}
-
-async function exportExcel(){
-    if(!paytableData.pages.length){alert('没有可导出的内容，请先生成Paytable');return}
-    try{
-        var wb=new ExcelJS.Workbook();
-        var ws=wb.addWorksheet('paytable_市场');
-        ws.columns=[{width:4},{width:50},{width:4},{width:50}];
-        var bf={name:'Microsoft YaHei',size:11};
-        var bld={name:'Microsoft YaHei',size:11,bold:true};
-        var tf={name:'Microsoft YaHei',size:14,bold:true};
-        var pageTf={name:'Microsoft YaHei',size:16,bold:true};
-        var redFont={name:'Microsoft YaHei',size:10,color:{argb:'FFFF0000'}};
-        var al={vertical:'middle',horizontal:'left',wrapText:true};
-        var alc={vertical:'middle',horizontal:'center',wrapText:true};
-        var r=1;
-
-        // Add icon images to workbook
-        var iconImageIds={};
-        Object.keys(iconImages).forEach(function(name){
-            if(iconImages[name]){
-                try{
-                    var base64=iconImages[name].split(',')[1];
-                    var ext=iconImages[name].match(/data:image\/(\w+)/);
-                    iconImageIds[name]=wb.addImage({base64:base64,extension:ext?ext[1]:'png'});
-                }catch(e){}
-            }
-        });
-
-        // Document title
-        ws.mergeCells('A'+r+':B'+r);
-        ws.getCell('A'+r).value=paytableData.brand+paytableData.name+'：paytable需求';
-        ws.getCell('A'+r).font=pageTf;
-        ws.mergeCells('C'+r+':D'+r);
-        ws.getCell('C'+r).value='翻译（增删改查此列翻译）';
-        ws.getCell('C'+r).font=redFont;
-        ws.getRow(r).height=30;r++;r++;
-
-        paytableData.pages.forEach(function(page,pi){
-            // Page separator
-            ws.mergeCells('A'+r+':B'+r);
-            ws.getCell('A'+r).value='第'+(pi+1)+'页';
-            ws.getCell('A'+r).font=bld;
-            ws.getCell('A'+r).alignment=alc;
-            ws.getCell('A'+r).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};
-            ws.mergeCells('C'+r+':D'+r);
-            ws.getCell('C'+r).value='Page '+(pi+1);
-            ws.getCell('C'+r).font=bld;
-            ws.getCell('C'+r).alignment=alc;
-            ws.getCell('C'+r).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};
-            ws.getRow(r).height=20;r++;
-
-            // Page title
-            ws.mergeCells('A'+r+':B'+r);
-            ws.getCell('A'+r).value=page.title||'';
-            ws.getCell('A'+r).font=tf;
-            ws.getCell('A'+r).alignment=alc;
-            ws.mergeCells('C'+r+':D'+r);
-            ws.getCell('C'+r).value=page.titleEn||'';
-            ws.getCell('C'+r).font=tf;
-            ws.getCell('C'+r).alignment=alc;
-            ws.getRow(r).height=26;r++;
-
-            // Check if this is FEATURE or PAYS page - embed icon images
-            var isFeaturePage=(page.titleEn||'').toUpperCase()==='FEATURE'||(page.titleEn||'').toUpperCase()==='PAYS';
-
-            page.items.forEach(function(item){
-                var cnText=item.cn||'';
-                var enText=item.en||'';
-                var cnLines=cnText.split('\n');
-                var maxL=Math.max(cnLines.length,1);
-
-                // Find icon references in this item
-                var referencedIcons=[];
-                var iconPattern=/\[([A-Z][A-Z0-9_\s]*)\]/g;
-                var m;
-                while((m=iconPattern.exec(cnText))!==null){
-                    var iname=m[1].trim();
-                    if(iconImageIds[iname]&&referencedIcons.indexOf(iname)===-1) referencedIcons.push(iname);
-                }
-                iconPattern.lastIndex=0;
-
-                // If icons found and on FEATURE/PAYS page, add image in col A
-                if(referencedIcons.length&&isFeaturePage){
-                    var firstIcon=referencedIcons[0];
-                    ws.getRow(r).height=Math.max(50,maxL*15);
-                    try{
-                        ws.addImage(iconImageIds[firstIcon],{
-                            tl:{col:0,row:r-1},
-                            ext:{width:45,height:45}
-                        });
-                    }catch(e){}
-                }else{
-                    ws.getRow(r).height=Math.max(18,maxL*15);
-                }
-
-                ws.getCell('B'+r).value=cnText;
-                ws.getCell('B'+r).font=bf;
-                ws.getCell('B'+r).alignment=al;
-                ws.getCell('D'+r).value=enText;
-                ws.getCell('D'+r).font=bf;
-                ws.getCell('D'+r).alignment=al;
-                r++;
-            });
-            ws.getRow(r).height=10;r++;
-        });
-
-        var buf=await wb.xlsx.writeBuffer();
-        var filename=paytableData.brand+paytableData.name+'：paytable需求文档.xlsx';
-        saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),filename);
-        showToast('✅ Paytable文档已下载！');
-    }catch(err){alert('导出失败：'+err.message)}
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-    var ua=document.getElementById('uploadArea');
-    if(ua){
-        ua.addEventListener('dragover',function(e){e.preventDefault();ua.classList.add('dragover')});
-        ua.addEventListener('dragleave',function(){ua.classList.remove('dragover')});
-        ua.addEventListener('drop',function(e){e.preventDefault();ua.classList.remove('dragover');
-            var f=e.dataTransfer.files[0];if(f){var dt=new DataTransfer();dt.items.add(f);ua.querySelector('input').files=dt.files;handleFileUpload(ua.querySelector('input'))}
-        });
+      }
     }
+    if (hasNumbered) {
+      var idx = iconNames.indexOf(baseName);
+      if (idx !== -1) {
+        iconNames.splice(idx, 1);
+      }
+    }
+  }
+
+  // Functional keywords (line must contain at least one to be included)
+  var functionalKeywords = ['触发', '替代', '出现在', '携带', '收集', '落地'];
+  // Design keywords (line with ONLY these and no functional keywords is excluded)
+  var designKeywords = ['动画', '颜色', '设计', '美术', '超框'];
+
+  /**
+   * Check if a line contains at least one functional keyword.
+   */
+  function hasFunctionalKeyword(line) {
+    for (var k = 0; k < functionalKeywords.length; k++) {
+      if (line.indexOf(functionalKeywords[k]) !== -1) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if a line contains at least one design keyword.
+   */
+  function hasDesignKeyword(line) {
+    for (var k = 0; k < designKeywords.length; k++) {
+      if (line.indexOf(designKeywords[k]) !== -1) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Determine if a line should be included as a functional description.
+   * Include: has functional keyword (regardless of design keywords)
+   * Exclude: has only design keywords and no functional keywords
+   * Exclude: has neither functional nor design keywords (not relevant)
+   */
+  function isFunctionalLine(line) {
+    var hasFunctional = hasFunctionalKeyword(line);
+    if (hasFunctional) return true;
+    // If it has design keywords but no functional keywords, exclude
+    // If it has neither, it's not a description line we care about
+    return false;
+  }
+
+  // For each icon name, find lines that reference it and extract functional descriptions
+  var results = [];
+  for (var ic = 0; ic < iconNames.length; ic++) {
+    var iconName = iconNames[ic];
+    var functions = [];
+    // Build case-insensitive regex to find lines mentioning this icon
+    var iconRegex = new RegExp('\\b' + iconName + '\\b', 'i');
+
+    for (var li = 0; li < lines.length; li++) {
+      var currentLine = lines[li].trim();
+      if (!currentLine) continue;
+      if (iconRegex.test(currentLine)) {
+        if (isFunctionalLine(currentLine)) {
+          // Avoid duplicate descriptions
+          if (functions.indexOf(currentLine) === -1) {
+            functions.push(currentLine);
+          }
+        }
+      }
+    }
+
+    results.push({
+      name: iconName,
+      functions: functions
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Generate WILD Default Substitution Rule
+ * When WILD exists but has no explicit substitution rule, generate a default one
+ * listing all non-WILD special icons as exclusions.
+ *
+ * @param {SpecialIcon[]} specialIcons - Array of identified special icons
+ * @returns {string} Default substitution rule text, or empty string if not applicable
+ */
+function generateWildDefault(specialIcons) {
+  if (!specialIcons || !Array.isArray(specialIcons) || specialIcons.length === 0) return '';
+
+  // Find WILD icon
+  var wildIcon = null;
+  for (var i = 0; i < specialIcons.length; i++) {
+    if (specialIcons[i].name === 'WILD') {
+      wildIcon = specialIcons[i];
+      break;
+    }
+  }
+
+  // If no WILD icon exists, nothing to generate
+  if (!wildIcon) return '';
+
+  // Check if WILD already has an explicit substitution rule
+  // Look for '替代' keyword in its functions
+  var hasSubstitutionRule = false;
+  for (var f = 0; f < wildIcon.functions.length; f++) {
+    if (wildIcon.functions[f].indexOf('替代') !== -1) {
+      hasSubstitutionRule = true;
+      break;
+    }
+  }
+
+  // If WILD already has an explicit substitution rule, no default needed
+  if (hasSubstitutionRule) return '';
+
+  // Collect all non-WILD special icon names as exclusions
+  var exclusions = [];
+  for (var j = 0; j < specialIcons.length; j++) {
+    var name = specialIcons[j].name;
+    if (name !== 'WILD' && name.indexOf('WILD') !== 0) {
+      exclusions.push(name);
+    }
+  }
+
+  // Generate default substitution rule
+  if (exclusions.length === 0) {
+    return 'WILD替代所有图标';
+  }
+
+  return 'WILD替代除' + exclusions.join('、') + '外的所有图标';
+}
+
+// ============================================================
+// Structural Parser: Normal Icon Detection
+// ============================================================
+
+/**
+ * Identify Normal Icons
+ * Detects H[n] and L[n] pattern references from document text.
+ * Returns a sorted array of unique icon names like ['H1', 'H2', 'H3', 'L1', 'L2', 'L3'].
+ *
+ * @param {string} text - Full document text (all lines joined by newlines)
+ * @returns {string[]} Sorted array of unique normal icon names
+ */
+function identifyNormalIcons(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  // Match H or L followed by one or more digits (word boundary)
+  var pattern = /\b([HL]\d+)\b/g;
+  var found = {};
+  var match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    // Normalize to uppercase
+    var name = match[1].toUpperCase();
+    found[name] = true;
+  }
+
+  // Also try case-insensitive matching for lowercase h/l references
+  var patternLower = /\b([hHlL]\d+)\b/g;
+  while ((match = patternLower.exec(text)) !== null) {
+    var nameLower = match[1].toUpperCase();
+    found[nameLower] = true;
+  }
+
+  var icons = Object.keys(found);
+
+  // Sort: H series first (by number), then L series (by number)
+  icons.sort(function(a, b) {
+    var aType = a.charAt(0);
+    var bType = b.charAt(0);
+    if (aType !== bType) {
+      return aType === 'H' ? -1 : 1;
+    }
+    var aNum = parseInt(a.substring(1), 10);
+    var bNum = parseInt(b.substring(1), 10);
+    return aNum - bNum;
+  });
+
+  return icons;
+}
+
+// ============================================================
+// Structural Parser: Feature Boundary Detection
+// ============================================================
+
+/**
+ * Non-player-visible content patterns.
+ * Lines/sections containing these keywords are skipped.
+ */
+var NON_VISIBLE_KEYWORDS = ['断线重连', '概率', '权重', 'RTP', '触发概率', '美术说明', '美术描述', '动画说明'];
+
+/**
+ * Known English feature keywords for boundary detection (case-insensitive word boundary match).
+ */
+var FEATURE_KEYWORDS_EN = ['BASE', 'FG', 'FREE', 'RESPIN', 'WHEEL', 'PICK', 'LINK', 'JACKPOT', 'BONUS', 'SUPER', 'BUFF', 'WILD', 'SCATTER', 'MEGA'];
+
+/**
+ * Chinese section markers for feature boundary detection.
+ */
+var CHINESE_MARKERS = ['触发条件', '玩法说明', '结束条件'];
+
+/**
+ * Reward/prize keywords for wheel rewards detection.
+ */
+var REWARD_KEYWORDS = ['COIN', 'GRAND', 'MAJOR', 'MINOR', 'MINI', 'FREE GAME', 'FREE SPIN', 'RESPIN', 'FEATURE', '奖金', '奖池', '倍数', '乘倍'];
+
+/**
+ * Check if a line contains non-player-visible content.
+ * @param {string} line - A single line of text
+ * @returns {boolean} True if line should be skipped
+ */
+function isNonVisibleContent(line) {
+  if (!line) return false;
+  var upper = line.toUpperCase();
+  for (var i = 0; i < NON_VISIBLE_KEYWORDS.length; i++) {
+    if (upper.indexOf(NON_VISIBLE_KEYWORDS[i].toUpperCase()) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a line matches a known English feature keyword (word boundary, case-insensitive).
+ * @param {string} line - A single line of text
+ * @returns {boolean} True if line contains a feature keyword
+ */
+function hasFeatureKeywordEN(line) {
+  for (var i = 0; i < FEATURE_KEYWORDS_EN.length; i++) {
+    var keyword = FEATURE_KEYWORDS_EN[i];
+    var regex = new RegExp('\\b' + keyword + '\\b', 'i');
+    if (regex.test(line)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a line contains a Chinese section marker.
+ * @param {string} line - A single line of text
+ * @returns {boolean} True if line contains a Chinese marker
+ */
+function hasChineseMarker(line) {
+  for (var i = 0; i < CHINESE_MARKERS.length; i++) {
+    if (line.indexOf(CHINESE_MARKERS[i]) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a line is a feature header (boundary).
+ * A line is a feature header if it:
+ * - Contains a known English keyword AND looks like a title/header (not content), OR
+ * - Is a standalone Chinese section marker (exact match), OR
+ * - Is ≤40 chars and ends with "玩法"
+ *
+ * Distinguishing headers from content:
+ * - Headers: "FREE SPINS", "WHEEL BONUS", "BONUS玩法", "RESPIN功能", "BASE GAME"
+ * - Content: "3个SCATTER触发", "LINK图标收集满", "获得GRAND或MAJOR奖池"
+ *
+ * Heuristic: A header is a short line where the keyword(s) make up most of the 
+ * content. The total non-keyword Chinese characters should be minimal (≤4),
+ * and the line should not contain action/description verbs after the keyword.
+ *
+ * @param {string} line - A single line of text (trimmed)
+ * @returns {boolean} True if line is a feature boundary
+ */
+function isFeatureHeader(line) {
+  if (!line) return false;
+  var trimmed = line.trim();
+  if (!trimmed) return false;
+
+  // Check standalone Chinese markers (exact match)
+  for (var i = 0; i < CHINESE_MARKERS.length; i++) {
+    if (trimmed === CHINESE_MARKERS[i]) return true;
+  }
+
+  // Check ≤40 chars ending with "玩法"
+  if (trimmed.length <= 40 && trimmed.length >= 2 && trimmed.indexOf('玩法') === trimmed.length - 2) {
+    return true;
+  }
+
+  // Check English keywords with header heuristic
+  if (hasFeatureKeywordEN(trimmed)) {
+    // A header line is one where the English keyword(s) dominate the line.
+    // Remove all matched keywords from the line and check remaining content.
+    var remaining = trimmed;
+    for (var k = 0; k < FEATURE_KEYWORDS_EN.length; k++) {
+      var kw = FEATURE_KEYWORDS_EN[k];
+      var kwRegex = new RegExp('\\b' + kw + '\\b', 'gi');
+      remaining = remaining.replace(kwRegex, '');
+    }
+    // Remove spaces, digits, and common title suffixes
+    remaining = remaining.replace(/[\s\d]/g, '');
+
+    // Count Chinese characters remaining after removing keywords
+    var chineseRemaining = remaining.replace(/[^\u4e00-\u9fff]/g, '');
+
+    // Title suffixes that are acceptable after a keyword (功能, 系统, 模式, 说明)
+    var titleSuffixes = ['功能', '系统', '模式', '说明', '奖励', '特色', '阶段', '关卡'];
+    var isTitleSuffix = false;
+    for (var ts = 0; ts < titleSuffixes.length; ts++) {
+      if (chineseRemaining === titleSuffixes[ts]) {
+        isTitleSuffix = true;
+        break;
+      }
+    }
+
+    // Header if: very few Chinese chars remaining (≤2), or remaining is a known title suffix
+    // AND the line is short overall (≤30 chars for strict header detection)
+    if (chineseRemaining.length === 0) {
+      // Pure English line with keyword(s) - definitely a header
+      return true;
+    }
+    if (isTitleSuffix && trimmed.length <= 30) {
+      return true;
+    }
+    if (chineseRemaining.length <= 2 && trimmed.length <= 20) {
+      return true;
+    }
+    return false;
+  }
+
+  return false;
+}
+
+/**
+ * Check if a feature header matches known feature keyword patterns.
+ * Returns true if the header contains a recognized English keyword at a header position.
+ * Headers that are only detected via "玩法" ending without known English keywords
+ * are considered potentially unrecognized.
+ *
+ * @param {string} header - The feature header text
+ * @returns {boolean} True if recognized
+ */
+function isRecognizedFeatureHeader(header) {
+  if (!header) return false;
+  // Recognized if it contains a known English feature keyword (as a header)
+  if (hasFeatureKeywordEN(header)) return true;
+  // Chinese markers are recognized structural markers (not unrecognized)
+  for (var i = 0; i < CHINESE_MARKERS.length; i++) {
+    if (header === CHINESE_MARKERS[i]) return true;
+  }
+  return false;
+}
+
+/**
+ * Check if a line contains reward/prize keywords.
+ * @param {string} line - A single line of text
+ * @returns {boolean} True if line contains reward keywords
+ */
+function hasRewardKeyword(line) {
+  if (!line) return false;
+  var upper = line.toUpperCase();
+  for (var i = 0; i < REWARD_KEYWORDS.length; i++) {
+    if (upper.indexOf(REWARD_KEYWORDS[i].toUpperCase()) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Detect Features
+ * Parses an array of lines to detect feature boundaries and extract
+ * structured GameFeature objects.
+ *
+ * Skips non-player-visible content (art design notes, reconnection rules,
+ * edge cases, probability data).
+ *
+ * Flags unrecognized section headers for manual review.
+ *
+ * @param {string[]} lines - Array of text lines from the document
+ * @returns {GameFeature[]} Array of feature objects
+ */
+function detectFeatures(lines) {
+  if (!lines || !Array.isArray(lines) || lines.length === 0) return [];
+
+  // First pass: filter out non-visible content lines
+  var visibleLines = [];
+  var inNonVisibleSection = false;
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var trimmed = (typeof line === 'string') ? line.trim() : '';
+
+    // Check if this line starts a non-visible section
+    if (isNonVisibleContent(trimmed)) {
+      inNonVisibleSection = true;
+      continue;
+    }
+
+    // If we hit a new feature header, exit non-visible section
+    if (inNonVisibleSection && isFeatureHeader(trimmed) && !isNonVisibleContent(trimmed)) {
+      inNonVisibleSection = false;
+    }
+
+    if (!inNonVisibleSection && trimmed) {
+      visibleLines.push(trimmed);
+    }
+  }
+
+  // Second pass: detect feature boundaries and group lines
+  var features = [];
+  var currentFeature = null;
+
+  for (var j = 0; j < visibleLines.length; j++) {
+    var currentLine = visibleLines[j];
+
+    if (isFeatureHeader(currentLine)) {
+      // Check if this is a sub-section marker within the current feature
+      var isSubSection = false;
+      if (currentFeature) {
+        // 触发条件, 玩法说明, 结束条件 are sub-section markers, not new features
+        if (currentLine === '触发条件' || currentLine === '玩法说明' || currentLine === '结束条件') {
+          isSubSection = true;
+        }
+        // If line is ONLY a Chinese marker (exact match), treat as sub-section
+        for (var cm = 0; cm < CHINESE_MARKERS.length; cm++) {
+          if (currentLine === CHINESE_MARKERS[cm]) {
+            isSubSection = true;
+            break;
+          }
+        }
+      }
+
+      if (!isSubSection) {
+        // Save previous feature if exists
+        if (currentFeature) {
+          features.push(currentFeature);
+        }
+
+        // Determine if this header is recognized
+        var unrecognized = !isRecognizedFeatureHeader(currentLine);
+
+        // Start new feature
+        currentFeature = {
+          name: currentLine,
+          trigger: '',
+          rules: [],
+          endCondition: '',
+          wheelRewards: []
+        };
+
+        if (unrecognized) {
+          currentFeature.unrecognized = true;
+        }
+      } else {
+        // Sub-section marker: update parsing context within current feature
+        currentFeature._currentSection = currentLine;
+      }
+    } else if (currentFeature) {
+      // Assign line to appropriate section within the current feature
+      var section = currentFeature._currentSection || '';
+
+      if (section === '触发条件') {
+        // Trigger condition lines
+        if (currentFeature.trigger) {
+          currentFeature.trigger += '\n' + currentLine;
+        } else {
+          currentFeature.trigger = currentLine;
+        }
+      } else if (section === '结束条件') {
+        // End condition lines
+        if (currentFeature.endCondition) {
+          currentFeature.endCondition += '\n' + currentLine;
+        } else {
+          currentFeature.endCondition = currentLine;
+        }
+      } else if (section === '玩法说明') {
+        // Gameplay rules
+        currentFeature.rules.push(currentLine);
+      } else {
+        // Default: add to rules
+        currentFeature.rules.push(currentLine);
+      }
+
+      // Check for wheel rewards
+      if (hasRewardKeyword(currentLine)) {
+        currentFeature.wheelRewards.push(currentLine);
+      }
+    }
+  }
+
+  // Don't forget the last feature
+  if (currentFeature) {
+    features.push(currentFeature);
+  }
+
+  // Clean up internal tracking property
+  for (var f = 0; f < features.length; f++) {
+    delete features[f]._currentSection;
+  }
+
+  return features;
+}
+
+// ============================================================
+// Structural Parser: Main Parse Function
+// ============================================================
+
+/**
+ * Parse
+ * Orchestrates all sub-parsers and produces a complete StructuredGameData object.
+ * Joins all lines into text for icon detection, passes array to feature detection,
+ * detects payout values, icon relations, jackpots, and combo type.
+ *
+ * @param {string[]} allLines - Array of all non-empty text lines from the document
+ * @returns {StructuredGameData} Complete structured output with all fields present
+ */
+function parse(allLines) {
+  // Ensure allLines is a valid array
+  var lines = (allLines && Array.isArray(allLines)) ? allLines : [];
+
+  // Join all lines into a single text block for text-based parsers
+  var text = lines.join('\n');
+
+  // --- Identify special icons ---
+  var specialIcons = identifySpecialIcons(text);
+
+  // --- Generate WILD default substitution rule if applicable ---
+  var wildDefault = generateWildDefault(specialIcons);
+  if (wildDefault) {
+    // Find WILD icon and append default rule to its functions
+    for (var w = 0; w < specialIcons.length; w++) {
+      if (specialIcons[w].name === 'WILD') {
+        specialIcons[w].functions.push(wildDefault);
+        break;
+      }
+    }
+  }
+
+  // --- Identify normal icons ---
+  var normalIcons = identifyNormalIcons(text);
+
+  // --- Detect features ---
+  var features = detectFeatures(lines);
+
+  // --- Detect payout values ---
+  // Look for digit-dash-digit patterns (e.g., "5-250", "4-40", "3-20")
+  // Include en-dash (\u2013) and em-dash (\u2014) variants
+  var payoutPattern = /\d+[\-\u2013\u2014]\d+/;
+  var hasPayoutValues = payoutPattern.test(text);
+
+  // --- Detect icon relations ---
+  // Look for patterns like "BONUS1...收集区1" or "BONUS → COLLECTOR" or "BONUS1对应收集区1"
+  var iconRelations = [];
+  var specialIconNames = [];
+  for (var si = 0; si < specialIcons.length; si++) {
+    specialIconNames.push(specialIcons[si].name);
+  }
+
+  // Pattern: SpecialIcon + separator + target (Chinese text or English identifier)
+  // Separators: →, ->, ..., 对应, 对应到, 连接, 关联
+  var relationSeparators = ['→', '->', '\\.\\.+', '对应', '连接', '关联'];
+  var sepPatternStr = '(?:' + relationSeparators.join('|') + ')';
+
+  for (var ri = 0; ri < lines.length; ri++) {
+    var rLine = lines[ri];
+    if (!rLine) continue;
+
+    for (var sn = 0; sn < specialIconNames.length; sn++) {
+      var iconName = specialIconNames[sn];
+      // Build regex: iconName + optional spaces + separator + optional spaces + target
+      var relRegex = new RegExp(iconName + '\\s*' + sepPatternStr + '\\s*([^\\s,，。.;；]+)', 'i');
+      var relMatch = rLine.match(relRegex);
+      if (relMatch && relMatch[1]) {
+        // Avoid duplicate relations
+        var target = relMatch[1].trim();
+        var isDuplicate = false;
+        for (var dr = 0; dr < iconRelations.length; dr++) {
+          if (iconRelations[dr].icon === iconName && iconRelations[dr].target === target) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        if (!isDuplicate) {
+          iconRelations.push({
+            icon: iconName,
+            target: target
+          });
+        }
+      }
+    }
+  }
+
+  // --- Detect jackpots ---
+  // Look for mentions of GRAND, MAJOR, MINOR, MINI as jackpot tiers
+  var jackpotTiers = ['GRAND', 'MAJOR', 'MINOR', 'MINI'];
+  var jackpots = [];
+  var upperText = text.toUpperCase();
+  for (var jt = 0; jt < jackpotTiers.length; jt++) {
+    var tier = jackpotTiers[jt];
+    // Use word boundary to avoid matching partial words
+    var tierRegex = new RegExp('\\b' + tier + '\\b');
+    if (tierRegex.test(upperText)) {
+      jackpots.push(tier);
+    }
+  }
+
+  // --- Detect combo (game structure) ---
+  // Try to infer from features: if has BASE + FG/FREE, combo = "base+fg"
+  // If has multiple distinct game modes, determine combo
+  var combo = '';
+  var hasBase = false;
+  var hasFG = false;
+  var hasRespin = false;
+  var hasLink = false;
+  var featureCount = 0;
+
+  for (var fc = 0; fc < features.length; fc++) {
+    var fName = features[fc].name.toUpperCase();
+    if (/\bBASE\b/.test(fName)) hasBase = true;
+    if (/\bFG\b|\bFREE\b/.test(fName)) hasFG = true;
+    if (/\bRESPIN\b/.test(fName)) hasRespin = true;
+    if (/\bLINK\b/.test(fName)) hasLink = true;
+    featureCount++;
+  }
+
+  if (hasBase && hasFG && hasLink) {
+    combo = 'base+fg+link';
+  } else if (hasBase && hasFG && hasRespin) {
+    combo = 'base+fg+respin';
+  } else if (hasBase && hasFG) {
+    combo = 'base+fg';
+  } else if (hasBase && hasRespin) {
+    combo = 'base+respin';
+  } else if (hasBase && hasLink) {
+    combo = 'base+link';
+  } else if (featureCount > 1) {
+    combo = featureCount + '+1';
+  } else if (featureCount === 1) {
+    combo = 'base';
+  }
+
+  // --- Build and return complete StructuredGameData ---
+  return {
+    combo: combo,
+    jackpots: jackpots,
+    specialIcons: specialIcons,
+    normalIcons: normalIcons,
+    features: features,
+    iconRelations: iconRelations,
+    hasPayoutValues: hasPayoutValues
+  };
+}
+
+// ============================================================
+// AI Engine: Puter.js Loading and AI Model Calling
+// ============================================================
+
+/**
+ * loadPuterJS()
+ * Dynamically loads puter.js v2 from CDN with a 30-second timeout.
+ * Returns a Promise that resolves when puter.js is ready.
+ * If already loaded (window.puter exists), resolves immediately.
+ */
+function loadPuterJS() {
+  return new Promise(function(resolve, reject) {
+    // If already loaded, resolve immediately
+    if (window.puter && window.puter.ai) {
+      resolve();
+      return;
+    }
+
+    // Check protocol - puter.js requires HTTP/HTTPS
+    if (window.location.protocol === 'file:') {
+      reject(new Error('Puter.js不支持file://协议，请通过HTTP服务器访问。\n\n请双击运行"启动服务器.bat"，然后访问:\nhttp://localhost:8080/paytable/'));
+      return;
+    }
+
+    var script = document.createElement('script');
+    script.src = 'https://js.puter.com/v2/';
+    script.type = 'text/javascript';
+
+    // 30-second timeout
+    var timeoutId = setTimeout(function() {
+      script.onload = null;
+      script.onerror = null;
+      reject(new Error('Puter.js加载超时，请检查网络'));
+    }, 30000);
+
+    script.onload = function() {
+      clearTimeout(timeoutId);
+      // puter.js may need time to initialize after script loads
+      var checkInterval = setInterval(function() {
+        if (window.puter && window.puter.ai) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 200);
+      // Safety timeout for initialization
+      setTimeout(function() {
+        clearInterval(checkInterval);
+        if (window.puter && window.puter.ai) {
+          resolve();
+        } else {
+          reject(new Error('Puter.js初始化超时，请刷新重试'));
+        }
+      }, 15000);
+    };
+
+    script.onerror = function() {
+      clearTimeout(timeoutId);
+      reject(new Error('Puter.js加载失败'));
+    };
+
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * callAI(prompt, model)
+ * Calls puter.js AI chat with the specified model.
+ * Returns a Promise resolving to the AI response text.
+ */
+function callAI(prompt, model) {
+  if (!window.puter || !window.puter.ai) {
+    return Promise.reject(new Error('Puter.js未加载完成，请稍后重试'));
+  }
+  return puter.ai.chat(prompt, { model: model }).then(function(response) {
+    // puter.ai.chat returns a response object; extract text content
+    if (typeof response === 'string') {
+      return response;
+    }
+    if (response && response.message && response.message.content) {
+      return response.message.content;
+    }
+    if (response && typeof response.text === 'string') {
+      return response.text;
+    }
+    // Fallback: try to get string representation
+    return String(response);
+  });
+}
+
+/**
+ * generatePaytable()
+ * Main generation flow wired to the generate button.
+ * Validates inputs, runs structural parser, loads puter.js,
+ * calls AI with model fallback, and manages UI states.
+ */
+function generatePaytable() {
+  // --- Validation using validateGenerationInput ---
+  var gameName = document.getElementById('gameNameInput').value.trim();
+  var allText = (AppState.rawWorkbook && AppState.rawWorkbook.allText) ? AppState.rawWorkbook.allText : null;
+  var validation = validateGenerationInput(gameName, allText);
+  if (!validation.valid) {
+    var aiStatusEl = document.getElementById('aiStatus');
+    aiStatusEl.textContent = validation.error;
+    aiStatusEl.style.color = '#ff6b6b';
+    return;
+  }
+
+  // Update AppState with current form values
+  AppState.gameName = gameName;
+  AppState.brand = document.getElementById('brandSelect').value;
+  AppState.boardLayout = document.getElementById('boardLayoutInput').value.trim();
+  AppState.lines = document.getElementById('linesInput').value.trim();
+
+  // --- Disable generate button, show spinner ---
+  var generateBtn = document.getElementById('generateBtn');
+  var btnText = document.getElementById('btnText');
+  var btnSpinner = document.getElementById('btnSpinner');
+  var aiStatusEl = document.getElementById('aiStatus');
+
+  generateBtn.disabled = true;
+  btnText.style.display = 'none';
+  btnSpinner.style.display = 'inline-block';
+  AppState.isGenerating = true;
+
+  // Reset status color to default (clear any previous error state)
+  aiStatusEl.style.color = '#8892b0';
+
+  // --- Parsing phase ---
+  aiStatusEl.textContent = '正在解析文档结构...';
+  AppState.aiStatus = '正在解析文档结构...';
+
+  // Run structural parser
+  try {
+    AppState.structuredData = parse(AppState.rawWorkbook.allText);
+  } catch (parseErr) {
+    aiStatusEl.textContent = '文档解析失败: ' + parseErr.message;
+    aiStatusEl.style.color = '#ff6b6b';
+    generateBtn.disabled = false;
+    btnText.style.display = 'inline';
+    btnSpinner.style.display = 'none';
+    AppState.isGenerating = false;
+    return;
+  }
+
+  // --- AI generation phase ---
+  aiStatusEl.textContent = '正在调用AI生成内容...';
+  AppState.aiStatus = '正在调用AI生成内容...';
+
+  // Load puter.js then call AI with fallback
+  loadPuterJS().then(function() {
+    // Compute full-ways detection for metadata
+    var isFullWays = false;
+    var waysNum = 0;
+    var boardStr = AppState.boardLayout || '';
+    var linesStr = AppState.lines || '';
+
+    // Parse board dimensions (e.g., "3X5", "4x5", "5X3")
+    var boardMatch = boardStr.match(/(\d+)\s*[xX×]\s*(\d+)/);
+    if (boardMatch) {
+      var rows = parseInt(boardMatch[1], 10);
+      var cols = parseInt(boardMatch[2], 10);
+      var maxWays = Math.pow(rows, cols);
+
+      // Check if lines value equals rows^cols
+      var linesNum = parseInt(linesStr.replace(/[^0-9]/g, ''), 10);
+      if (linesNum === maxWays) {
+        isFullWays = true;
+        waysNum = maxWays;
+      }
+    }
+
+    // Also check for "ways" or "满线" keywords in lines input
+    if (!isFullWays && (/ways/i.test(linesStr) || /满线/.test(linesStr))) {
+      isFullWays = true;
+      // Try to extract ways number from lines string
+      var waysMatch = linesStr.match(/(\d+)/);
+      if (waysMatch) {
+        waysNum = parseInt(waysMatch[1], 10);
+      }
+    }
+
+    // Build prompt
+    var prompt = buildPrompt(AppState.structuredData, {
+      brand: AppState.brand,
+      name: AppState.gameName,
+      board: AppState.boardLayout,
+      lines: AppState.lines,
+      isFullWays: isFullWays,
+      waysNum: waysNum
+    });
+
+    // Try primary model: claude-sonnet-4-20250514
+    return callAI(prompt, 'claude-sonnet-4-20250514').catch(function(primaryError) {
+      // Fallback to gpt-4o
+      aiStatusEl.textContent = '正在切换备用模型(GPT-4o)...';
+      AppState.aiStatus = '正在切换备用模型(GPT-4o)...';
+      return callAI(prompt, 'gpt-4o');
+    });
+  }).then(function(aiResult) {
+    // Success - store result
+    AppState.aiResult = aiResult;
+    aiStatusEl.style.color = '#8892b0';
+    aiStatusEl.textContent = 'AI生成完成！';
+    AppState.aiStatus = 'AI生成完成！';
+
+    // Process AI response using processAIResult
+    var waysDetection = detectFullWays(AppState.boardLayout, AppState.lines);
+    var result = processAIResult(aiResult, AppState.structuredData, {
+      isFullWays: waysDetection.isFullWays,
+      waysNum: waysDetection.waysNum,
+      paylineCount: waysDetection.paylineCount,
+      boardLayout: AppState.boardLayout,
+      lines: AppState.lines
+    });
+
+    if (!result) {
+      aiStatusEl.textContent = 'AI返回格式异常，请重试';
+      aiStatusEl.style.color = '#ff6b6b';
+      AppState.aiStatus = 'AI返回格式异常，请重试';
+      return;
+    }
+
+    // Store processed pages
+    AppState.pages = result.pages;
+
+    // Show validation warning if any
+    if (result.warning) {
+      aiStatusEl.textContent = 'AI生成完成！ ' + result.warning;
+      aiStatusEl.style.color = '#f39c12';
+      AppState.aiStatus = 'AI生成完成！ ' + result.warning;
+    } else {
+      aiStatusEl.textContent = 'AI生成完成！';
+      aiStatusEl.style.color = '#64ffda';
+      AppState.aiStatus = 'AI生成完成！';
+    }
+
+    // Wire: AI Engine output → Icon Manager scan → Preview Panel render
+    populateIconUploadGrid();
+    render(AppState.pages, AppState.iconImages);
+
+    // Auto-navigate to Step 2
+    goStep(2);
+    showToast('✅ Paytable文档生成成功！');
+  }).catch(function(error) {
+    // Both models failed or puter.js loading failed
+    aiStatusEl.textContent = 'AI生成失败: ' + error.message;
+    aiStatusEl.style.color = '#ff6b6b';
+    AppState.aiStatus = '';
+  }).finally(function() {
+    // Always restore button state
+    generateBtn.disabled = false;
+    btnText.style.display = 'inline';
+    btnSpinner.style.display = 'none';
+    AppState.isGenerating = false;
+  });
+}
+
+// --- Wire generate button click event ---
+document.addEventListener('DOMContentLoaded', function() {
+  var generateBtn = document.getElementById('generateBtn');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', generatePaytable);
+  }
 });
+
+// ============================================================
+// AI Engine: Prompt Construction and Validation
+// ============================================================
+
+/**
+ * validateGenerationInput(gameName, allText)
+ * Validates preconditions before invoking AI generation.
+ * @param {string} gameName - The game name from user input
+ * @param {string[]} allText - Array of text lines from parsed document
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateGenerationInput(gameName, allText) {
+  // Check game name is at least 1 character
+  if (!gameName || gameName.trim().length < 1) {
+    return { valid: false, error: '请输入游戏名称（至少1个字符）' };
+  }
+
+  // Check allText has at least 1 non-empty text line
+  if (!allText || !Array.isArray(allText)) {
+    return { valid: false, error: '请先上传并解析游戏文档' };
+  }
+
+  var hasNonEmptyLine = false;
+  for (var i = 0; i < allText.length; i++) {
+    if (allText[i] && allText[i].trim().length > 0) {
+      hasNonEmptyLine = true;
+      break;
+    }
+  }
+
+  if (!hasNonEmptyLine) {
+    return { valid: false, error: '文档内容为空，请上传包含有效内容的游戏文档' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * buildPrompt(structured, metadata)
+ * Assembles the comprehensive AI generation prompt from structured data and metadata.
+ * @param {StructuredGameData} structured - Output from the structural parser
+ * @param {GameMetadata} metadata - Game metadata from user input
+ * @returns {string} The complete prompt string for the AI model
+ */
+function buildPrompt(structured, metadata) {
+  var lines = [];
+
+  // ===== Section 1: Role and Task =====
+  lines.push('You are a professional slot game paytable content writer. Your task is to generate a bilingual (Chinese/English) paytable requirement document in JSON format.');
+  lines.push('');
+
+  // ===== Section 2: Game Metadata =====
+  lines.push('## GAME METADATA');
+  lines.push('- Brand: ' + (metadata.brand || 'CTS'));
+  lines.push('- Game Name: ' + (metadata.name || ''));
+  lines.push('- Board Layout: ' + (metadata.board || 'Unknown'));
+  lines.push('- Lines/Ways: ' + (metadata.lines || 'Unknown'));
+  if (metadata.isFullWays) {
+    lines.push('- Mode: Full Ways (' + metadata.waysNum + ' ways to win)');
+  } else {
+    lines.push('- Mode: Fixed Paylines');
+  }
+  lines.push('');
+
+  // ===== Section 3: Structured Data Summary =====
+  lines.push('## STRUCTURED GAME DATA');
+  lines.push('');
+
+  // Special Icons
+  lines.push('### Special Icons');
+  if (structured.specialIcons && structured.specialIcons.length > 0) {
+    for (var si = 0; si < structured.specialIcons.length; si++) {
+      var icon = structured.specialIcons[si];
+      lines.push('- ' + icon.name + ':');
+      if (icon.functions && icon.functions.length > 0) {
+        for (var f = 0; f < icon.functions.length; f++) {
+          lines.push('  - ' + icon.functions[f]);
+        }
+      }
+    }
+  } else {
+    lines.push('- None detected');
+  }
+  lines.push('');
+
+  // Normal Icons
+  lines.push('### Normal Icons');
+  if (structured.normalIcons && structured.normalIcons.length > 0) {
+    lines.push('- ' + structured.normalIcons.join(', '));
+  } else {
+    lines.push('- None detected');
+  }
+  lines.push('');
+
+  // Features
+  lines.push('### Features (in document order - MUST maintain this order)');
+  if (structured.features && structured.features.length > 0) {
+    for (var fi = 0; fi < structured.features.length; fi++) {
+      var feat = structured.features[fi];
+      lines.push('- Feature ' + (fi + 1) + ': ' + feat.name);
+      if (feat.trigger) lines.push('  - Trigger: ' + feat.trigger);
+      if (feat.rules && feat.rules.length > 0) {
+        lines.push('  - Rules:');
+        for (var r = 0; r < feat.rules.length; r++) {
+          lines.push('    - ' + feat.rules[r]);
+        }
+      }
+      if (feat.endCondition) lines.push('  - End Condition: ' + feat.endCondition);
+      if (feat.wheelRewards && feat.wheelRewards.length > 0) {
+        lines.push('  - Wheel Rewards: ' + feat.wheelRewards.join(', '));
+      }
+    }
+  } else {
+    lines.push('- None detected');
+  }
+  lines.push('');
+
+  // Icon Relations
+  lines.push('### Icon Relations');
+  if (structured.iconRelations && structured.iconRelations.length > 0) {
+    for (var ir = 0; ir < structured.iconRelations.length; ir++) {
+      var rel = structured.iconRelations[ir];
+      lines.push('- ' + rel.icon + ' → ' + rel.target);
+    }
+  } else {
+    lines.push('- None detected');
+  }
+  lines.push('');
+
+  // Jackpots
+  lines.push('### Jackpots');
+  if (structured.jackpots && structured.jackpots.length > 0) {
+    lines.push('- Tiers: ' + structured.jackpots.join(', '));
+  } else {
+    lines.push('- None detected');
+  }
+  lines.push('');
+
+  // Payout values
+  lines.push('### Payout Values');
+  if (structured.hasPayoutValues) {
+    lines.push('- Numeric payout values detected in document. Include actual values on PAYS page.');
+  } else {
+    lines.push('- No numeric payout values found. Use "数值待定" (Chinese) / "Values TBD" (English) for all payout entries on PAYS page.');
+  }
+  lines.push('');
+
+  // ===== Section 4: Output Format Specification =====
+  lines.push('## OUTPUT FORMAT');
+  lines.push('');
+  lines.push('You MUST respond with ONLY a valid JSON object in this exact structure:');
+  lines.push('```json');
+  lines.push('{');
+  lines.push('  "pages": [');
+  lines.push('    {');
+  lines.push('      "title": "Chinese page title",');
+  lines.push('      "titleEn": "English page title",');
+  lines.push('      "items": [');
+  lines.push('        { "cn": "* Chinese bullet point", "en": "* English bullet point" },');
+  lines.push('        { "cn": "* Chinese bullet point", "en": "* English bullet point", "table": { "headers": ["COL1", "COL2"], "rows": [["val1", "val2"]] } }');
+  lines.push('      ]');
+  lines.push('    }');
+  lines.push('  ]');
+  lines.push('}');
+  lines.push('```');
+  lines.push('');
+
+  // ===== Section 5: Page Ordering Rules =====
+  lines.push('## PAGE ORDERING RULES (STRICT)');
+  lines.push('');
+  lines.push('Generate pages in this EXACT order:');
+  lines.push('1. **FEATURE page** (first) — Special icon overview with all special icons, their labels, and description bullets');
+  lines.push('2. **PAYS page** (second) — Symbol payout values for ALL icons (special + normal)');
+  lines.push('3. **Feature detail pages** (middle) — One page per gameplay feature, in STRICT document order (the same order as listed in STRUCTURED GAME DATA above). Do NOT reorder features.');
+  lines.push('4. **DO NOT generate a PAY LINES page** — It will be auto-appended by the system separately.');
+  lines.push('');
+
+  // ===== Section 6: Language Style Rules =====
+  lines.push('## LANGUAGE STYLE RULES');
+  lines.push('');
+  lines.push('### General Style');
+  lines.push('- Use present tense, concise, action-oriented language');
+  lines.push('- Each bullet point starts with "* " (asterisk + space)');
+  lines.push('- One bullet = one mechanic, typically under 25 words in English');
+  lines.push('- No verbose explanations, no paragraph-style text');
+  lines.push('- Each bullet reads as concise player-facing paytable information');
+  lines.push('');
+  lines.push('### Feature Names');
+  lines.push('- Format feature/mechanic names in BOLD CAPITALS within text (e.g., "XMAX LINK", "FREE SPINS", "CABANA SHOW")');
+  lines.push('- Feature names must NOT exceed 5 words');
+  lines.push('');
+  lines.push('### Icon Bracket Notation');
+  lines.push('- Reference icon names within text using [BRACKET_NOTATION]: [WILD], [SCATTER], [BONUS1], [H1], [L1]');
+  lines.push('- When an icon appears as a standalone label (on FEATURE/PAYS pages below icon images), use ALL CAPS without brackets: WILD, SCATTER, BONUS');
+  lines.push('- When an icon appears within descriptive text, use brackets: [WILD], [SCATTER], [BONUS1]');
+  lines.push('');
+  lines.push('### Jackpot Notation');
+  lines.push('- Mark jackpot tier names with double curly braces: {{GRAND}}, {{MAJOR}}, {{MINOR}}, {{MINI}}');
+  lines.push('- Example: "* Landing 15 symbols awards the {{GRAND}} jackpot."');
+  lines.push('');
+  lines.push('### Standard Terminology');
+  lines.push('- English terms: Ways to win, paylines, reels, scatter, wild, bonus, free games, free spins, respin, hold and spin, multiplier, jackpot');
+  lines.push('- Chinese equivalents: 赔付线, 转轴, 免费游戏, 百搭, 奖金, 乘倍, 累积奖池, 免费旋转, 重新旋转, 保持并旋转');
+  lines.push('');
+  lines.push('### WILD Description Rules');
+  lines.push('- Describe WILD using separate bullets for:');
+  lines.push('  - Substitution scope (e.g., "* [WILD] substitutes for all symbols except [SCATTER].")');
+  lines.push('  - Reel positions (e.g., "* [WILD] appears on reels 2, 3, and 4.")');
+  lines.push('  - Size properties if applicable (e.g., "* [WILD] is always expanding during FREE SPINS.")');
+  lines.push('');
+  lines.push('### Trigger Description Rules');
+  lines.push('- Use specific numeric conditions with icon names in brackets');
+  lines.push('- Example CN: "* 3个及以上[SCATTER]触发免费游戏"');
+  lines.push('- Example EN: "* 3 or more [SCATTER] scattered anywhere triggers FREE SPINS."');
+  lines.push('- Include tiered rewards: "* 3 symbols - 12 free spins. 4 symbols - 24 free spins."');
+  lines.push('');
+  lines.push('### Multiplier and Collector Rules');
+  lines.push('- Include specific numeric values and caps');
+  lines.push('- Example: "* Each Copa Girl increases the MULTIPLIER by +1 up to x20."');
+  lines.push('- Example: "* Landing a [BONUS] in an unlocked area will immediately collect into the [COLLECTOR]."');
+  lines.push('');
+  lines.push('### Wheel Reward Data');
+  lines.push('- When a feature has wheel/prize reward combinations, use the "table" field in items');
+  lines.push('- Headers should describe columns (e.g., ["FEATURES", "WHEEL PRIZES"])');
+  lines.push('- Rows list specific rewards (COIN, GRAND, MAJOR, MINOR, MINI, +1 FREE GAME, RESPIN, etc.)');
+  lines.push('');
+  lines.push('### Content Exclusion (DO NOT INCLUDE)');
+  lines.push('- RTP (Return to Player percentage)');
+  lines.push('- Reel weights or strip configurations');
+  lines.push('- Trigger probability or hit rate');
+  lines.push('- Animation notes or timing');
+  lines.push('- Reconnection/disconnect rules (断线重连)');
+  lines.push('- Internal variable names or config IDs');
+  lines.push('- Server logic or state machine details');
+  lines.push('- UI positioning or layout instructions');
+  lines.push('- Art design notes (美术, 动画, 颜色, 超框)');
+  lines.push('- Edge cases or numerical avoidance rules');
+  lines.push('');
+
+  // ===== Section 7: FEATURE Page Rules =====
+  lines.push('## FEATURE PAGE CONTENT RULES');
+  lines.push('');
+  lines.push('The FEATURE page (page 1) is a special icon overview page:');
+  lines.push('- Group special icons together (e.g., if BONUS1, BONUS2, BONUS3 exist, group them as one "BONUS" block)');
+  lines.push('- For each icon/group, generate:');
+  lines.push('  - A label line in ALL CAPS (the icon name without brackets, e.g., "WILD", "SCATTER", "BONUS")');
+  lines.push('  - Description bullets explaining the icon\'s function');
+  lines.push('- The preview system will show icon image placeholders + ALL CAPS label + description bullets');
+  lines.push('- Use [ICON_NAME] bracket notation ONLY within description text, NOT in labels');
+  lines.push('');
+
+  // ===== Section 8: PAYS Page Rules =====
+  lines.push('## PAYS PAGE CONTENT RULES');
+  lines.push('');
+  lines.push('The PAYS page (page 2) lists all symbol payout values:');
+  lines.push('- List ALL icons: special icons first, then normal icons (H-series, L-series)');
+  lines.push('- For each icon, generate payout entries in "N - value" format (e.g., "5 - 250", "4 - 40", "3 - 20")');
+  if (!structured.hasPayoutValues) {
+    lines.push('- Since NO payout values were found in the document, use "数值待定" / "Values TBD" for all payout values');
+    lines.push('- Example CN: "* 5 - 数值待定 / 4 - 数值待定 / 3 - 数值待定"');
+    lines.push('- Example EN: "* 5 - TBD / 4 - TBD / 3 - TBD"');
+  } else {
+    lines.push('- Use the actual payout values from the document where available');
+  }
+  lines.push('- Format each icon\'s payouts as a single bullet: "* 5 - 250 / 4 - 40 / 3 - 20"');
+  lines.push('');
+
+  // ===== Section 9: Feature Detail Page Rules =====
+  lines.push('## FEATURE DETAIL PAGE RULES');
+  lines.push('');
+  lines.push('For each detected feature, generate ONE dedicated page:');
+  lines.push('- Page title should be the feature name (Chinese) / feature name (English)');
+  lines.push('- Include trigger conditions as bullets');
+  lines.push('- Include gameplay rules as bullets');
+  lines.push('- Include end conditions as bullets (if applicable)');
+  lines.push('- Maintain STRICT document order — feature pages MUST appear in the same sequence as in the source document');
+  lines.push('- Use [ICON_NAME] bracket notation when referencing icons within text');
+  lines.push('- If the feature has wheel reward data, include a "table" field item');
+  lines.push('');
+
+  // ===== Section 10: Final Reminders =====
+  lines.push('## IMPORTANT REMINDERS');
+  lines.push('');
+  lines.push('1. Output ONLY valid JSON — no markdown fences, no explanatory text outside JSON');
+  lines.push('2. Every "cn" and "en" field in items MUST start with "* " (asterisk + space)');
+  lines.push('3. DO NOT generate a PAY LINES page — it is auto-appended by the system');
+  lines.push('4. Maintain feature page order matching the source document order EXACTLY');
+  lines.push('5. Use {{GRAND}}, {{MAJOR}}, {{MINOR}}, {{MINI}} notation for jackpot references');
+  lines.push('6. Use [ICON_NAME] bracket notation for all icon references within text');
+  lines.push('7. Generate bilingual content: Chinese in "cn", English in "en"');
+  lines.push('8. Keep bullets concise — one mechanic per bullet, under 25 words English');
+
+  return lines.join('\n');
+}
+
+// ============================================================
+// AI Engine: Response Parsing and Page Generation
+// ============================================================
+
+/**
+ * parseAIResponse(raw)
+ * Parse AI response text into pages array.
+ * First tries JSON.parse directly, then regex extraction of first complete JSON object.
+ * Handles markdown code fences, explanatory text, and nested JSON objects.
+ * @param {string} raw - Raw AI response text
+ * @returns {Array|null} Pages array or null if extraction fails
+ */
+function parseAIResponse(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+
+  var parsed = null;
+
+  // First try: direct JSON.parse
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    // Direct parse failed, try extraction methods
+  }
+
+  // If direct parse didn't work, try removing markdown code fences
+  if (!parsed) {
+    var stripped = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    try {
+      parsed = JSON.parse(stripped.trim());
+    } catch (e) {
+      // Still failed
+    }
+  }
+
+  // If still no result, use regex to find first complete JSON object with brace matching
+  if (!parsed) {
+    var startIdx = raw.indexOf('{');
+    if (startIdx !== -1) {
+      var depth = 0;
+      var inString = false;
+      var escape = false;
+      var endIdx = -1;
+
+      for (var i = startIdx; i < raw.length; i++) {
+        var ch = raw[i];
+
+        if (escape) {
+          escape = false;
+          continue;
+        }
+
+        if (ch === '\\' && inString) {
+          escape = true;
+          continue;
+        }
+
+        if (ch === '"' && !escape) {
+          inString = !inString;
+          continue;
+        }
+
+        if (!inString) {
+          if (ch === '{') {
+            depth++;
+          } else if (ch === '}') {
+            depth--;
+            if (depth === 0) {
+              endIdx = i;
+              break;
+            }
+          }
+        }
+      }
+
+      if (endIdx !== -1) {
+        var jsonStr = raw.substring(startIdx, endIdx + 1);
+        try {
+          parsed = JSON.parse(jsonStr);
+        } catch (e) {
+          // JSON extraction failed
+        }
+      }
+    }
+  }
+
+  // Extract pages array from parsed object
+  if (!parsed) return null;
+
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (parsed.pages && Array.isArray(parsed.pages)) {
+    return parsed.pages;
+  }
+
+  return null;
+}
+
+/**
+ * validatePageCount(pages, expectedFeatures)
+ * Compare feature page count with detected features.
+ * @param {Array} pages - Generated pages array
+ * @param {number} expectedFeatures - Number of features detected by structural parser
+ * @returns {string|null} Warning string or null if count is sufficient
+ */
+function validatePageCount(pages, expectedFeatures) {
+  if (!pages || !Array.isArray(pages) || expectedFeatures <= 0) return null;
+
+  // Count feature detail pages (exclude FEATURE, PAYS, and PAY LINES pages)
+  var featureDetailCount = 0;
+  for (var i = 0; i < pages.length; i++) {
+    var title = (pages[i].title || '').toUpperCase();
+    var isPaysPage = /^PAYS\b|^赔付|^符号/.test(title);
+    var isPayLinesPage = /PAY\s*LINES|赔付线/.test(title);
+
+    // Identify FEATURE overview page (first page typically)
+    var isOverviewFeature = title === 'FEATURE' || title === '特色' || title === '功能' ||
+      /^FEATURE\b/.test(title) || /^特色/.test(title) || /^功能/.test(title);
+
+    if (!isOverviewFeature && !isPaysPage && !isPayLinesPage) {
+      featureDetailCount++;
+    }
+  }
+
+  if (featureDetailCount < expectedFeatures) {
+    return '⚠️ 识别到' + expectedFeatures + '个玩法但只生成了' + featureDetailCount + '个页面';
+  }
+
+  return null;
+}
+
+/**
+ * enforcePageOrder(pages)
+ * Ensure correct page ordering: FEATURE first, PAYS second, feature details in middle, PAY LINES last.
+ * @param {Array} pages - Pages array to reorder
+ * @returns {Array} Reordered pages array
+ */
+function enforcePageOrder(pages) {
+  if (!pages || !Array.isArray(pages) || pages.length === 0) return pages || [];
+
+  var featurePage = null;
+  var paysPage = null;
+  var payLinesPage = null;
+  var detailPages = [];
+
+  for (var i = 0; i < pages.length; i++) {
+    var title = (pages[i].title || '').toUpperCase();
+    var titleEn = (pages[i].titleEn || '').toUpperCase();
+    var combined = title + ' ' + titleEn;
+
+    // Identify FEATURE overview page
+    if (!featurePage && (/^FEATURE\b/.test(combined) || /^特色/.test(title) || /^功能/.test(title))) {
+      featurePage = pages[i];
+    }
+    // Identify PAY LINES page (must check before PAYS to avoid false match)
+    else if (!payLinesPage && (/PAY\s*LINES/.test(combined) || /赔付线/.test(title) || (title.length <= 4 && /^线$/.test(title.trim())))) {
+      payLinesPage = pages[i];
+    }
+    // Identify PAYS page
+    else if (!paysPage && (/^PAYS\b/.test(combined) || /^赔付/.test(title) || /^符号/.test(title))) {
+      paysPage = pages[i];
+    }
+    // Everything else is a feature detail page
+    else {
+      detailPages.push(pages[i]);
+    }
+  }
+
+  // Reassemble in correct order
+  var ordered = [];
+  if (featurePage) ordered.push(featurePage);
+  if (paysPage) ordered.push(paysPage);
+  for (var d = 0; d < detailPages.length; d++) {
+    ordered.push(detailPages[d]);
+  }
+  if (payLinesPage) ordered.push(payLinesPage);
+
+  return ordered;
+}
+
+/**
+ * detectFullWays(boardLayout, linesValue)
+ * Full-ways detection: calculate rows^cols, compare with lines value, check keywords.
+ * @param {string} boardLayout - Board layout string (e.g., "3X5", "4x5", "3×5")
+ * @param {string} linesValue - Lines/ways value string (e.g., "243ways", "25线", "1024")
+ * @returns {{ isFullWays: boolean, waysNum: number, paylineCount: number }}
+ */
+function detectFullWays(boardLayout, linesValue) {
+  var result = { isFullWays: false, waysNum: 0, paylineCount: 0 };
+
+  var boardStr = boardLayout || '';
+  var linesStr = linesValue || '';
+
+  // Parse board dimensions
+  var boardMatch = boardStr.match(/(\d+)\s*[xX×]\s*(\d+)/);
+  var rows = 0, cols = 0, maxWays = 0;
+  if (boardMatch) {
+    rows = parseInt(boardMatch[1], 10);
+    cols = parseInt(boardMatch[2], 10);
+    maxWays = Math.pow(rows, cols);
+  }
+
+  // Extract numeric value from lines string
+  var linesNum = parseInt(linesStr.replace(/[^0-9]/g, ''), 10) || 0;
+
+  // Check if lines value equals rows^cols
+  if (maxWays > 0 && linesNum === maxWays) {
+    result.isFullWays = true;
+    result.waysNum = maxWays;
+    result.paylineCount = linesNum;
+    return result;
+  }
+
+  // Also check for "ways" or "满线" keywords
+  if (/ways/i.test(linesStr) || /满线/.test(linesStr)) {
+    result.isFullWays = true;
+    result.waysNum = linesNum || maxWays;
+    result.paylineCount = linesNum;
+    return result;
+  }
+
+  // Fixed payline game
+  result.paylineCount = linesNum;
+  return result;
+}
+
+/**
+ * appendPayLinesPage(pages, isFullWays, waysNum, paylineCount)
+ * Add PAY LINES page with appropriate template.
+ * @param {Array} pages - Pages array to append to
+ * @param {boolean} isFullWays - Whether this is a full-ways game
+ * @param {number} waysNum - Number of ways (for full-ways games)
+ * @param {number} paylineCount - Number of paylines (for fixed payline games)
+ * @returns {Array} Pages array with PAY LINES page appended
+ */
+function appendPayLinesPage(pages, isFullWays, waysNum, paylineCount) {
+  var payLinesPage = {
+    title: '赔付线',
+    titleEn: 'PAY LINES',
+    items: []
+  };
+
+  if (isFullWays) {
+    // 6-entry template for full-ways games
+    var n = waysNum || 0;
+    payLinesPage.items = [
+      { cn: '* ' + n + ' Ways to win!', en: '* ' + n + ' Ways to win!' },
+      { cn: '* 无赔付线', en: '* No paylines.' },
+      { cn: '* 匹配图标在连续转轴的任何位置赔付', en: '* Matching symbols pay in any position on consecutive reels.' },
+      { cn: '* 同一转轴上出现多个匹配的中奖图标时，赢钱额按该轴匹配数相乘', en: '* Matching winning symbols on the same reel multiply the win by the number matched.' },
+      { cn: '* 只赔付最高的中奖组合', en: '* Only the highest winning combination is paid.' },
+      { cn: '* 赢钱额乘以投注倍数', en: '* Wins are multiplied by the bet multiplier.' }
+    ];
+  } else {
+    // 1-entry template for fixed payline games
+    var count = paylineCount || 0;
+    payLinesPage.items = [
+      { cn: '* ' + count + '条赔付线', en: '* ' + count + ' paylines.' }
+    ];
+  }
+
+  pages.push(payLinesPage);
+  return pages;
+}
+
+/**
+ * markPayoutTBD(pages)
+ * Mark payout entries as "数值待定" / "Values TBD" when hasPayoutValues is false.
+ * Looks for PAYS page and replaces numeric payout values with TBD markers.
+ * @param {Array} pages - Pages array
+ * @returns {Array} Modified pages array
+ */
+function markPayoutTBD(pages) {
+  for (var i = 0; i < pages.length; i++) {
+    var title = (pages[i].title || '').toUpperCase();
+    var titleEn = (pages[i].titleEn || '').toUpperCase();
+    var combined = title + ' ' + titleEn;
+
+    // Find PAYS page
+    if (/^PAYS\b/.test(combined) || /^赔付/.test(pages[i].title || '') || /^符号/.test(pages[i].title || '')) {
+      var items = pages[i].items || [];
+      for (var j = 0; j < items.length; j++) {
+        // Replace numeric values in "N - value" pattern with TBD
+        if (items[j].cn) {
+          items[j].cn = items[j].cn.replace(/(\d+)\s*-\s*\d+/g, '$1 - 数值待定');
+        }
+        if (items[j].en) {
+          items[j].en = items[j].en.replace(/(\d+)\s*-\s*\d+/g, '$1 - TBD');
+        }
+      }
+      break;
+    }
+  }
+  return pages;
+}
+
+/**
+ * processAIResult(aiResult, structuredData, metadata)
+ * Main processing function for AI response.
+ * Parses, validates, orders, and appends PAY LINES page.
+ * @param {string} aiResult - Raw AI response text
+ * @param {object} structuredData - Structured game data from parser
+ * @param {object} metadata - Game metadata { isFullWays, waysNum, boardLayout, lines, hasPayoutValues }
+ * @returns {{ pages: Array, warning: string|null }|null} Processed result or null if parsing failed
+ */
+function processAIResult(aiResult, structuredData, metadata) {
+  // Parse AI response
+  var pages = parseAIResponse(aiResult);
+  if (!pages) return null;
+
+  // Enforce page ordering
+  pages = enforcePageOrder(pages);
+
+  // Validate page count
+  var expectedFeatures = (structuredData && structuredData.features) ? structuredData.features.length : 0;
+  var warning = validatePageCount(pages, expectedFeatures);
+
+  // Mark payout entries as TBD if no payout values detected
+  var hasPayoutValues = structuredData ? structuredData.hasPayoutValues : true;
+  if (!hasPayoutValues) {
+    pages = markPayoutTBD(pages);
+  }
+
+  // Detect full-ways using metadata or re-detect
+  var isFullWays = metadata.isFullWays || false;
+  var waysNum = metadata.waysNum || 0;
+  var paylineCount = metadata.paylineCount || 0;
+
+  // If metadata doesn't provide these, use detectFullWays
+  if (!metadata.hasOwnProperty('isFullWays')) {
+    var detection = detectFullWays(metadata.boardLayout || '', metadata.lines || '');
+    isFullWays = detection.isFullWays;
+    waysNum = detection.waysNum;
+    paylineCount = detection.paylineCount;
+  } else {
+    // Extract payline count from lines string if not provided
+    if (!paylineCount) {
+      paylineCount = parseInt((metadata.lines || '').replace(/[^0-9]/g, ''), 10) || 0;
+    }
+  }
+
+  // Check if PAY LINES page already exists
+  var hasPayLinesPage = false;
+  for (var i = 0; i < pages.length; i++) {
+    var title = (pages[i].title || '').toUpperCase();
+    var titleEn = (pages[i].titleEn || '').toUpperCase();
+    var combined = title + ' ' + titleEn;
+    if (/PAY\s*LINES/.test(combined) || /赔付线/.test(pages[i].title || '')) {
+      hasPayLinesPage = true;
+      break;
+    }
+  }
+
+  // Auto-append PAY LINES page if not present
+  if (!hasPayLinesPage) {
+    pages = appendPayLinesPage(pages, isFullWays, waysNum, paylineCount);
+  }
+
+  return { pages: pages, warning: warning };
+}
+
+// ============================================================
+// Icon Manager Module
+// ============================================================
+
+/**
+ * Supported image MIME types for icon upload.
+ */
+var SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+
+/**
+ * Maximum image file size: 2MB
+ */
+var MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+
+/**
+ * scanForIcons(pages)
+ * Extracts unique icon names from bracket-notation [ICON_NAME] across all page items
+ * and H/L symbol references on the PAYS page.
+ *
+ * @param {Array} pages - Array of PaytablePage objects with items
+ * @returns {string[]} Array of unique icon names found
+ */
+function scanForIcons(pages) {
+  if (!pages || !Array.isArray(pages) || pages.length === 0) return [];
+
+  var iconsSet = {};
+  var bracketPattern = /\[([A-Z][A-Z0-9_]*)\]/g;
+  var hlPattern = /\b([HL]\d+)\b/gi;
+
+  for (var i = 0; i < pages.length; i++) {
+    var page = pages[i];
+    if (!page || !page.items || !Array.isArray(page.items)) continue;
+
+    var title = (page.title || '').toUpperCase();
+    var titleEn = (page.titleEn || '').toUpperCase();
+    var combined = title + ' ' + titleEn;
+    var isPaysPage = /^PAYS\b/.test(combined) || /^赔付/.test(page.title || '') || /^符号/.test(page.title || '');
+
+    for (var j = 0; j < page.items.length; j++) {
+      var item = page.items[j];
+      if (!item) continue;
+
+      var texts = [];
+      if (item.cn) texts.push(item.cn);
+      if (item.en) texts.push(item.en);
+
+      for (var t = 0; t < texts.length; t++) {
+        var text = texts[t];
+
+        // Extract bracket-notation references [ICON_NAME]
+        bracketPattern.lastIndex = 0;
+        var match;
+        while ((match = bracketPattern.exec(text)) !== null) {
+          iconsSet[match[1]] = true;
+        }
+
+        // On PAYS page, also extract H/L references
+        if (isPaysPage) {
+          hlPattern.lastIndex = 0;
+          while ((match = hlPattern.exec(text)) !== null) {
+            iconsSet[match[1].toUpperCase()] = true;
+          }
+        }
+      }
+    }
+  }
+
+  // Sort: special icons first (WILD, SCATTER, BONUS, LINK), then H-series, then L-series, then others
+  var icons = Object.keys(iconsSet);
+  icons.sort(function(a, b) {
+    var order = function(name) {
+      if (/^WILD/.test(name)) return 0;
+      if (/^SCATTER/.test(name)) return 1;
+      if (/^BONUS/.test(name)) return 2;
+      if (/^LINK/.test(name)) return 3;
+      if (/^H\d/.test(name)) return 4;
+      if (/^L\d/.test(name)) return 5;
+      return 6;
+    };
+    var diff = order(a) - order(b);
+    if (diff !== 0) return diff;
+    return a.localeCompare(b);
+  });
+
+  return icons;
+}
+
+/**
+ * validateImage(file)
+ * Validates that a file is a supported image format (PNG, JPG, GIF, WebP) and ≤ 2MB.
+ *
+ * @param {File} file - The file to validate
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateImage(file) {
+  if (!file) {
+    return { valid: false, error: '未选择文件' };
+  }
+
+  // Check MIME type
+  var type = file.type || '';
+  var isSupported = false;
+  for (var i = 0; i < SUPPORTED_IMAGE_TYPES.length; i++) {
+    if (type === SUPPORTED_IMAGE_TYPES[i]) {
+      isSupported = true;
+      break;
+    }
+  }
+
+  if (!isSupported) {
+    // Also check by file extension as fallback (some browsers may not set MIME correctly)
+    var name = (file.name || '').toLowerCase();
+    if (/\.(png|jpg|jpeg|gif|webp)$/.test(name)) {
+      isSupported = true;
+    }
+  }
+
+  if (!isSupported) {
+    return { valid: false, error: '仅支持 PNG、JPG、GIF、WebP 格式' };
+  }
+
+  // Check file size
+  if (file.size > MAX_IMAGE_SIZE) {
+    return { valid: false, error: '文件大小超过 2MB 限制' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * handleIconUpload(iconName, file)
+ * Reads the image file as base64 data URL and stores in AppState.iconImages.
+ * Updates the corresponding upload slot with a preview image and green border.
+ *
+ * @param {string} iconName - The icon name to associate the image with
+ * @param {File} file - The validated image file
+ * @returns {Promise<void>}
+ */
+function handleIconUpload(iconName, file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+      var base64 = e.target.result;
+
+      // Store in AppState
+      AppState.iconImages[iconName] = base64;
+
+      // Re-render preview with updated icon images
+      if (AppState.pages && AppState.pages.length > 0) {
+        render(AppState.pages, AppState.iconImages);
+      }
+
+      // Update UI for the corresponding slot
+      var slot = document.querySelector('.icon-slot[data-icon="' + iconName + '"]');
+      if (slot) {
+        // Remove error state if present
+        slot.classList.remove('error');
+        var errorMsg = slot.querySelector('.icon-error-msg');
+        if (errorMsg) errorMsg.remove();
+
+        // Add green border
+        slot.classList.add('has-image');
+
+        // Update or create image preview
+        var img = slot.querySelector('img');
+        if (!img) {
+          // Remove placeholder icon
+          var placeholder = slot.querySelector('.icon-placeholder');
+          if (placeholder) placeholder.remove();
+
+          img = document.createElement('img');
+          var nameEl = slot.querySelector('.icon-name');
+          if (nameEl) {
+            slot.insertBefore(img, nameEl);
+          } else {
+            slot.appendChild(img);
+          }
+        }
+        img.src = base64;
+        img.alt = iconName;
+      }
+
+      resolve();
+    };
+
+    reader.onerror = function() {
+      reject(new Error('文件读取失败'));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * getIconImage(iconName)
+ * Returns the base64 data URL for a given icon name, or null if not uploaded.
+ *
+ * @param {string} iconName - The icon name
+ * @returns {string|null} Base64 data URL or null
+ */
+function getIconImage(iconName) {
+  if (!iconName) return null;
+  return AppState.iconImages[iconName] || null;
+}
+
+/**
+ * getAllIcons()
+ * Returns the complete icon images map.
+ *
+ * @returns {Record<string, string>} Object mapping icon names to base64 data URLs
+ */
+function getAllIcons() {
+  return AppState.iconImages;
+}
+
+/**
+ * renderUploadGrid(iconNames)
+ * Creates a grid of upload slots, one per unique icon name.
+ * Each slot supports drag-and-drop and click-to-upload.
+ *
+ * @param {string[]} iconNames - Array of unique icon names
+ * @returns {HTMLElement} The grid container element
+ */
+function renderUploadGrid(iconNames) {
+  var grid = document.createElement('div');
+  grid.className = 'icon-grid';
+
+  if (!iconNames || iconNames.length === 0) {
+    var emptyMsg = document.createElement('div');
+    emptyMsg.className = 'step2-empty-state';
+    emptyMsg.textContent = '未检测到图标引用。';
+    grid.appendChild(emptyMsg);
+    return grid;
+  }
+
+  for (var i = 0; i < iconNames.length; i++) {
+    var iconName = iconNames[i];
+    var slot = createIconSlot(iconName);
+    grid.appendChild(slot);
+  }
+
+  return grid;
+}
+
+/**
+ * createIconSlot(iconName)
+ * Creates a single icon upload slot element with drag-and-drop and click handlers.
+ *
+ * @param {string} iconName - The icon name for this slot
+ * @returns {HTMLElement} The slot element
+ */
+function createIconSlot(iconName) {
+  var slot = document.createElement('div');
+  slot.className = 'icon-slot';
+  slot.setAttribute('data-icon', iconName);
+
+  // Check if an image already exists for this icon
+  var existingImage = AppState.iconImages[iconName];
+  if (existingImage) {
+    var img = document.createElement('img');
+    img.src = existingImage;
+    img.alt = iconName;
+    slot.appendChild(img);
+    slot.classList.add('has-image');
+  } else {
+    var placeholder = document.createElement('div');
+    placeholder.className = 'icon-placeholder';
+    placeholder.textContent = '🖼️';
+    slot.appendChild(placeholder);
+  }
+
+  var nameLabel = document.createElement('div');
+  nameLabel.className = 'icon-name';
+  nameLabel.textContent = iconName;
+  slot.appendChild(nameLabel);
+
+  // --- Click-to-upload ---
+  slot.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp';
+    input.style.display = 'none';
+
+    input.addEventListener('change', function() {
+      if (input.files && input.files.length > 0) {
+        processIconFile(iconName, input.files[0], slot);
+      }
+      input.remove();
+    });
+
+    document.body.appendChild(input);
+    input.click();
+  });
+
+  // --- Drag-and-drop handlers ---
+  slot.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    slot.classList.add('drag-over');
+  });
+
+  slot.addEventListener('dragenter', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    slot.classList.add('drag-over');
+  });
+
+  slot.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    slot.classList.remove('drag-over');
+  });
+
+  slot.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    slot.classList.remove('drag-over');
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processIconFile(iconName, e.dataTransfer.files[0], slot);
+    }
+  });
+
+  return slot;
+}
+
+/**
+ * processIconFile(iconName, file, slot)
+ * Validates and processes an image file for an icon slot.
+ * Shows error indication on invalid file without clearing previous image.
+ *
+ * @param {string} iconName - The icon name
+ * @param {File} file - The file to process
+ * @param {HTMLElement} slot - The slot DOM element
+ */
+function processIconFile(iconName, file, slot) {
+  // Validate the image
+  var validation = validateImage(file);
+
+  if (!validation.valid) {
+    // Show error state without clearing previous image
+    slot.classList.add('error');
+
+    // Remove existing error message if any
+    var existingError = slot.querySelector('.icon-error-msg');
+    if (existingError) existingError.remove();
+
+    // Add error message
+    var errorMsg = document.createElement('div');
+    errorMsg.className = 'icon-error-msg';
+    errorMsg.textContent = validation.error;
+    slot.appendChild(errorMsg);
+
+    // Remove error state after 3 seconds
+    setTimeout(function() {
+      slot.classList.remove('error');
+      var msg = slot.querySelector('.icon-error-msg');
+      if (msg) msg.remove();
+    }, 3000);
+
+    return;
+  }
+
+  // Valid file - handle upload
+  handleIconUpload(iconName, file).catch(function(err) {
+    // Show error on read failure
+    slot.classList.add('error');
+    var existingError = slot.querySelector('.icon-error-msg');
+    if (existingError) existingError.remove();
+
+    var errorMsg = document.createElement('div');
+    errorMsg.className = 'icon-error-msg';
+    errorMsg.textContent = err.message || '上传失败';
+    slot.appendChild(errorMsg);
+
+    setTimeout(function() {
+      slot.classList.remove('error');
+      var msg = slot.querySelector('.icon-error-msg');
+      if (msg) msg.remove();
+    }, 3000);
+  });
+}
+
+/**
+ * populateIconUploadGrid()
+ * Scans current pages for icon references and renders the upload grid
+ * into the iconUploadGrid container in Step 2.
+ */
+function populateIconUploadGrid() {
+  var container = document.getElementById('iconUploadGrid');
+  if (!container) return;
+
+  // Clear existing content
+  container.innerHTML = '';
+
+  if (!AppState.pages || AppState.pages.length === 0) {
+    return;
+  }
+
+  // Scan pages for icon names
+  var iconNames = scanForIcons(AppState.pages);
+
+  // Render the upload grid
+  var grid = renderUploadGrid(iconNames);
+  container.appendChild(grid);
+}
+
+// ============================================================
+// Preview Panel Module
+// ============================================================
+
+/**
+ * Module-level storage for edited payout values.
+ * Keys: iconName, Values: array of {count, value} objects
+ */
+var editedPayouts = {};
+
+/**
+ * replaceIconBrackets(text, icons, size)
+ * Replaces [ICON_NAME] with inline <img> elements at exact text positions.
+ * Leaves unmatched brackets (no matching image) as plain text.
+ *
+ * @param {string} text - Text containing [ICON_NAME] references
+ * @param {Record<string, string>} icons - Map of icon names to base64 data URLs
+ * @param {number} size - Pixel size for the image (width and height)
+ * @returns {string} HTML string with <img> tags replacing matched brackets
+ */
+function replaceIconBrackets(text, icons, size) {
+  if (!text || typeof text !== 'string') return text || '';
+  if (!icons || typeof icons !== 'object') return escapeHtml(text);
+
+  var sz = size || 40;
+  // Split text into segments: plain text vs [ICON_NAME] patterns
+  var segments = [];
+  var pattern = /\[([A-Z][A-Z0-9_]*)\]/g;
+  var lastIdx = 0;
+  var match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    // Add plain text segment before this match
+    if (match.index > lastIdx) {
+      segments.push({ type: 'text', value: text.substring(lastIdx, match.index) });
+    }
+    // Add icon segment
+    var iconName = match[1];
+    if (icons[iconName]) {
+      segments.push({ type: 'icon', name: iconName, src: icons[iconName] });
+    } else {
+      // No matching image - leave as plain text
+      segments.push({ type: 'text', value: match[0] });
+    }
+    lastIdx = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIdx < text.length) {
+    segments.push({ type: 'text', value: text.substring(lastIdx) });
+  }
+
+  // Build HTML from segments
+  var result = '';
+  for (var i = 0; i < segments.length; i++) {
+    var seg = segments[i];
+    if (seg.type === 'icon') {
+      result += '<img src="' + seg.src + '" alt="' + seg.name +
+        '" class="preview-inline-icon" style="width:' + sz + 'px;height:' + sz + 'px;">';
+    } else {
+      result += escapeHtml(seg.value);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * escapeHtml(str)
+ * Simple HTML escape for safe text rendering.
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * renderJackpotLabels(text)
+ * Replaces {{GRAND}}/{{MAJOR}}/{{MINOR}}/{{MINI}} with colored HTML span labels.
+ *
+ * @param {string} text - Text containing {{JACKPOT}} markers
+ * @returns {string} HTML string with colored labels
+ */
+function renderJackpotLabels(text) {
+  if (!text || typeof text !== 'string') return text || '';
+  var result = text;
+  result = result.replace(/\{\{GRAND\}\}/g, '<span class="jackpot-label jackpot-grand">GRAND</span>');
+  result = result.replace(/\{\{MAJOR\}\}/g, '<span class="jackpot-label jackpot-major">MAJOR</span>');
+  result = result.replace(/\{\{MINOR\}\}/g, '<span class="jackpot-label jackpot-minor">MINOR</span>');
+  result = result.replace(/\{\{MINI\}\}/g, '<span class="jackpot-label jackpot-mini">MINI</span>');
+  return result;
+}
+
+/**
+ * processTextForPreview(text, icons, size)
+ * Applies icon bracket replacement AND jackpot label rendering in a single pass.
+ * Handles escaping of plain text while preserving generated HTML.
+ *
+ * @param {string} text - Raw text
+ * @param {Record<string, string>} icons - Icon images map
+ * @param {number} size - Icon size in px
+ * @returns {string} Processed HTML string
+ */
+function processTextForPreview(text, icons, size) {
+  if (!text) return '';
+  var sz = size || 40;
+  var safeIcons = icons || {};
+
+  // Combined pattern: match [ICON_NAME] or {{JACKPOT}} tokens
+  var combinedPattern = /\[([A-Z][A-Z0-9_]*)\]|\{\{(GRAND|MAJOR|MINOR|MINI)\}\}/g;
+  var segments = [];
+  var lastIdx = 0;
+  var match;
+
+  while ((match = combinedPattern.exec(text)) !== null) {
+    // Plain text before this match
+    if (match.index > lastIdx) {
+      segments.push({ type: 'text', value: text.substring(lastIdx, match.index) });
+    }
+
+    if (match[1]) {
+      // Icon bracket [ICON_NAME]
+      var iconName = match[1];
+      if (safeIcons[iconName]) {
+        segments.push({ type: 'html', value: '<img src="' + safeIcons[iconName] + '" alt="' +
+          iconName + '" class="preview-inline-icon" style="width:' + sz + 'px;height:' + sz + 'px;">' });
+      } else {
+        segments.push({ type: 'text', value: match[0] });
+      }
+    } else if (match[2]) {
+      // Jackpot label {{GRAND}}, {{MAJOR}}, etc.
+      var tier = match[2];
+      var cls = 'jackpot-' + tier.toLowerCase();
+      segments.push({ type: 'html', value: '<span class="jackpot-label ' + cls + '">' + tier + '</span>' });
+    }
+
+    lastIdx = match.index + match[0].length;
+  }
+
+  // Remaining text
+  if (lastIdx < text.length) {
+    segments.push({ type: 'text', value: text.substring(lastIdx) });
+  }
+
+  // Assemble: escape text segments, pass through html segments
+  var result = '';
+  for (var i = 0; i < segments.length; i++) {
+    if (segments[i].type === 'html') {
+      result += segments[i].value;
+    } else {
+      result += escapeHtml(segments[i].value);
+    }
+  }
+  return result;
+}
+
+/**
+ * classifyPaySymbol(name)
+ * Classifies a symbol name into tier categories for PAYS grid layout.
+ * Returns 'high', 'medium', or 'low'.
+ */
+function classifyPaySymbol(name) {
+  if (!name) return 'medium';
+  var upper = name.toUpperCase();
+  // High-value: WILD, SCATTER, BONUS, LINK, H-series
+  if (/^(WILD|SCATTER|BONUS|LINK)/.test(upper)) return 'high';
+  if (/^H\d/.test(upper)) return 'high';
+  // Low-value: A, K, Q, J, 10, L-series
+  if (/^(A|K|Q|J|10)$/.test(upper)) return 'low';
+  if (/^L\d/.test(upper)) return 'low';
+  return 'medium';
+}
+
+/**
+ * parsePayoutData(text)
+ * Parses payout data from item text.
+ * Format: "* 5 - 250 / 4 - 40 / 3 - 20"
+ * Returns array of { count, value } objects.
+ */
+function parsePayoutData(text) {
+  if (!text) return [];
+  var rows = [];
+  var pattern = /(\d+)\s*[-–—]\s*([^\s/／,，]+)/g;
+  var match;
+  while ((match = pattern.exec(text)) !== null) {
+    rows.push({ count: parseInt(match[1], 10), value: match[2] });
+  }
+  return rows;
+}
+
+/**
+ * extractIconNameFromPayItem(item)
+ * Extracts the icon name from a PAYS page item.
+ * Looks for [ICON_NAME] bracket notation or H/L patterns.
+ */
+function extractIconNameFromPayItem(item) {
+  if (!item) return null;
+  var text = (item.cn || '') + ' ' + (item.en || '');
+  // Try bracket notation first
+  var bracketMatch = text.match(/\[([A-Z][A-Z0-9_]*)\]/);
+  if (bracketMatch) return bracketMatch[1];
+  // Try H/L pattern
+  var hlMatch = text.match(/\b([HL]\d+)\b/i);
+  if (hlMatch) return hlMatch[1].toUpperCase();
+  // Try special icon keywords at start
+  var specialMatch = text.match(/^\*?\s*(WILD|SCATTER|BONUS|LINK)\d*/i);
+  if (specialMatch) return specialMatch[1].toUpperCase();
+  return null;
+}
+
+/**
+ * renderFeaturePage(page, icons)
+ * Returns an HTML string for a FEATURE page with grouped special icon blocks.
+ * Each block: icon image(s) + ALL CAPS label below + description text to the right.
+ *
+ * @param {PaytablePage} page - The FEATURE page object
+ * @param {Record<string, string>} icons - Icon images map
+ * @returns {string} HTML string
+ */
+function renderFeaturePage(page, icons) {
+  if (!page || !page.items) return '';
+  var html = '';
+  // Group items by icon reference
+  var currentIcon = null;
+  var currentDescLines = [];
+
+  function flushBlock() {
+    if (!currentIcon && currentDescLines.length === 0) return;
+    html += '<div class="preview-feature-block">';
+    html += '<div class="preview-feature-icon-group">';
+    if (currentIcon && icons && icons[currentIcon]) {
+      html += '<img src="' + icons[currentIcon] + '" alt="' + currentIcon + '">';
+    } else if (currentIcon) {
+      html += '<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;' +
+        'background:rgba(255,255,255,.05);border-radius:4px;font-size:.65rem;color:#8892b0;">' +
+        escapeHtml(currentIcon) + '</div>';
+    }
+    if (currentIcon) {
+      html += '<div class="icon-label">' + escapeHtml(currentIcon) + '</div>';
+    }
+    html += '</div>';
+    html += '<div class="preview-feature-desc">';
+    for (var d = 0; d < currentDescLines.length; d++) {
+      html += '<div>' + currentDescLines[d] + '</div>';
+    }
+    html += '</div></div>';
+  }
+
+  for (var i = 0; i < page.items.length; i++) {
+    var item = page.items[i];
+    var text = item.cn || item.en || '';
+    // Check if this item introduces a new icon (ALL CAPS label pattern)
+    var labelMatch = text.match(/^\*?\s*([A-Z][A-Z0-9_]*)\s*$/);
+    if (labelMatch) {
+      // Flush previous block
+      flushBlock();
+      currentIcon = labelMatch[1];
+      currentDescLines = [];
+      continue;
+    }
+    // Check if item has a bracket icon that could start a new block
+    var iconRef = text.match(/\[([A-Z][A-Z0-9_]*)\]/);
+    if (iconRef && currentIcon === null && i === 0) {
+      currentIcon = iconRef[1];
+    }
+    // Add processed description
+    var processed = processTextForPreview(
+      (item.cn || '') + (item.en ? '  |  ' + item.en : ''),
+      icons, 40
+    );
+    currentDescLines.push(processed);
+  }
+  // Flush last block
+  flushBlock();
+
+  return html;
+}
+
+/**
+ * renderPaysPage(page, icons)
+ * Renders the PAYS page with tiered grid layout.
+ * High-value (WILD, SCATTER, BONUS, LINK, H-series): 2 per row
+ * Medium (general): 3 per row
+ * Low-value (A/K/Q/J/10, L-series): 5 per row
+ *
+ * @param {PaytablePage} page - The PAYS page object
+ * @param {Record<string, string>} icons - Icon images map
+ * @returns {string} HTML string
+ */
+function renderPaysPage(page, icons) {
+  if (!page || !page.items) return '';
+
+  // Parse each item into symbol data
+  var symbols = [];
+  for (var i = 0; i < page.items.length; i++) {
+    var item = page.items[i];
+    var iconName = extractIconNameFromPayItem(item);
+    if (!iconName) continue;
+
+    var payouts = [];
+    // Check if we have edited payouts stored
+    if (editedPayouts[iconName] && editedPayouts[iconName].length > 0) {
+      payouts = editedPayouts[iconName];
+    } else {
+      // Parse from item text
+      payouts = parsePayoutData(item.cn || item.en || '');
+      if (payouts.length === 0) {
+        // Default to 3 rows
+        payouts = [
+          { count: 5, value: '数值待定' },
+          { count: 4, value: '数值待定' },
+          { count: 3, value: '数值待定' }
+        ];
+      }
+      // Store initial parsed payouts
+      editedPayouts[iconName] = payouts.slice();
+    }
+
+    symbols.push({
+      name: iconName,
+      tier: classifyPaySymbol(iconName),
+      payouts: payouts
+    });
+  }
+
+  // Group by tier
+  var highSymbols = symbols.filter(function(s) { return s.tier === 'high'; });
+  var medSymbols = symbols.filter(function(s) { return s.tier === 'medium'; });
+  var lowSymbols = symbols.filter(function(s) { return s.tier === 'low'; });
+
+  var html = '';
+
+  // Render each tier group
+  function renderTierGroup(syms, perRow) {
+    if (syms.length === 0) return '';
+    var groupHtml = '<div class="preview-pays-grid" style="' +
+      'display:grid;grid-template-columns:repeat(' + perRow + ',1fr);gap:12px;margin-bottom:16px;">';
+    for (var s = 0; s < syms.length; s++) {
+      var sym = syms[s];
+      groupHtml += renderPayItem(sym, icons);
+    }
+    groupHtml += '</div>';
+    return groupHtml;
+  }
+
+  html += renderTierGroup(highSymbols, 2);
+  html += renderTierGroup(medSymbols, 3);
+  html += renderTierGroup(lowSymbols, 5);
+
+  return html;
+}
+
+/**
+ * renderPayItem(sym, icons)
+ * Renders a single pay symbol card with icon and editable payout rows.
+ */
+function renderPayItem(sym, icons) {
+  var html = '<div class="preview-pays-item" data-symbol="' + sym.name + '">';
+
+  // Icon image or placeholder
+  if (icons && icons[sym.name]) {
+    html += '<img src="' + icons[sym.name] + '" alt="' + sym.name +
+      '" class="preview-pays-icon">';
+  } else {
+    html += '<div class="preview-pays-icon-placeholder">' + escapeHtml(sym.name) + '</div>';
+  }
+
+  // Symbol name label
+  html += '<div style="font-size:.72rem;color:#ffd200;font-weight:700;margin-bottom:6px;">' +
+    escapeHtml(sym.name) + '</div>';
+
+  // Payout rows container
+  html += '<div class="preview-payout-rows" data-icon="' + sym.name + '">';
+  for (var p = 0; p < sym.payouts.length; p++) {
+    html += '<div class="preview-payout-row">';
+    html += '<input type="text" value="' + sym.payouts[p].count + ' - ' +
+      escapeHtml(String(sym.payouts[p].value)) + '" ' +
+      'data-icon="' + sym.name + '" data-idx="' + p + '" ' +
+      'onchange="onPayoutEdit(this)">';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Add/Remove row buttons
+  html += '<div class="preview-pays-row-buttons">';
+  html += '<button class="preview-payout-add" onclick="addPayoutRow(\'' +
+    sym.name + '\')" title="添加行">+</button>';
+  html += '<button class="preview-payout-remove" onclick="removePayoutRow(\'' +
+    sym.name + '\')" title="删除行">−</button>';
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+/**
+ * onPayoutEdit(inputEl)
+ * Called when a payout input value is changed. Updates editedPayouts.
+ */
+function onPayoutEdit(inputEl) {
+  var iconName = inputEl.getAttribute('data-icon');
+  var idx = parseInt(inputEl.getAttribute('data-idx'), 10);
+  var val = inputEl.value.trim();
+
+  // Parse "count - value" format
+  var match = val.match(/^(\d+)\s*[-–—]\s*(.+)$/);
+  if (match) {
+    if (!editedPayouts[iconName]) editedPayouts[iconName] = [];
+    editedPayouts[iconName][idx] = { count: parseInt(match[1], 10), value: match[2].trim() };
+  }
+}
+
+/**
+ * addPayoutRow(iconName)
+ * Adds a new payout row to a symbol.
+ */
+function addPayoutRow(iconName) {
+  if (!editedPayouts[iconName]) editedPayouts[iconName] = [];
+  var payouts = editedPayouts[iconName];
+  // Determine next count (one less than smallest, or 2)
+  var minCount = 2;
+  if (payouts.length > 0) {
+    minCount = payouts[payouts.length - 1].count - 1;
+    if (minCount < 2) minCount = 2;
+  }
+  payouts.push({ count: minCount, value: '数值待定' });
+  editedPayouts[iconName] = payouts;
+
+  // Re-render the payout rows for this symbol
+  refreshPayoutRows(iconName);
+}
+
+/**
+ * removePayoutRow(iconName)
+ * Removes the last payout row from a symbol.
+ */
+function removePayoutRow(iconName) {
+  if (!editedPayouts[iconName] || editedPayouts[iconName].length <= 1) return;
+  editedPayouts[iconName].pop();
+  refreshPayoutRows(iconName);
+}
+
+/**
+ * refreshPayoutRows(iconName)
+ * Re-renders payout row inputs for a specific symbol.
+ */
+function refreshPayoutRows(iconName) {
+  var container = document.querySelector('.preview-payout-rows[data-icon="' + iconName + '"]');
+  if (!container) return;
+  var payouts = editedPayouts[iconName] || [];
+  var html = '';
+  for (var p = 0; p < payouts.length; p++) {
+    html += '<div class="preview-payout-row">';
+    html += '<input type="text" value="' + payouts[p].count + ' - ' +
+      escapeHtml(String(payouts[p].value)) + '" ' +
+      'data-icon="' + iconName + '" data-idx="' + p + '" ' +
+      'onchange="onPayoutEdit(this)">';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+/**
+ * render(pages, iconImages)
+ * Main preview render function. Displays all pages in a scrollable format
+ * inside #previewPanel container. Renders each page with "第N页 / Page N" header
+ * and bilingual title. Hides the empty state message.
+ *
+ * @param {PaytablePage[]} pages - Array of page objects
+ * @param {Record<string, string>} iconImages - Icon images map
+ */
+function render(pages, iconImages) {
+  var panel = document.getElementById('previewPanel');
+  var emptyState = document.getElementById('previewEmptyState');
+  if (!panel) return;
+
+  var icons = iconImages || {};
+
+  // Hide empty state
+  if (emptyState) emptyState.style.display = 'none';
+
+  if (!pages || pages.length === 0) {
+    if (emptyState) emptyState.style.display = 'block';
+    panel.innerHTML = '';
+    panel.appendChild(emptyState);
+    return;
+  }
+
+  var html = '';
+
+  for (var i = 0; i < pages.length; i++) {
+    var page = pages[i];
+    var pageNum = i + 1;
+    var title = page.title || '';
+    var titleEn = page.titleEn || '';
+
+    html += '<div class="preview-page" data-page-idx="' + i + '">';
+
+    // Page header
+    html += '<div class="preview-page-header">第' + pageNum + '页 / Page ' + pageNum + '</div>';
+
+    // Bilingual title
+    html += '<div class="preview-page-title">' + escapeHtml(title) +
+      (titleEn ? '  |  ' + escapeHtml(titleEn) : '') + '</div>';
+
+    // Content area
+    html += '<div class="preview-content">';
+
+    // Determine page type for specialized rendering
+    var titleUpper = (title + ' ' + titleEn).toUpperCase();
+    var isFeaturePage = (i === 0) || /^FEATURE\b/.test(titleUpper) ||
+      /^特色/.test(title) || /^功能/.test(title);
+    var isPaysPage = /^PAYS\b/.test(titleUpper) || /^赔付/.test(title) || /^符号/.test(title);
+
+    if (isFeaturePage && i === 0) {
+      html += renderFeaturePage(page, icons);
+    } else if (isPaysPage) {
+      html += renderPaysPage(page, icons);
+    } else {
+      // Feature detail page or other page
+      html += renderDetailPage(page, icons);
+    }
+
+    html += '</div>'; // .preview-content
+
+    // Editable text areas
+    html += renderEditableAreas(page, i);
+
+    html += '</div>'; // .preview-page
+  }
+
+  // Set innerHTML (preserving empty state element)
+  panel.innerHTML = html;
+  if (emptyState) {
+    emptyState.style.display = 'none';
+  }
+}
+
+/**
+ * renderDetailPage(page, icons)
+ * Renders a feature detail page or generic page with inline icons and tables.
+ */
+function renderDetailPage(page, icons) {
+  if (!page || !page.items) return '';
+  var html = '';
+
+  for (var i = 0; i < page.items.length; i++) {
+    var item = page.items[i];
+
+    // Render table data if present
+    if (item.table && item.table.headers && item.table.rows) {
+      html += '<table class="preview-table">';
+      html += '<thead><tr>';
+      for (var h = 0; h < item.table.headers.length; h++) {
+        html += '<th>' + escapeHtml(item.table.headers[h]) + '</th>';
+      }
+      html += '</tr></thead><tbody>';
+      for (var r = 0; r < item.table.rows.length; r++) {
+        html += '<tr>';
+        for (var c = 0; c < item.table.rows[r].length; c++) {
+          var cellText = item.table.rows[r][c] || '';
+          html += '<td>' + processTextForPreview(cellText, icons, 30) + '</td>';
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+
+    // Render text content
+    if (item.cn || item.en) {
+      var cnProcessed = processTextForPreview(item.cn || '', icons, 40);
+      var enProcessed = processTextForPreview(item.en || '', icons, 40);
+      html += '<div style="margin-bottom:4px;">';
+      html += '<span>' + cnProcessed + '</span>';
+      if (item.en) {
+        html += '<br><span style="color:#8892b0;font-size:.8rem;">' + enProcessed + '</span>';
+      }
+      html += '</div>';
+    }
+  }
+
+  return html;
+}
+
+/**
+ * renderEditableAreas(page, pageIdx)
+ * Renders editable textarea elements for Chinese and English content.
+ */
+function renderEditableAreas(page, pageIdx) {
+  if (!page || !page.items) return '';
+
+  // Build text content from items
+  var cnLines = [];
+  var enLines = [];
+  for (var i = 0; i < page.items.length; i++) {
+    if (page.items[i].cn) cnLines.push(page.items[i].cn);
+    if (page.items[i].en) enLines.push(page.items[i].en);
+  }
+
+  var html = '';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">';
+  html += '<div>';
+  html += '<div style="font-size:.72rem;color:#8892b0;margin-bottom:4px;">中文内容 (可编辑)</div>';
+  html += '<textarea class="preview-editable" data-page="' + pageIdx +
+    '" data-lang="cn" onchange="onContentEdit(this)">' + escapeHtml(cnLines.join('\n')) + '</textarea>';
+  html += '</div>';
+  html += '<div>';
+  html += '<div style="font-size:.72rem;color:#8892b0;margin-bottom:4px;">English Content (editable)</div>';
+  html += '<textarea class="preview-editable" data-page="' + pageIdx +
+    '" data-lang="en" onchange="onContentEdit(this)">' + escapeHtml(enLines.join('\n')) + '</textarea>';
+  html += '</div>';
+  html += '</div>';
+
+  return html;
+}
+
+
+/**
+ * Module-level storage for edited content (textarea edits).
+ * Keys: "pageIdx-lang" (e.g., "0-cn", "1-en"), Values: edited text string
+ */
+var editedContent = {};
+
+/**
+ * onContentEdit(textareaEl)
+ * Called when a textarea value is changed. Stores the edit.
+ */
+function onContentEdit(textareaEl) {
+  var pageIdx = textareaEl.getAttribute('data-page');
+  var lang = textareaEl.getAttribute('data-lang');
+  var key = pageIdx + '-' + lang;
+  editedContent[key] = textareaEl.value;
+}
+
+/**
+ * getEditedContent()
+ * Returns the pages array with all user modifications reflected.
+ * Combines textarea edits + payout edits from the PAYS page.
+ *
+ * @returns {PaytablePage[]} Modified pages array
+ */
+function getEditedContent() {
+  if (!AppState.pages || AppState.pages.length === 0) return [];
+
+  // Deep copy pages
+  var pages = JSON.parse(JSON.stringify(AppState.pages));
+
+  // Apply textarea edits
+  for (var key in editedContent) {
+    if (!editedContent.hasOwnProperty(key)) continue;
+    var parts = key.split('-');
+    var pageIdx = parseInt(parts[0], 10);
+    var lang = parts[1];
+    if (isNaN(pageIdx) || pageIdx < 0 || pageIdx >= pages.length) continue;
+
+    var editedText = editedContent[key];
+    var lines = editedText.split('\n').filter(function(l) {
+      return l.trim() !== '';
+    });
+
+    // Rebuild items from edited lines
+    var page = pages[pageIdx];
+    while (page.items.length < lines.length) {
+      page.items.push({ cn: '', en: '' });
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      if (i < page.items.length) {
+        page.items[i][lang] = lines[i];
+      }
+    }
+    // Trim excess items if edited text has fewer lines
+    if (lines.length < page.items.length) {
+      var otherLang = (lang === 'cn') ? 'en' : 'cn';
+      var otherKey = pageIdx + '-' + otherLang;
+      if (editedContent[otherKey]) {
+        var otherLines = editedContent[otherKey].split('\n').filter(function(l) {
+          return l.trim() !== '';
+        });
+        var maxLen = Math.max(lines.length, otherLines.length);
+        page.items = page.items.slice(0, maxLen);
+      }
+    }
+  }
+
+  // Apply payout edits to PAYS page
+  for (var p = 0; p < pages.length; p++) {
+    var title = (pages[p].title || '').toUpperCase();
+    var titleEn = (pages[p].titleEn || '').toUpperCase();
+    var combined = title + ' ' + titleEn;
+    var isPays = /^PAYS\b/.test(combined) ||
+      /^赔付/.test(pages[p].title || '') ||
+      /^符号/.test(pages[p].title || '');
+
+    if (isPays) {
+      var newItems = [];
+      for (var iconName in editedPayouts) {
+        if (!editedPayouts.hasOwnProperty(iconName)) continue;
+        var payouts = editedPayouts[iconName];
+        if (!payouts || payouts.length === 0) continue;
+
+        var payStr = payouts.map(function(row) {
+          return row.count + ' - ' + row.value;
+        }).join(' / ');
+
+        newItems.push({
+          cn: '* [' + iconName + '] ' + payStr,
+          en: '* [' + iconName + '] ' + payStr
+        });
+      }
+      if (newItems.length > 0) {
+        pages[p].items = newItems;
+      }
+      break;
+    }
+  }
+
+  return pages;
+}
+
+/**
+ * PreviewPanel namespace object for external access.
+ */
+var PreviewPanel = {
+  render: render,
+  renderFeaturePage: renderFeaturePage,
+  renderPaysPage: renderPaysPage,
+  replaceIconBrackets: replaceIconBrackets,
+  renderJackpotLabels: renderJackpotLabels,
+  getEditedContent: getEditedContent,
+  processTextForPreview: processTextForPreview
+};
+
+// ============================================================
+// Excel Exporter Module
+// ============================================================
+
+/**
+ * buildWorkbook(pages, metadata, icons)
+ * Creates an ExcelJS workbook with "paytable_市场" worksheet,
+ * sets up column layout, writes title row, and exports all page content.
+ *
+ * @param {Array} pages - Array of PaytablePage objects with title, titleEn, items
+ * @param {Object} metadata - { brand, gameName }
+ * @param {Object} icons - Record<string, string> iconName -> base64 data URL
+ * @returns {Promise<ExcelJS.Workbook>} The constructed workbook
+ */
+async function buildWorkbook(pages, metadata, icons) {
+  var workbook = new ExcelJS.Workbook();
+  var worksheet = workbook.addWorksheet('paytable_市场');
+
+  // Set column widths: A(4), B(50), C(4), D(50)
+  worksheet.columns = [
+    { width: 4 },
+    { width: 50 },
+    { width: 4 },
+    { width: 50 }
+  ];
+
+  // Default font for the worksheet
+  var defaultFont = { name: 'Microsoft YaHei', size: 11 };
+  var titleFont = { name: 'Microsoft YaHei', size: 14, bold: true };
+
+  // Row 1: Title row
+  var titleRow = worksheet.addRow([
+    '',
+    metadata.brand + metadata.gameName + '：paytable需求',
+    '',
+    'Paytable Requirement (Chinese-English)'
+  ]);
+  titleRow.getCell(2).font = titleFont;
+  titleRow.getCell(4).font = titleFont;
+
+  // Export each page
+  for (var p = 0; p < pages.length; p++) {
+    var page = pages[p];
+
+    // Page separator row (gray background)
+    var separatorRow = worksheet.addRow(['', '', '', '']);
+    for (var sc = 1; sc <= 4; sc++) {
+      separatorRow.getCell(sc).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFC0C0C0' }
+      };
+      separatorRow.getCell(sc).font = defaultFont;
+    }
+
+    // Centered bilingual title row
+    var pageTitleRow = worksheet.addRow([
+      '',
+      page.title || '',
+      '',
+      page.titleEn || ''
+    ]);
+    pageTitleRow.getCell(2).font = titleFont;
+    pageTitleRow.getCell(2).alignment = { horizontal: 'center' };
+    pageTitleRow.getCell(4).font = titleFont;
+    pageTitleRow.getCell(4).alignment = { horizontal: 'center' };
+
+    // Determine page type
+    var titleUpper = ((page.title || '') + ' ' + (page.titleEn || '')).toUpperCase();
+    var isPays = /^PAYS\b/.test(titleUpper) ||
+      /^赔付/.test(page.title || '') ||
+      /^符号/.test(page.title || '');
+    var isFeature = /^FEATURE\b/.test(titleUpper) ||
+      /^特殊图标/.test(page.title || '');
+
+    if (isPays) {
+      // PAYS page: export with icon images in col A
+      await exportPaysPage(worksheet, page, icons, defaultFont);
+    } else {
+      // FEATURE and feature detail pages: export with inline icon support
+      await exportContentPage(worksheet, page, icons, defaultFont, isFeature);
+    }
+  }
+
+  return workbook;
+}
+
+/**
+ * exportPaysPage(worksheet, page, icons, font)
+ * Exports the PAYS page content. Each symbol gets its icon in col A (40x40)
+ * followed by payout rows on consecutive lines.
+ */
+async function exportPaysPage(worksheet, page, icons, font) {
+  var items = page.items || [];
+  var currentIcon = null;
+  var iconPlaced = {};
+
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var cnText = item.cn || '';
+    var enText = item.en || '';
+
+    // Detect icon name from bracket notation at start of line
+    var iconMatch = cnText.match(/^\*?\s*\[([A-Za-z0-9_]+)\]/);
+    var iconName = iconMatch ? iconMatch[1] : null;
+
+    var row = worksheet.addRow(['', cnText, '', enText]);
+    row.getCell(2).font = font;
+    row.getCell(4).font = font;
+
+    // Embed icon image on first reference row for this icon
+    if (iconName && !iconPlaced[iconName] && icons && icons[iconName]) {
+      await embedIconImage(worksheet, row.number, 1, icons[iconName], { width: 40, height: 40 });
+      row.height = 30;
+      iconPlaced[iconName] = true;
+    }
+  }
+}
+
+/**
+ * exportContentPage(worksheet, page, icons, font, isFeaturePage)
+ * Exports FEATURE or feature detail page content rows.
+ * Embeds icons in the adjacent image placeholder column on first reference.
+ */
+async function exportContentPage(worksheet, page, icons, font, isFeaturePage) {
+  var items = page.items || [];
+  var iconPlaced = {};
+
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var cnText = item.cn || '';
+    var enText = item.en || '';
+
+    var row = worksheet.addRow(['', cnText, '', enText]);
+    row.getCell(2).font = font;
+    row.getCell(4).font = font;
+
+    // Find icon references in the text
+    var iconRefs = cnText.match(/\[([A-Za-z0-9_]+)\]/g);
+    if (iconRefs) {
+      for (var r = 0; r < iconRefs.length; r++) {
+        var refName = iconRefs[r].replace(/[\[\]]/g, '');
+        if (!iconPlaced[refName] && icons && icons[refName]) {
+          // Embed in col A (Chinese side image placeholder) on first reference
+          await embedIconImage(worksheet, row.number, 1, icons[refName], { width: 40, height: 40 });
+          row.height = 30;
+          iconPlaced[refName] = true;
+          break; // Only embed one icon per row in col A
+        }
+      }
+    }
+
+    // Also check English text for icon references to embed in col C
+    var enIconRefs = enText.match(/\[([A-Za-z0-9_]+)\]/g);
+    if (enIconRefs) {
+      for (var er = 0; er < enIconRefs.length; er++) {
+        var enRefName = enIconRefs[er].replace(/[\[\]]/g, '');
+        if (!iconPlaced['en_' + enRefName] && icons && icons[enRefName]) {
+          await embedIconImage(worksheet, row.number, 3, icons[enRefName], { width: 40, height: 40 });
+          row.height = 30;
+          iconPlaced['en_' + enRefName] = true;
+          break; // Only embed one icon per row in col C
+        }
+      }
+    }
+  }
+}
+
+/**
+ * embedIconImage(worksheet, rowNum, col, base64DataUrl, size)
+ * Embeds an icon image into the specified cell position in the worksheet.
+ *
+ * @param {ExcelJS.Worksheet} worksheet - Target worksheet
+ * @param {number} rowNum - 1-based row number
+ * @param {number} col - 1-based column number (1=A, 3=C)
+ * @param {string} base64DataUrl - Base64 data URL (data:image/png;base64,...)
+ * @param {Object} size - { width, height } in pixels
+ */
+async function embedIconImage(worksheet, rowNum, col, base64DataUrl, size) {
+  if (!base64DataUrl) return;
+
+  // Extract raw base64 data from data URL
+  var base64Data = base64DataUrl;
+  var extension = 'png';
+  if (base64DataUrl.indexOf('data:') === 0) {
+    var parts = base64DataUrl.split(',');
+    base64Data = parts[1];
+    // Detect extension from MIME type
+    var mimeMatch = parts[0].match(/data:image\/([a-z]+)/);
+    if (mimeMatch) {
+      extension = mimeMatch[1];
+      if (extension === 'jpeg') extension = 'jpeg';
+    }
+  }
+
+  // Add image to workbook
+  var imageId = worksheet.workbook.addImage({
+    base64: base64Data,
+    extension: extension
+  });
+
+  // Calculate cell anchor position (0-based col index)
+  var colIndex = col - 1;
+
+  worksheet.addImage(imageId, {
+    tl: { col: colIndex, row: rowNum - 1 },
+    ext: { width: size.width, height: size.height }
+  });
+}
+
+/**
+ * triggerDownload(workbook, filename)
+ * Generates the Excel buffer and triggers a browser download via FileSaver.
+ *
+ * @param {ExcelJS.Workbook} workbook - The constructed ExcelJS workbook
+ * @param {string} filename - Filename for the download
+ */
+async function triggerDownload(workbook, filename) {
+  var buffer = await workbook.xlsx.writeBuffer();
+  var blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  saveAs(blob, filename);
+}
+
+/**
+ * generateExportFilename(brand, gameName)
+ * Returns the formatted export filename.
+ *
+ * @param {string} brand - Brand identifier (CTS, JFS, JMS)
+ * @param {string} gameName - Game name string
+ * @returns {string} Formatted filename
+ */
+function generateExportFilename(brand, gameName) {
+  return brand + gameName + '：paytable需求文档.xlsx';
+}
+
+/**
+ * exportToExcel()
+ * Full export flow: validates content exists, builds workbook, triggers download.
+ */
+async function exportToExcel() {
+  // Validation: check if content has been generated
+  if (!AppState.pages || AppState.pages.length === 0) {
+    alert('请先生成paytable内容后再导出。\nPlease generate paytable content first before exporting.');
+    return;
+  }
+
+  // Get pages with user edits applied
+  var pages = getEditedContent();
+  var metadata = {
+    brand: AppState.brand || 'CTS',
+    gameName: AppState.gameName || ''
+  };
+  var icons = AppState.iconImages || {};
+
+  try {
+    // Build workbook
+    var workbook = await buildWorkbook(pages, metadata, icons);
+
+    // Generate filename and trigger download
+    var filename = generateExportFilename(metadata.brand, metadata.gameName);
+    await triggerDownload(workbook, filename);
+  } catch (err) {
+    console.error('Excel export error:', err);
+    alert('导出Excel失败：' + (err.message || err) + '\nExcel export failed.');
+  }
+}
+
+/**
+ * ExcelExporter namespace object for external access.
+ */
+var ExcelExporter = {
+  buildWorkbook: buildWorkbook,
+  embedIconImage: embedIconImage,
+  triggerDownload: triggerDownload,
+  generateExportFilename: generateExportFilename,
+  exportToExcel: exportToExcel
+};
+
+// Wire export button click event
+document.addEventListener('DOMContentLoaded', function() {
+  var exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      exportToExcel();
+    });
+  }
+});
+
+// Wire form field changes to update AppState reactively
+document.addEventListener('DOMContentLoaded', function() {
+  var brandSelect = document.getElementById('brandSelect');
+  var gameNameInput = document.getElementById('gameNameInput');
+  var boardLayoutInput = document.getElementById('boardLayoutInput');
+  var linesInput = document.getElementById('linesInput');
+
+  if (brandSelect) {
+    brandSelect.addEventListener('change', function() {
+      AppState.brand = brandSelect.value;
+    });
+  }
+  if (gameNameInput) {
+    gameNameInput.addEventListener('input', function() {
+      AppState.gameName = gameNameInput.value;
+    });
+  }
+  if (boardLayoutInput) {
+    boardLayoutInput.addEventListener('input', function() {
+      AppState.boardLayout = boardLayoutInput.value;
+    });
+  }
+  if (linesInput) {
+    linesInput.addEventListener('input', function() {
+      AppState.lines = linesInput.value;
+    });
+  }
+});
+
 </script>
 </body>
 </html>
