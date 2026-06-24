@@ -3545,11 +3545,14 @@ function renderFeaturePage(page, icons) {
       currentIcon = iconRef[1];
     }
     // Add processed description
-    var processed = processTextForPreview(
-      (item.cn || '') + (item.en ? '  |  ' + item.en : ''),
-      icons, 40
+    var processedCn = processTextForPreview(item.cn || '', icons, 40);
+    var processedEn = processTextForPreview(item.en || '', icons, 40);
+    currentDescLines.push(
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div style="flex:1;min-width:0;">' + processedCn + '</div>' +
+      '<div style="flex:1;min-width:0;color:#8892b0;font-size:.8rem;">' + processedEn + '</div>' +
+      '</div>'
     );
-    currentDescLines.push(processed);
   }
   // Flush last block
   flushBlock();
@@ -3851,11 +3854,9 @@ function renderDetailPage(page, icons) {
     if (item.cn || item.en) {
       var cnProcessed = processTextForPreview(item.cn || '', icons, 40);
       var enProcessed = processTextForPreview(item.en || '', icons, 40);
-      html += '<div style="margin-bottom:4px;">';
-      html += '<span>' + cnProcessed + '</span>';
-      if (item.en) {
-        html += '<br><span style="color:#8892b0;font-size:.8rem;">' + enProcessed + '</span>';
-      }
+      html += '<div style="display:flex;gap:16px;margin-bottom:4px;align-items:flex-start;">';
+      html += '<div style="flex:1;min-width:0;">' + cnProcessed + '</div>';
+      html += '<div style="flex:1;min-width:0;color:#8892b0;font-size:.82rem;">' + enProcessed + '</div>';
       html += '</div>';
     }
   }
