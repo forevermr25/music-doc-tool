@@ -2326,9 +2326,28 @@ function buildPrompt(structured, metadata) {
   lines.push('3. **Feature detail pages** (middle) — One page per gameplay feature, in STRICT document order (the same order as listed in STRUCTURED GAME DATA above). Do NOT reorder features.');
   lines.push('4. **DO NOT generate a PAY LINES page** — It will be auto-appended by the system separately.');
   lines.push('');
+  lines.push('### CRITICAL: Feature page ordering enforcement');
+  lines.push('- Feature detail pages MUST appear in EXACTLY this order:');
+  if (structured.features && structured.features.length > 0) {
+    for (var oi = 0; oi < structured.features.length; oi++) {
+      lines.push('  Page ' + (oi + 3) + ': "' + structured.features[oi].name + '"');
+    }
+  }
+  lines.push('- Do NOT reorder features based on their type (e.g., do NOT put SCATTER/FREE games before RESPIN just because SCATTER is more "common")');
+  lines.push('- If RESPIN appears first in the document, it MUST be the first feature detail page');
+  lines.push('');
 
   // ===== Section 6: Language Style Rules =====
   lines.push('## LANGUAGE STYLE RULES');
+  lines.push('');
+  lines.push('### CRITICAL: Chinese and English are INDEPENDENT writings, NOT translations');
+  lines.push('- The Chinese ("cn") content describes the mechanic in natural Chinese paytable style');
+  lines.push('- The English ("en") content describes the SAME mechanic in natural English paytable style');
+  lines.push('- English is NOT a word-for-word translation of Chinese. Both are independently written in their native paytable conventions.');
+  lines.push('- Chinese example: "* 3个及以上[SCATTER]触发普通转盘玩法"');
+  lines.push('- English example: "* 3 or more [SCATTER] trigger the WHEEL FEATURE." (NOT "3 or more [SCATTER] trigger the normal wheel feature")');
+  lines.push('- Chinese may use terms like "棋盘" but English uses "reels" or "grid", not "chessboard"');
+  lines.push('- Chinese may say "收集" but English says "collect" or "fill", not "collecting"');
   lines.push('');
   lines.push('### General Style');
   lines.push('- Use present tense, concise, action-oriented language');
@@ -2336,6 +2355,7 @@ function buildPrompt(structured, metadata) {
   lines.push('- One bullet = one mechanic, typically under 25 words in English');
   lines.push('- No verbose explanations, no paragraph-style text');
   lines.push('- Each bullet reads as concise player-facing paytable information');
+  lines.push('- English bullets should sound like professional slot game help screens (NetEnt, Pragmatic Play, IGT style)');
   lines.push('');
   lines.push('### Feature Names');
   lines.push('- Format feature/mechanic names in BOLD CAPITALS within text (e.g., "XMAX LINK", "FREE SPINS", "CABANA SHOW")');
@@ -2580,6 +2600,7 @@ function validatePageCount(pages, expectedFeatures) {
 /**
  * enforcePageOrder(pages)
  * Ensure correct page ordering: FEATURE first, PAYS second, feature details in middle, PAY LINES last.
+ * Also reorders feature detail pages to match structural parser's detected order.
  * @param {Array} pages - Pages array to reorder
  * @returns {Array} Reordered pages array
  */
@@ -2612,6 +2633,24 @@ function enforcePageOrder(pages) {
     else {
       detailPages.push(pages[i]);
     }
+  }
+
+  // Reorder detail pages to match structural parser's feature order
+  if (AppState.structuredData && AppState.structuredData.features && AppState.structuredData.features.length > 0 && detailPages.length > 1) {
+    var featureNames = AppState.structuredData.features.map(function(f) { return f.name; });
+    detailPages.sort(function(a, b) {
+      var aTitle = (a.title || '') + ' ' + (a.titleEn || '');
+      var bTitle = (b.title || '') + ' ' + (b.titleEn || '');
+      var aIdx = -1, bIdx = -1;
+      for (var fi = 0; fi < featureNames.length; fi++) {
+        var fn = featureNames[fi].toLowerCase();
+        if (aIdx === -1 && (aTitle.toLowerCase().indexOf(fn) !== -1 || fn.indexOf(aTitle.toLowerCase().replace(/[^a-z\u4e00-\u9fff]/g, '')) !== -1)) aIdx = fi;
+        if (bIdx === -1 && (bTitle.toLowerCase().indexOf(fn) !== -1 || fn.indexOf(bTitle.toLowerCase().replace(/[^a-z\u4e00-\u9fff]/g, '')) !== -1)) bIdx = fi;
+      }
+      if (aIdx === -1) aIdx = 999;
+      if (bIdx === -1) bIdx = 999;
+      return aIdx - bIdx;
+    });
   }
 
   // Reassemble in correct order
