@@ -21,11 +21,10 @@ const SITE_ROOT = path.join(__dirname, '..'); // music-doc-tool 根目录
 const PORT = process.env.PORT || 8080;
 const REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-2';
 
-// 文本模型映射：所有调用最终都走 Bedrock 的 Claude。
-// - PRIMARY 对应原来的 'claude-sonnet-4-*'（以及默认）
-// - SECONDARY 对应原来的 'gpt-4o-mini'（保留"双版本对比"时给出不同/更快更省的第二版）
-const MODEL_PRIMARY = process.env.CLAUDE_MODEL_PRIMARY || 'us.anthropic.claude-sonnet-4-5-20250929-v1:0';
-const MODEL_SECONDARY = process.env.CLAUDE_MODEL_SECONDARY || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
+// 文本模型：当前统一使用 Claude Opus 4.8。
+// PRIMARY / SECONDARY 都指向同一模型；保留两个变量以便将来想做"双版本对比"时区分。
+const MODEL_PRIMARY = process.env.CLAUDE_MODEL_PRIMARY || 'global.anthropic.claude-opus-4-8';
+const MODEL_SECONDARY = process.env.CLAUDE_MODEL_SECONDARY || 'global.anthropic.claude-opus-4-8';
 const IMAGE_MODEL = process.env.BEDROCK_IMAGE_MODEL || 'amazon.titan-image-generator-v2:0';
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '4096', 10);
 
@@ -43,6 +42,13 @@ function resolveModelId(model) {
   }
   // 其它（claude-sonnet-4 等）一律走主模型
   return MODEL_PRIMARY;
+}
+
+// 部分较新模型（如 Claude Opus 4.8）已弃用 temperature 参数，传了会报错。
+function modelSupportsTemperature(modelId) {
+  const m = String(modelId).toLowerCase();
+  if (m.includes('opus-4-8')) return false;
+  return true;
 }
 
 const bedrock = new BedrockRuntimeClient({ region: REGION });
@@ -71,17 +77,34 @@ app.post('/api/ai/chat', async (req, res) => {
     return res.status(400).json({ error: 'prompt (string) is required' });
   }
   const modelId = resolveModelId(model);
-  try {
+  const useTemp = modelSupportsTemperature(modelId);
+
+  async function invoke(withTemp) {
+    const inferenceConfig = { maxTokens: MAX_TOKENS };
+    if (withTemp) {
+      inferenceConfig.temperature = typeof temperature === 'number' ? temperature : 0.8;
+    }
     const cmd = new ConverseCommand({
       modelId,
       messages: [{ role: 'user', content: [{ text: prompt }] }],
       ...(system ? { system: [{ text: system }] } : {}),
-      inferenceConfig: {
-        maxTokens: MAX_TOKENS,
-        temperature: typeof temperature === 'number' ? temperature : 0.8,
-      },
+      inferenceConfig,
     });
-    const out = await bedrock.send(cmd);
+    return bedrock.send(cmd);
+  }
+
+  try {
+    let out;
+    try {
+      out = await invoke(useTemp);
+    } catch (e) {
+      // 兜底：模型不接受 temperature 时去掉重试一次
+      if (useTemp && /temperature/i.test(e?.message || '')) {
+        out = await invoke(false);
+      } else {
+        throw e;
+      }
+    }
     const parts = out?.output?.message?.content || [];
     const text = parts.map((p) => p.text || '').join('').trim();
     res.json({ text, modelId, usage: out?.usage });

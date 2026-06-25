@@ -33,8 +33,8 @@ npm start          # 默认 http://localhost:8080
 | `PORT` | 站点+接口端口 | 8080 |
 | `AWS_REGION` | Bedrock 区域 | us-west-2 |
 | `AWS_PROFILE` | 本地 AWS 凭证 profile | bedrock |
-| `CLAUDE_MODEL_PRIMARY` | 主模型（原 claude-sonnet-4/默认） | Claude Sonnet 4.5 |
-| `CLAUDE_MODEL_SECONDARY` | 副模型（原 gpt-4o-mini） | Claude Haiku 4.5 |
+| `CLAUDE_MODEL_PRIMARY` | 主模型 | Claude Opus 4.8 |
+| `CLAUDE_MODEL_SECONDARY` | 副模型 | Claude Opus 4.8 |
 | `BEDROCK_IMAGE_MODEL` | 图片模型（美术文档用） | Nova Canvas |
 | `MAX_TOKENS` | 单次回复上限 | 4096 |
 
@@ -45,9 +45,15 @@ npm start          # 默认 http://localhost:8080
 前端历史上会传 `gpt-4o-mini` / `claude-sonnet-4-20250514` / `claude-3-haiku-...` 等名字。
 服务端 `resolveModelId()` 统一映射到 Bedrock 的 Claude：
 
-- 含 `mini` / `haiku` / `flash` → 副模型（更快更省）
+- 含 `mini` / `haiku` / `flash` → 副模型
 - 已是 `*.anthropic.*` 形态的 ID → 原样透传
 - 其它 → 主模型
+
+当前 PRIMARY / SECONDARY 都配置为 **Claude Opus 4.8**，所以无论前端传什么名字，最终都走 Opus 4.8。
+
+> 注意：Claude Opus 4.8 已弃用 `temperature` 参数。服务端 `modelSupportsTemperature()`
+> 会对该模型自动跳过 temperature；另有 catch 兜底，遇到 “temperature deprecated”
+> 类错误会去掉该参数重试一次。
 
 ## 接口
 
