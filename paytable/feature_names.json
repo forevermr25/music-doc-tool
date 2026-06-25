@@ -1,0 +1,1028 @@
+{
+  "features": [
+    "4*5棋盘  fg玩法",
+    "BASE",
+    "BASE玩法",
+    "BONUS",
+    "BONUS1",
+    "BONUS2",
+    "BONUS3",
+    "Base",
+    "Base玩法",
+    "Bonus",
+    "Bonus5",
+    "FANG BIAN PAO KITTYS玩法",
+    "FG",
+    "FG-BONUS玩法",
+    "FG-JACKPOT玩法",
+    "FG-升行玩法",
+    "FG1",
+    "FG1-EXPAND玩法",
+    "FG2",
+    "FG2-REPEAT玩法",
+    "FG3",
+    "FG3-JACKPOT玩法",
+    "FG玩法",
+    "FREE1",
+    "FREE12",
+    "FREE123",
+    "FREE1234",
+    "FREE124",
+    "FREE13",
+    "FREE134",
+    "FREE14",
+    "FREE2",
+    "FREE23",
+    "FREE234",
+    "FREE24",
+    "FREE3",
+    "FREE34",
+    "FREE4",
+    "FireLink玩法",
+    "Jackpot",
+    "PICK玩法",
+    "RESPIN1",
+    "RESPIN1-5级玩法",
+    "RESPIN2",
+    "RESPIN3",
+    "Respin流程：转盘玩法+Respin玩法+FireLink玩法",
+    "Respin玩法",
+    "SCATTER",
+    "SCATTER BONUS玩法",
+    "SUPER",
+    "SUPER FG",
+    "SUPER FG玩法",
+    "SUPER FREE玩法",
+    "Scatter",
+    "WILD",
+    "Wheel bonus",
+    "Wild",
+    "base",
+    "base和fg玩法期间都可以触发jp玩法",
+    "base玩法",
+    "bonus",
+    "bonus0",
+    "bonus1",
+    "bonus2",
+    "bonus2对应：jackpot玩法",
+    "bonus3",
+    "bonus4",
+    "bonus5",
+    "bonus6",
+    "bonus7",
+    "bonus玩法",
+    "bonus连续列玩法",
+    "buff1",
+    "buff1+2",
+    "buff1+2+3",
+    "buff1+3",
+    "buff1+buff2",
+    "buff1+buff2+buff3",
+    "buff1+buff3",
+    "buff2",
+    "buff2+3",
+    "buff2+buff3",
+    "buff3",
+    "buff4",
+    "buff玩法",
+    "fg",
+    "fg1",
+    "fg1+2",
+    "fg1+2+3",
+    "fg1+3",
+    "fg1：双link玩法",
+    "fg1：双棋盘玩法",
+    "fg1：推移wild玩法",
+    "fg1：移动bonus玩法",
+    "fg2",
+    "fg2+3",
+    "fg2：jackpot玩法",
+    "fg2：升棋盘玩法",
+    "fg2：双棋盘玩法",
+    "fg2：随机wild玩法",
+    "fg3",
+    "fg3：fg次数玩法",
+    "fg3：jackpot玩法",
+    "fg3：jp玩法",
+    "fg3：升行玩法",
+    "fg3：双图标玩法",
+    "fg玩法",
+    "fg玩法期间可以触发jp玩法",
+    "fg通用玩法",
+    "free",
+    "free games",
+    "free1",
+    "free12",
+    "free123",
+    "free13",
+    "free2",
+    "free23",
+    "free3",
+    "free玩法",
+    "jackpot",
+    "jackpot玩法",
+    "jp玩法",
+    "link",
+    "link玩法",
+    "mega",
+    "mega bonus",
+    "pick-fg玩法",
+    "pick玩法",
+    "respin",
+    "respin玩法",
+    "respin通用玩法",
+    "scatter",
+    "spin--完成任务获得货币--购买玩法",
+    "super bonus",
+    "super bonus1",
+    "super bonus2",
+    "super bonus3",
+    "super fg",
+    "super fg1",
+    "super fg1+2",
+    "super fg1+2+3",
+    "super fg1+3",
+    "super fg1：双link玩法",
+    "super fg2",
+    "super fg2+3",
+    "super fg2：双棋盘玩法",
+    "super fg3",
+    "super fg3：fg次数玩法",
+    "super fg期间fg次数用完后结束游戏",
+    "super fg：十个点位，最后一个点位放大",
+    "super free games",
+    "super free games（转盘略）",
+    "super link",
+    "super pick",
+    "super respin",
+    "super玩法",
+    "super转盘玩法",
+    "wheel bonus",
+    "wheel玩法",
+    "wild",
+    "wild玩法",
+    "● 进入玩法后断线：常规回到关卡继续玩法",
+    "三收+大转盘玩法",
+    "三种多福多彩玩法",
+    "三线收集+长线玩法",
+    "付费加成玩法",
+    "共同商店-整页奖励玩法",
+    "共同商店玩法",
+    "再触发玩法",
+    "四线收集+长线玩法",
+    "地图玩法",
+    "多福多彩玩法",
+    "大收集区pick玩法",
+    "奖励玩法",
+    "开门玩法",
+    "所出现的玩法",
+    "整页奖励fg玩法",
+    "普通respin玩法",
+    "普通模式Respin玩法",
+    "消除玩法，3+1玩法",
+    "玩法1",
+    "玩法1：pick玩法",
+    "玩法2",
+    "玩法2：升级玩法",
+    "玩法3",
+    "玩法3：fg玩法",
+    "玩法4",
+    "玩法5",
+    "玩法三：棋盘升行+随机wild玩法",
+    "玩法四：wild乘倍+随机wild玩法",
+    "组合触发玩法",
+    "角标商店玩法",
+    "触发的buff玩法",
+    "转盘玩法",
+    "转轮玩法",
+    "进度条玩法",
+    "连续列玩法",
+    "通用基础玩法",
+    "钻石加成玩法",
+    "长线玩法",
+    "集邮商店-整页奖励玩法",
+    "高低BET玩法",
+    "高低Bet玩法",
+    "高低bet玩法"
+  ],
+  "combos": [
+    "3+1",
+    "3+1【base+free-3buff+玩法升级（墨西哥辣椒形式）+1super转盘】",
+    "3+1收集FG",
+    "4+1",
+    "5收集respin",
+    "BASE+FG",
+    "BASE+FG+respin(带横向转盘）",
+    "BASE+三收集respin",
+    "Base+FG+Respin",
+    "Base+FG+SuperFG",
+    "Base+三收集Respin",
+    "base+fg",
+    "base+fg+pick（3+1）",
+    "base+fg+respin+转盘",
+    "base+fg+wheel+商店",
+    "base+fg+商店（建造）【super fg】",
+    "base+fg+转盘+pick",
+    "base+fg+转盘（super fg）",
+    "base+free game+pick",
+    "base+free game+存储机制",
+    "base+free+地图",
+    "base+link（三个收集区对应三个buff）+pick（收集区触发）",
+    "base+wheel+respin+free",
+    "base+四收集fg",
+    "base三收集+free+super",
+    "base三收集，三种玩法，各自单独触发",
+    "base五收集（3+2）+link+free+pick",
+    "base单收集+respin+super respin",
+    "base（3X5）+ respin 8*5【3收集+转盘】+长线收集",
+    "fg+四收集",
+    "fg三收集+super fg三收集",
+    "free+super free",
+    "respin升级+多福多彩+must hit",
+    "三收+大转盘玩法",
+    "三收+长线",
+    "三收集FG（7种Buff组合）",
+    "三收集（五收集的形式）",
+    "三线收集+长线玩法",
+    "单收集+fg",
+    "四收集free",
+    "四收集（3+1）",
+    "四线收集+长线玩法",
+    "固定wild，多棋盘",
+    "消除",
+    "消除玩法，3+1玩法"
+  ],
+  "docs": [
+    {
+      "name": "CTS 建造玩法需求文档.xlsx",
+      "combo": "base+fg+商店（建造）【super fg】",
+      "features": [
+        "FG玩法",
+        "SUPER FG玩法",
+        "base玩法",
+        "bonus",
+        "scatter",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS2025周年庆玩法需求文档.xlsx",
+      "combo": "三收集FG（7种Buff组合）",
+      "features": [
+        "BONUS",
+        "开门玩法"
+      ]
+    },
+    {
+      "name": "CTSDJ臭鼬：玩法文档.xlsx",
+      "combo": "base+fg+转盘+pick",
+      "features": [
+        "base",
+        "所出现的玩法"
+      ]
+    },
+    {
+      "name": "CTS侦探VS吸血鬼：玩法文档【系列关第1关】.xlsx",
+      "combo": "Base+FG+Respin",
+      "features": [
+        "4*5棋盘  fg玩法",
+        "Base",
+        "bonus0",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "buff4",
+        "free",
+        "free玩法",
+        "respin",
+        "respin玩法",
+        "scatter",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS侦探VS弗兰克：玩法文档【系列关第3关】.xlsx",
+      "combo": "base+fg+respin+转盘",
+      "features": [
+        "4*5棋盘  fg玩法",
+        "Base玩法",
+        "buff1",
+        "buff2",
+        "buff3",
+        "wild",
+        "三种多福多彩玩法"
+      ]
+    },
+    {
+      "name": "CTS元素娃娃：玩法文档.xlsx",
+      "combo": "四收集free",
+      "features": [
+        "Base玩法",
+        "free玩法",
+        "共同商店玩法",
+        "钻石加成玩法"
+      ]
+    },
+    {
+      "name": "CTS共同商店：玩法文档.xlsx",
+      "combo": "固定wild，多棋盘",
+      "features": [
+        "wild",
+        "共同商店-整页奖励玩法"
+      ]
+    },
+    {
+      "name": "CTS写实大象二代：玩法文档.xlsx",
+      "combo": "base+fg+wheel+商店",
+      "features": [
+        "Wheel bonus",
+        "base玩法",
+        "fg玩法",
+        "mega bonus",
+        "wild",
+        "● 进入玩法后断线：常规回到关卡继续玩法",
+        "付费加成玩法",
+        "角标商店玩法",
+        "转轮玩法",
+        "高低BET玩法"
+      ]
+    },
+    {
+      "name": "CTS变相怪杰：玩法文档.xls",
+      "combo": null,
+      "features": []
+    },
+    {
+      "name": "CTS圣帕特里克节：玩法文档.xlsx",
+      "combo": "base+fg",
+      "features": [
+        "base",
+        "bonus玩法",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS圣诞小猪玩法文档.xlsx",
+      "combo": "3+1收集FG",
+      "features": [
+        "Base",
+        "Bonus5",
+        "Wild"
+      ]
+    },
+    {
+      "name": "CTS墨西哥节2026：玩法文档.xlsx",
+      "combo": "BASE+三收集respin",
+      "features": [
+        "BASE玩法",
+        "BONUS1",
+        "BONUS2",
+        "BONUS3",
+        "RESPIN1",
+        "RESPIN2",
+        "RESPIN3",
+        "WILD",
+        "wild",
+        "通用基础玩法"
+      ]
+    },
+    {
+      "name": "CTS宝箱人：玩法文档.xlsx",
+      "combo": "Base+三收集Respin",
+      "features": [
+        "Base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus5",
+        "bonus6",
+        "bonus7",
+        "buff1+buff2",
+        "buff1+buff2+buff3",
+        "buff1+buff3",
+        "buff2+buff3",
+        "wild",
+        "普通respin玩法",
+        "高低bet玩法"
+      ]
+    },
+    {
+      "name": "CTS招财猫：玩法文档.xlsx",
+      "combo": "三收+长线",
+      "features": [
+        "bonus玩法"
+      ]
+    },
+    {
+      "name": "CTS捕鱼达人：玩法文档.xlsx",
+      "combo": "base+link（三个收集区对应三个buff）+pick（收集区触发）",
+      "features": [
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS海盗2025：玩法文档.xls",
+      "combo": null,
+      "features": []
+    },
+    {
+      "name": "CTS火球：玩法文档.xlsx",
+      "combo": "base（3X5）+ respin 8*5【3收集+转盘】+长线收集",
+      "features": [
+        "FireLink玩法",
+        "Respin流程：转盘玩法+Respin玩法+FireLink玩法",
+        "Respin玩法",
+        "base玩法",
+        "wild",
+        "转盘玩法",
+        "高低Bet玩法"
+      ]
+    },
+    {
+      "name": "CTS犀牛2026：玩法文档.xlsx",
+      "combo": "base+free+地图",
+      "features": [
+        "Bonus",
+        "SUPER FG",
+        "base玩法",
+        "free玩法",
+        "scatter",
+        "地图玩法"
+      ]
+    },
+    {
+      "name": "CTS独立日：玩法文档.xlsx",
+      "combo": "base五收集（3+2）+link+free+pick",
+      "features": [
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus5",
+        "jackpot玩法",
+        "link玩法"
+      ]
+    },
+    {
+      "name": "CTS碧玺大象：玩法文档.xlsx",
+      "combo": "BASE+FG+respin(带横向转盘）",
+      "features": [
+        "BASE玩法",
+        "FG玩法",
+        "SCATTER",
+        "WILD",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus5",
+        "respin玩法"
+      ]
+    },
+    {
+      "name": "CTS糖果消除：玩法文档.xlsx",
+      "combo": "消除",
+      "features": [
+        "FG玩法",
+        "SUPER",
+        "SUPER FG",
+        "SUPER FREE玩法",
+        "base玩法",
+        "scatter",
+        "高低bet玩法"
+      ]
+    },
+    {
+      "name": "CTS赛博舞狮火车：玩法文档.xlsx",
+      "combo": "base单收集+respin+super respin",
+      "features": [
+        "bonus",
+        "buff1",
+        "buff2",
+        "buff3",
+        "respin通用玩法",
+        "super bonus",
+        "super respin",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS赫拉克勒斯：玩法文档.xlsx",
+      "combo": "base+fg+转盘（super fg）",
+      "features": [
+        "Base玩法",
+        "base",
+        "free games",
+        "super fg",
+        "super free games",
+        "super free games（转盘略）",
+        "wild"
+      ]
+    },
+    {
+      "name": "CTS超级碗：玩法文档.xlsx",
+      "combo": "三线收集+长线玩法",
+      "features": [
+        "FREE1",
+        "FREE12",
+        "FREE123",
+        "FREE13",
+        "FREE23",
+        "FREE3",
+        "RESPIN1-5级玩法",
+        "三线收集+长线玩法",
+        "长线玩法"
+      ]
+    },
+    {
+      "name": "CTS金蟾蜍：玩法需求文档.xlsx",
+      "combo": "base+free game+存储机制",
+      "features": [
+        "base玩法",
+        "buff1",
+        "buff2",
+        "buff3"
+      ]
+    },
+    {
+      "name": "CTS面具魔杰森：玩法文档.xlsx",
+      "combo": "free+super free",
+      "features": [
+        "BONUS1",
+        "BONUS2",
+        "BONUS3",
+        "FG-BONUS玩法",
+        "FG-JACKPOT玩法",
+        "FG-升行玩法",
+        "SUPER FG",
+        "base玩法",
+        "scatter"
+      ]
+    },
+    {
+      "name": "CTS鲨鱼玩法需求文档.xlsx",
+      "combo": "BASE+FG",
+      "features": [
+        "BASE玩法",
+        "FG玩法",
+        "Jackpot",
+        "SCATTER BONUS玩法",
+        "WILD"
+      ]
+    },
+    {
+      "name": "CTS黑五2025：玩法文档.xlsx",
+      "combo": "base+free game+pick",
+      "features": [
+        "base玩法",
+        "bonus",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus连续列玩法",
+        "buff1",
+        "buff1+buff2",
+        "buff1+buff2+buff3",
+        "buff1+buff3",
+        "buff2",
+        "buff2+buff3",
+        "buff3",
+        "wild",
+        "大收集区pick玩法"
+      ]
+    },
+    {
+      "name": "JFS巨狼芬里尔玩法文档.xlsx",
+      "combo": "base+四收集fg",
+      "features": [
+        "Base玩法",
+        "FG玩法",
+        "Wild",
+        "wild"
+      ]
+    },
+    {
+      "name": "JMS Tiki：玩法文档.xlsx",
+      "combo": "消除玩法，3+1玩法",
+      "features": [
+        "WILD",
+        "base",
+        "buff1",
+        "buff2",
+        "buff3",
+        "fg1",
+        "fg2：随机wild玩法",
+        "fg3：jackpot玩法",
+        "super玩法",
+        "消除玩法，3+1玩法"
+      ]
+    },
+    {
+      "name": "JMS万圣节2026：玩法文档.xlsx",
+      "combo": "base三收集+free+super",
+      "features": [
+        "WILD",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "buff1",
+        "buff1+buff2",
+        "buff1+buff2+buff3",
+        "buff1+buff3",
+        "buff2",
+        "buff2+buff3",
+        "buff3",
+        "respin通用玩法",
+        "super bonus",
+        "super转盘玩法",
+        "再触发玩法",
+        "组合触发玩法"
+      ]
+    },
+    {
+      "name": "JMS人猿泰山：玩法文档.xlsx",
+      "combo": "fg+四收集",
+      "features": [
+        "Base",
+        "FG1-EXPAND玩法",
+        "FG2-REPEAT玩法",
+        "FG3-JACKPOT玩法",
+        "PICK玩法",
+        "base玩法",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "wild"
+      ]
+    },
+    {
+      "name": "JMS企鹅：玩法文档.xlsx",
+      "combo": "三收+大转盘玩法",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "fg",
+        "mega",
+        "三收+大转盘玩法"
+      ]
+    },
+    {
+      "name": "JMS冰雪猩猩：玩法美术文档.xlsx",
+      "combo": "单收集+fg",
+      "features": [
+        "BASE",
+        "FG",
+        "base",
+        "base玩法",
+        "buff1",
+        "buff2",
+        "buff3",
+        "buff4",
+        "fg",
+        "super fg",
+        "super fg：十个点位，最后一个点位放大",
+        "wild"
+      ]
+    },
+    {
+      "name": "JMS双机台_白狼：玩法文档.xlsx",
+      "combo": "三收集（五收集的形式）",
+      "features": [
+        "base和fg玩法期间都可以触发jp玩法",
+        "fg玩法",
+        "fg玩法期间可以触发jp玩法",
+        "jp玩法",
+        "wild",
+        "wild玩法"
+      ]
+    },
+    {
+      "name": "JMS双机台_黑豹：玩法文档.xlsx",
+      "combo": "三收集（五收集的形式）",
+      "features": [
+        "base和fg玩法期间都可以触发jp玩法",
+        "bonus",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus玩法",
+        "fg玩法",
+        "fg玩法期间可以触发jp玩法",
+        "jp玩法",
+        "wild",
+        "连续列玩法"
+      ]
+    },
+    {
+      "name": "JMS双龍护宝玩法文档.xlsx",
+      "combo": "respin升级+多福多彩+must hit",
+      "features": [
+        "BONUS",
+        "WILD",
+        "base玩法",
+        "普通模式Respin玩法"
+      ]
+    },
+    {
+      "name": "JMS发财树玩法文档.xlsx",
+      "combo": "Base+FG+SuperFG",
+      "features": [
+        "Base玩法",
+        "FG1",
+        "FG2",
+        "FG3",
+        "Scatter",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4"
+      ]
+    },
+    {
+      "name": "JMS墨西哥辣椒：玩法文档.xlsx",
+      "combo": "3+1",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "buff1",
+        "buff2",
+        "buff3",
+        "fg1：移动bonus玩法",
+        "fg2：升棋盘玩法",
+        "fg3：双图标玩法",
+        "link",
+        "pick玩法",
+        "super fg",
+        "super fg期间fg次数用完后结束游戏",
+        "super link"
+      ]
+    },
+    {
+      "name": "JMS复活节2026：玩法文档.xlsx",
+      "combo": "base三收集，三种玩法，各自单独触发",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "link",
+        "玩法1：pick玩法",
+        "玩法2：升级玩法",
+        "玩法3：fg玩法",
+        "进度条玩法"
+      ]
+    },
+    {
+      "name": "JMS新老母鸡：玩法文档.xlsx",
+      "combo": "base+wheel+respin+free",
+      "features": [
+        "pick-fg玩法",
+        "respin玩法",
+        "scatter",
+        "wheel bonus",
+        "wheel玩法",
+        "wild",
+        "多福多彩玩法"
+      ]
+    },
+    {
+      "name": "JMS火山神女二代玩法美术文档（玩法同工装女郎）.xlsx",
+      "combo": null,
+      "features": [
+        "BONUS",
+        "Base",
+        "FANG BIAN PAO KITTYS玩法",
+        "WILD",
+        "bonus",
+        "bonus2",
+        "scatter",
+        "wild"
+      ]
+    },
+    {
+      "name": "JMS犀牛二代：玩法文档.xlsx",
+      "combo": "四线收集+长线玩法",
+      "features": [
+        "FREE1",
+        "FREE12",
+        "FREE123",
+        "FREE1234",
+        "FREE124",
+        "FREE13",
+        "FREE134",
+        "FREE14",
+        "FREE2",
+        "FREE23",
+        "FREE234",
+        "FREE24",
+        "FREE3",
+        "FREE34",
+        "FREE4",
+        "WILD",
+        "scatter",
+        "四线收集+长线玩法",
+        "长线玩法"
+      ]
+    },
+    {
+      "name": "JMS矿工哥布林：玩法文档.xlsx",
+      "combo": "5收集respin",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus5",
+        "link",
+        "wild",
+        "玩法1",
+        "玩法2",
+        "玩法3",
+        "玩法4",
+        "玩法5"
+      ]
+    },
+    {
+      "name": "JMS花木兰：玩法文档.xlsx",
+      "combo": "fg三收集+super fg三收集",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "fg1",
+        "fg1+2",
+        "fg1+2+3",
+        "fg1+3",
+        "fg1：双link玩法",
+        "fg2",
+        "fg2+3",
+        "fg2：双棋盘玩法",
+        "fg3",
+        "fg3：fg次数玩法",
+        "link",
+        "super bonus1",
+        "super bonus2",
+        "super bonus3",
+        "super fg1",
+        "super fg1+2",
+        "super fg1+2+3",
+        "super fg1+3",
+        "super fg1：双link玩法",
+        "super fg2",
+        "super fg2+3",
+        "super fg2：双棋盘玩法",
+        "super fg3",
+        "super fg3：fg次数玩法",
+        "super link",
+        "wild",
+        "整页奖励fg玩法",
+        "集邮商店-整页奖励玩法"
+      ]
+    },
+    {
+      "name": "JMS藏族风：玩法文档.xlsx",
+      "combo": "3+1",
+      "features": [
+        "base",
+        "bonus",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "buff1",
+        "buff2",
+        "buff3",
+        "fg1：双棋盘玩法",
+        "fg2",
+        "fg3：jp玩法",
+        "link",
+        "super玩法",
+        "wild"
+      ]
+    },
+    {
+      "name": "JMS西方金龙玩法需求文档.xlsx",
+      "combo": null,
+      "features": [
+        "BASE玩法",
+        "BONUS",
+        "FG玩法",
+        "FREE1",
+        "FREE12",
+        "FREE123",
+        "FREE13",
+        "FREE2",
+        "FREE23",
+        "FREE3",
+        "PICK玩法",
+        "WILD",
+        "base",
+        "bonus2对应：jackpot玩法",
+        "free1",
+        "free12",
+        "free123",
+        "free13",
+        "free2",
+        "free23",
+        "free3",
+        "wild",
+        "玩法三：棋盘升行+随机wild玩法",
+        "玩法四：wild乘倍+随机wild玩法"
+      ]
+    },
+    {
+      "name": "JMS阿波罗：玩法文档.xlsx",
+      "combo": "四收集（3+1）",
+      "features": [
+        "base",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "bonus5",
+        "buff1",
+        "buff2",
+        "buff3",
+        "fg1：推移wild玩法",
+        "fg2：jackpot玩法",
+        "fg3：升行玩法",
+        "super玩法",
+        "wild",
+        "奖励玩法"
+      ]
+    },
+    {
+      "name": "JMS青花瓷大象：玩法文档.xlsx",
+      "combo": "base+fg+pick（3+1）",
+      "features": [
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "buff1",
+        "buff1+2",
+        "buff1+2+3",
+        "buff1+3",
+        "buff2",
+        "buff2+3",
+        "buff3",
+        "buff玩法",
+        "fg通用玩法",
+        "jackpot",
+        "spin--完成任务获得货币--购买玩法",
+        "super bonus",
+        "super pick",
+        "wild",
+        "触发的buff玩法"
+      ]
+    },
+    {
+      "name": "JMS黑金孔雀：玩法文档.xlsx",
+      "combo": "3+1【base+free-3buff+玩法升级（墨西哥辣椒形式）+1super转盘】",
+      "features": [
+        "WILD",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "buff1",
+        "buff1+buff2",
+        "buff1+buff2+buff3",
+        "buff1+buff3",
+        "buff2",
+        "buff2+buff3",
+        "buff3",
+        "super bonus",
+        "组合触发玩法"
+      ]
+    },
+    {
+      "name": "JMS黑金火车：玩法美术文档.xlsx",
+      "combo": "4+1",
+      "features": [
+        "BASE",
+        "base",
+        "base玩法",
+        "bonus1",
+        "bonus2",
+        "bonus3",
+        "bonus4",
+        "respin",
+        "wild"
+      ]
+    }
+  ]
+}
