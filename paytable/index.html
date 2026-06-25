@@ -2101,9 +2101,11 @@ function generatePaytable() {
     });
 
     if (!result) {
-      aiStatusEl.textContent = 'AI返回格式异常，请重试';
+      var preview = aiResult ? aiResult.substring(0, 100) : '(空响应)';
+      aiStatusEl.textContent = 'AI返回格式异常，请重试。响应前100字: ' + preview;
       aiStatusEl.style.color = '#ff6b6b';
       AppState.aiStatus = 'AI返回格式异常，请重试';
+      console.error('[Paytable] Full AI response:', aiResult);
       return;
     }
 
@@ -2461,6 +2463,7 @@ function buildPrompt(structured, metadata) {
   lines.push('6. Use [ICON_NAME] bracket notation for all icon references within text');
   lines.push('7. Generate bilingual content: Chinese in "cn", English in "en"');
   lines.push('8. Keep bullets concise — one mechanic per bullet, under 25 words English');
+  lines.push('9. Your entire response must be ONLY the JSON object. No text before or after. No markdown fences. Start with { and end with }.');
 
   return lines.join('\n');
 }
@@ -2482,6 +2485,9 @@ function parseAIResponse(raw) {
 
   var parsed = null;
 
+  // Clean up: trim whitespace, remove BOM
+  raw = raw.replace(/^\uFEFF/, '').trim();
+
   // First try: direct JSON.parse
   try {
     parsed = JSON.parse(raw);
@@ -2489,13 +2495,28 @@ function parseAIResponse(raw) {
     // Direct parse failed, try extraction methods
   }
 
-  // If direct parse didn't work, try removing markdown code fences
+  // If direct parse didn't work, try removing markdown code fences (various styles)
   if (!parsed) {
-    var stripped = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    var stripped = raw
+      .replace(/^```(?:json|JSON|js|javascript)?\s*\n?/gm, '')
+      .replace(/\n?```\s*$/gm, '')
+      .trim();
     try {
-      parsed = JSON.parse(stripped.trim());
+      parsed = JSON.parse(stripped);
     } catch (e) {
       // Still failed
+    }
+  }
+
+  // Try extracting content between first ``` and last ```
+  if (!parsed) {
+    var fenceMatch = raw.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)\n?\s*```/);
+    if (fenceMatch && fenceMatch[1]) {
+      try {
+        parsed = JSON.parse(fenceMatch[1].trim());
+      } catch (e) {
+        // Still failed
+      }
     }
   }
 
@@ -2793,7 +2814,13 @@ function markPayoutTBD(pages) {
 function processAIResult(aiResult, structuredData, metadata) {
   // Parse AI response
   var pages = parseAIResponse(aiResult);
-  if (!pages) return null;
+  if (!pages) {
+    // Log the raw AI response for debugging
+    console.error('[Paytable] AI response parsing failed. Raw response (first 500 chars):', 
+      aiResult ? aiResult.substring(0, 500) : '(empty)');
+    console.error('[Paytable] Response type:', typeof aiResult, 'Length:', aiResult ? aiResult.length : 0);
+    return null;
+  }
 
   // Enforce page ordering
   pages = enforcePageOrder(pages);
