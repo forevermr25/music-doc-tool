@@ -26,7 +26,14 @@ const REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-w
 const MODEL_PRIMARY = process.env.CLAUDE_MODEL_PRIMARY || 'global.anthropic.claude-opus-4-8';
 const MODEL_SECONDARY = process.env.CLAUDE_MODEL_SECONDARY || 'global.anthropic.claude-opus-4-8';
 const IMAGE_MODEL = process.env.BEDROCK_IMAGE_MODEL || 'amazon.titan-image-generator-v2:0';
-const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '4096', 10);
+// 单次回复最大输出 token。钳制到安全区间，避免超过模型上限导致请求被拒。
+const MAX_TOKENS_CAP = 64000; // Opus 4.8 输出上限为 128000，留足余量
+let MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '8192', 10);
+if (!Number.isFinite(MAX_TOKENS) || MAX_TOKENS < 256) MAX_TOKENS = 8192;
+if (MAX_TOKENS > MAX_TOKENS_CAP) {
+  console.warn(`[config] MAX_TOKENS=${MAX_TOKENS} 超过上限，已钳制为 ${MAX_TOKENS_CAP}`);
+  MAX_TOKENS = MAX_TOKENS_CAP;
+}
 
 // 把前端传来的 model 名（历史遗留的 gpt-4o-mini / claude-*）映射到 Bedrock 模型 ID
 function resolveModelId(model) {

@@ -2081,18 +2081,8 @@ function generatePaytable() {
       waysNum: waysNum
     });
 
-    // Try primary model: claude-sonnet-4-20250514
-    return callAI(prompt, 'claude-sonnet-4-20250514').catch(function(primaryError) {
-      // Fallback to gpt-4o-mini (lower cost, more free quota)
-      aiStatusEl.textContent = '正在切换备用模型(GPT-4o-mini)...';
-      AppState.aiStatus = '正在切换备用模型(GPT-4o-mini)...';
-      return callAI(prompt, 'gpt-4o-mini').catch(function(secondError) {
-        // Final fallback to claude-3-haiku
-        aiStatusEl.textContent = '正在切换备用模型(Claude Haiku)...';
-        AppState.aiStatus = '正在切换备用模型(Claude Haiku)...';
-        return callAI(prompt, 'claude-3-haiku-20240307');
-      });
-    });
+    // 统一走后端默认模型（Claude Opus 4.8），不再指定模型名
+    return callAI(prompt);
   }).then(function(aiResult) {
     // Success - store result
     AppState.aiResult = aiResult;
