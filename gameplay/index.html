@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="/shared/ai.js"></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:28px 14px;color:#e0e0e0}
@@ -78,6 +79,7 @@ select option{background:#1a1a2e;color:#e0e0e0}
 </style>
 </head>
 <body>
+<a href="/" style="position:fixed;top:16px;left:16px;z-index:999;color:#8892b0;text-decoration:none;font-size:0.9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;">← 首页</a>
 <div class="container">
 <h1>🎰 老虎机玩法文档生成器</h1>
 <p class="subtitle">简洁输入 · AI 辅助 · 精准输出</p>
@@ -458,10 +460,7 @@ function addComboDescLine(ci){var el=document.getElementById('comboDescAdd_'+ci)
 function rmComboDesc(ci,li){var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines.splice(li,1);D.combos[ci].desc=lines.join('\n');renderCombos()}
 function updComboDesc(ci,li,val){var lines=(D.combos[ci].desc||'').split('\n').filter(l=>l.trim());lines[li]=val;D.combos[ci].desc=lines.join('\n')}
 
-/* ===== AI ===== */
-var aiReady=false,puterLoading=false;
-function loadPuter(){return new Promise((ok,no)=>{if(aiReady){ok();return}if(puterLoading){var w=setInterval(()=>{if(aiReady){clearInterval(w);ok()}},300);setTimeout(()=>{clearInterval(w);no(new Error('超时'))},30000);return}puterLoading=true;var s=document.createElement('script');s.src='https://js.puter.com/v2/';s.onload=()=>{var e=0,t=setInterval(()=>{e+=500;if(typeof puter!=='undefined'&&puter.ai){aiReady=true;clearInterval(t);ok()}if(e>=30000){clearInterval(t);no(new Error('超时'))}},500)};s.onerror=()=>{puterLoading=false;no(new Error('加载失败'))};document.head.appendChild(s)})}
-async function callAI(p){await loadPuter();var r=await puter.ai.chat(p,{model:'gpt-4o-mini',temperature:0.7});if(typeof r==='string')return r;if(r&&r.message&&r.message.content){var c=r.message.content;if(Array.isArray(c))return c.map(x=>x.text||x).join('');return c}return String(r)}
+/* ===== AI（走后端代理 -> AWS Bedrock，callAI 由 /shared/ai.js 提供） ===== */
 async function aiGenOne(idx){
     var sec=D.sections[idx];if(!sec)return;
     var btn=document.querySelector('#gpa_'+idx+' .btn-primary');

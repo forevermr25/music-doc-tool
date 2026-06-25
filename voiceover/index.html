@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>老虎机需求文档生成器</title>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="/shared/ai.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; padding: 40px 20px; color: #e0e0e0;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 {
+            text-align: center; font-size: 2rem; margin-bottom: 10px;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; color: transparent;
+        }
+        .subtitle { text-align: center; color: #8892b0; margin-bottom: 30px; font-size: 0.95rem; }
+
+        /* 顶部Tab切换 */
+        .tab-nav {
+            display: flex; justify-content: center; gap: 0; margin-bottom: 32px;
+            background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px;
+            border: 1px solid rgba(255,255,255,0.1); max-width: 400px; margin-left: auto; margin-right: auto;
+        }
+        .tab-btn {
+            flex: 1; padding: 14px 24px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            background: transparent; color: #8892b0; transition: all 0.3s;
+            font-family: inherit;
+        }
+        .tab-btn:hover { color: #ccd6f6; }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #1a1a2e; box-shadow: 0 4px 15px rgba(247,151,30,0.3);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* 通用卡片和表单样式 */
+        .card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 32px; margin-bottom: 24px; backdrop-filter: blur(10px);
+        }
+        .card-title {
+            font-size: 1.1rem; font-weight: 600; color: #ccd6f6;
+            margin-bottom: 20px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .form-group { margin-bottom: 24px; }
+        .form-row { display: flex; gap: 20px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #ccd6f6; }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%; padding: 12px 16px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; color: #e0e0e0; font-size: 0.95rem;
+            font-family: inherit; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            outline: none; border-color: #f7971e; box-shadow: 0 0 0 3px rgba(247,151,30,0.15);
+        }
+        textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+        select {
+            cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px;
+        }
+        select option { background: #1a1a2e; color: #e0e0e0; }
+        .info-tip {
+            display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px;
+            background: rgba(79,172,254,0.08); border: 1px solid rgba(79,172,254,0.2);
+            border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #8892b0; line-height: 1.5;
+        }
+        .info-tip::before { content: '💡'; flex-shrink: 0; }
+        .ai-status { font-size: 0.8rem; color: #8892b0; margin-top: 10px; min-height: 1.2em; }
+        .ai-status.generating { color: #a78bfa; }
+        .ai-status.error { color: #ff6b6b; }
+        .ai-status.done { color: #27ae60; }
+        .generated-tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: rgba(102,126,234,0.2); color: #a78bfa; margin-left: 8px; }
+        .success-toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: rgba(39,174,96,0.95); color: #fff; border-radius: 8px; font-weight: 600; transform: translateX(120%); transition: transform 0.4s ease; z-index: 1000; }
+        .success-toast.show { transform: translateX(0); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 按钮样式 */
+        .btn-primary {
+            display: block; width: 100%; padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 12px;
+            color: #fff; font-size: 1.1rem; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin: 0 auto; }
+        .btn-primary.loading .spinner { display: inline-block; }
+        .btn-primary.loading .btn-text { display: none; }
+        .btn-ai { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; margin-top: 8px; font-family: inherit; }
+        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+        .btn-ai:active { transform: translateY(0); }
+        .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-ai .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        .btn-ai.loading .spinner { display: block; }
+        .btn-ai.loading .btn-text { display: none; }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; color: #ccd6f6; font-size: 0.9rem; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: background 0.3s, border-color 0.3s;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); border-color: rgba(247,151,30,0.4); }
+        .btn-generate { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #f7971e, #ffd200); border: none; border-radius: 12px; color: #1a1a2e; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(247,151,30,0.3); }
+        .btn-generate:active { transform: translateY(0); }
+        .btn-export { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #f7971e, #ffd200); border: none; border-radius: 12px; color: #1a1a2e; font-size: 1.1rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-top: 16px; }
+        .btn-export:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(247,151,30,0.3); }
+        .btn-export:active { transform: translateY(0); }
+        .btn-export:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* 配乐模块专用 */
+        .music-sections { margin-top: 16px; }
+        .music-section { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: border-color 0.3s; }
+        .music-section:hover { border-color: rgba(247,151,30,0.3); }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .section-number { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #fff; }
+        .intensity-low { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .intensity-mid { background: linear-gradient(135deg, #f7971e, #ffd200); }
+        .intensity-high { background: linear-gradient(135deg, #f5576c, #ff6b6b); }
+        .section-title { font-weight: 600; color: #ccd6f6; }
+        .intensity-badge { margin-left: auto; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; color: #fff; }
+        .badge-low { background: rgba(79,172,254,0.3); }
+        .badge-mid { background: rgba(247,151,30,0.3); }
+        .badge-high { background: rgba(245,87,108,0.3); }
+        .scene-input { margin-bottom: 10px; }
+        .scene-input label { font-size: 0.82rem; color: #8892b0; }
+        .scene-input input { padding: 8px 12px; font-size: 0.88rem; }
+        .count-control { display: flex; align-items: center; gap: 12px; }
+        .count-control input { width: 80px; text-align: center; }
+        .count-control button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e0e0e0; font-size: 1.2rem; cursor: pointer; transition: background 0.2s; }
+        .count-control button:hover { background: rgba(247,151,30,0.2); border-color: #f7971e; }
+        .gradient-hint { font-size: 0.8rem; color: #8892b0; margin-top: 8px; font-style: italic; }
+
+        /* 配音模块专用 */
+        .scene-checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
+        .scene-checkbox-item { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer; transition: border-color 0.3s, background 0.3s; }
+        .scene-checkbox-item:hover { border-color: rgba(247,151,30,0.3); background: rgba(255,255,255,0.05); }
+        .scene-checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: #f7971e; cursor: pointer; }
+        .scene-checkbox-item label { font-size: 0.85rem; font-weight: 400; color: #ccd6f6; margin-bottom: 0; cursor: pointer; }
+        .custom-scene-area { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .custom-scene-input-row { display: flex; gap: 10px; align-items: center; }
+        .custom-scene-input-row input { flex: 1; }
+        .custom-scene-list { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .custom-scene-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(247,151,30,0.1); border: 1px solid rgba(247,151,30,0.3); border-radius: 20px; font-size: 0.82rem; color: #ffd200; }
+        .custom-scene-tag .remove-btn { cursor: pointer; font-size: 1rem; line-height: 1; opacity: 0.7; transition: opacity 0.2s; }
+        .custom-scene-tag .remove-btn:hover { opacity: 1; }
+        .char-tab-nav { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+        .char-tab-btn { padding: 8px 16px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.03); color: #8892b0; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .char-tab-btn:hover { border-color: rgba(247,151,30,0.4); color: #ccd6f6; }
+        .char-tab-btn.active { background: rgba(247,151,30,0.15); border-color: #f7971e; color: #ffd200; }
+        .char-scene-panel { display: none; }
+        .char-scene-panel.active { display: block; }
+        .char-card { flex: 1; min-width: 200px; max-width: 300px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
+        .char-card-header { font-size: 0.82rem; color: #ccd6f6; line-height: 1.6; margin-bottom: 12px; }
+        .char-card-header strong { color: #ffd200; }
+        .char-card-img { width: 100%; height: 140px; border: 2px dashed rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color 0.3s; position: relative; }
+        .char-card-img:hover { border-color: rgba(247,151,30,0.5); }
+        .char-card-img img { width: 100%; height: 100%; object-fit: contain; }
+        .char-card-img .placeholder { text-align: center; color: #8892b0; font-size: 0.78rem; }
+        .char-card-img input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .preview-table-wrapper { overflow-x: auto; margin-top: 16px; }
+        .preview-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .preview-table thead th { padding: 12px 14px; background: rgba(247,151,30,0.1); border: 1px solid rgba(255,255,255,0.1); color: #ffd200; font-weight: 600; text-align: left; white-space: nowrap; }
+        .preview-table tbody td { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.08); vertical-align: top; color: #e0e0e0; }
+        .preview-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+        .preview-table .editable-cell { min-width: 180px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 4px; cursor: text; transition: background 0.2s; outline: none; }
+        .preview-table .editable-cell:focus { background: rgba(255,255,255,0.08); box-shadow: 0 0 0 2px rgba(247,151,30,0.2); }
+        .preview-table .editable-cell.warning { border: 1px solid rgba(245,87,108,0.5); background: rgba(245,87,108,0.05); }
+        .preview-table .seq-cell { text-align: center; width: 50px; color: #8892b0; }
+        .preview-table .voice-select { width: 100%; min-width: 100px; padding: 6px 28px 6px 8px; font-size: 0.82rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #e0e0e0; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+        .preview-table .voice-select:focus { outline: none; border-color: #f7971e; }
+        .preview-table .voice-select option { background: #1a1a2e; color: #e0e0e0; }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 12px; } .card { padding: 20px; }
+            .form-row { flex-direction: column; gap: 0; }
+            .scene-checkbox-group { grid-template-columns: 1fr; }
+            h1 { font-size: 1.5rem; }
+            .tab-nav { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" style="position:fixed;top:16px;left:16px;z-index:999;color:#8892b0;text-decoration:none;font-size:0.9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;">← 首页</a>
+    <div class="container">
+        <h1>🎰 老虎机需求文档生成器</h1>
+        <p class="subtitle">AI 驱动 · 免费 · 无需注册 · 快速生成需求文档</p>
+
+        <!-- Tab 导航 -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('voice')">🎙️ 配音</button>
+            <button class="tab-btn" onclick="switchTab('music')">🎵 配乐</button>
+        </div>
+
+        <!-- ============ 配音面板 ============ -->
+        <div class="tab-panel active" id="panel-voice">
+            <div class="card">
+                <div class="info-tip">输入主题名称和故事氛围，点击「AI 生成音色」匹配角色音色，再选择场景后点击「AI 智能生成」生成配音台词。</div>
+                <div class="card-title">📝 基本信息</div>
+                <div class="form-group">
+                    <label for="v_theme">主题名称</label>
+                    <input type="text" id="v_theme" maxlength="50" placeholder="请输入老虎机主题名称，如：金蟾蜍、火球、圣帕特里克节">
+                </div>
+                <div class="form-group">
+                    <label for="v_atmosphere">故事氛围描述</label>
+                    <textarea id="v_atmosphere" maxlength="500" placeholder="请描述老虎机的故事氛围，用于指导AI生成符合主题的配音内容"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>配音角色数量</label>
+                    <div class="count-control">
+                        <button type="button" onclick="voiceAdjustCharCount(-1)">−</button>
+                        <input type="number" id="v_charCount" value="1" min="1" max="5">
+                        <button type="button" onclick="voiceAdjustCharCount(1)">+</button>
+                    </div>
+                    <p style="font-size:0.8rem; color:#8892b0; margin-top:8px;">如关卡中有多个角色需要配音，增加数量后点击AI生成</p>
+                </div>
+                <button class="btn-ai" id="v_voiceAiBtn" type="button" onclick="voiceAiSuggest()">
+                    <span class="btn-text">🎙️ AI 生成音色</span><span class="spinner"></span>
+                </button>
+                <div class="ai-status" id="v_voiceStatus"></div>
+                <div id="v_voiceResult" style="display:none; margin-top:14px;">
+                    <div style="font-size:0.9rem; font-weight:600; color:#a78bfa; margin-bottom:12px;">🎙️ 配音人物描述：</div>
+                    <div id="v_voiceResultText" style="font-size:0.85rem; color:#ccd6f6; line-height:1.7; margin-bottom:16px;"></div>
+                    <div id="v_charCards" style="display:flex; gap:16px; flex-wrap:wrap;"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎬 应用场景</div>
+                <div class="info-tip">先选择角色，再为该角色勾选对应的配音场景。如果同一个场景被多个角色勾选，则该场景由多个角色分别配音。</div>
+                <div id="v_sceneAssignArea">
+                    <!-- 角色场景分配区，由JS动态生成 -->
+                    <div id="v_defaultSceneArea">
+                        <div class="scene-checkbox-group" id="v_sceneGroup">
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_0" value="进入关卡" data-char="0"><label for="vs_0">进入关卡</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_1" value="预告中奖" data-char="0"><label for="vs_1">预告中奖</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_2" value="scatter图标播放触发动画时" data-char="0"><label for="vs_2">scatter图标播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_3" value="Bonus图标播放触发动画时" data-char="0"><label for="vs_3">Bonus图标播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_4" value="MINI弹板弹出" data-char="0"><label for="vs_4">MINI弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_5" value="MINOR弹板弹出" data-char="0"><label for="vs_5">MINOR弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_6" value="MAJOR弹板弹出" data-char="0"><label for="vs_6">MAJOR弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_7" value="MAXI弹板弹出" data-char="0"><label for="vs_7">MAXI弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_8" value="MEGA弹板弹出" data-char="0"><label for="vs_8">MEGA弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_9" value="GRAND弹板弹出" data-char="0"><label for="vs_9">GRAND弹板弹出</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_10" value="收集区播放触发动画时" data-char="0"><label for="vs_10">收集区播放触发动画时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_11" value="free结算弹板弹出时" data-char="0"><label for="vs_11">free结算弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_12" value="Respin结算弹板弹出时" data-char="0"><label for="vs_12">Respin结算弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_13" value="free开始弹板弹出时" data-char="0"><label for="vs_13">free开始弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_14" value="Respin开始弹板弹出时" data-char="0"><label for="vs_14">Respin开始弹板弹出时</label></div>
+                            <div class="scene-checkbox-item"><input type="checkbox" id="vs_15" value="大赢动画播放时" data-char="0"><label for="vs_15">大赢动画播放时</label></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="custom-scene-area">
+                    <label>添加自定义场景</label>
+                    <div class="custom-scene-input-row">
+                        <input type="text" id="v_customInput" maxlength="50" placeholder="请输入自定义场景描述">
+                        <button class="btn-secondary" type="button" onclick="voiceAddCustomScene()">+ 添加</button>
+                    </div>
+                    <div class="custom-scene-list" id="v_customList"></div>
+                </div>
+            </div>
+            <div class="card">
+                <button class="btn-primary" id="v_genBtn" type="button" onclick="voiceGenerate()">
+                    <span class="btn-text">🤖 AI 智能生成（双模型对比）</span><span class="spinner"></span>
+                </button>
+                <div class="ai-status" id="v_status"></div>
+            </div>
+            <div id="v_previewCard" style="display:none;">
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <!-- 主模型结果 (Claude Sonnet) -->
+                    <div class="card" style="flex:1; min-width:300px;">
+                        <div class="card-title">🟣 Claude Sonnet 版本</div>
+                        <div class="preview-table-wrapper">
+                            <table class="preview-table"><thead><tr><th>序号</th><th>中文</th><th>英文</th><th>场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
+                            <tbody id="v_tbody_claude"></tbody></table>
+                        </div>
+                        <button class="btn-export" style="margin-top:12px;" onclick="voiceExport('claude')">📥 导出 Sonnet 版本</button>
+                    </div>
+                    <!-- 副模型结果 (Claude Haiku) -->
+                    <div class="card" style="flex:1; min-width:300px;">
+                        <div class="card-title">🟢 Claude Haiku 版本</div>
+                        <div class="preview-table-wrapper">
+                            <table class="preview-table"><thead><tr><th>序号</th><th>中文</th><th>英文</th><th>场景</th><th>音色人物</th><th>音色描述</th></tr></thead>
+                            <tbody id="v_tbody_gpt"></tbody></table>
+                        </div>
+                        <button class="btn-export" style="margin-top:12px;" onclick="voiceExport('gpt')">📥 导出 Haiku 版本</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 配乐面板 ============ -->
+        <div class="tab-panel" id="panel-music">
+            <div class="card">
+                <div class="info-tip">输入主题名称和配乐数量，点击「AI 智能生成」即可。首次使用会弹出授权窗口，点击允许即可（完全免费）。</div>
+                <div class="form-group">
+                    <label for="m_theme">🎨 主题名称</label>
+                    <input type="text" id="m_theme" placeholder="例如：圣帕特里克节、犀牛2026、赛博舞狮、海盗、招财猫...">
+                </div>
+                <div class="form-group">
+                    <label>🎵 配乐数量</label>
+                    <div class="count-control">
+                        <button type="button" onclick="musicAdjustCount(-1)">−</button>
+                        <input type="number" id="m_count" value="3" min="1" max="10">
+                        <button type="button" onclick="musicAdjustCount(1)">+</button>
+                    </div>
+                    <p class="gradient-hint" id="m_gradientHint">情绪梯度：最高触发 > 中间触发 > BASE</p>
+                </div>
+                <button class="btn-ai" id="m_aiBtn" onclick="musicAutoGenerate()">
+                    <span class="btn-text">🤖 AI 智能生成</span><span class="spinner"></span>
+                </button>
+                <div class="ai-status" id="m_status"></div>
+            </div>
+            <div class="card">
+                <div class="form-group">
+                    <label for="m_atmosphere">🌍 整体氛围描述 <span class="generated-tag" id="m_atmoTag" style="display:none;">AI 生成</span></label>
+                    <textarea id="m_atmosphere" placeholder="点击上方「AI 智能生成」按钮自动填充，或手动输入..."></textarea>
+                </div>
+            </div>
+            <div class="card">
+                <label style="margin-bottom: 16px; font-size: 1rem;">📝 各段配乐详情 <span class="generated-tag" id="m_sectionsTag" style="display:none;">AI 生成</span></label>
+                <div class="music-sections" id="m_sections"></div>
+            </div>
+            <button class="btn-generate" onclick="musicGenerateExcel()">📥 生成配乐需求文档</button>
+        </div>
+    </div>
+
+    <div class="success-toast" id="toast"></div>
+
+    <script>
+    // =============================================
+    // Tab 切换
+    // =============================================
+    function switchTab(tab, el) {
+        document.querySelectorAll('.tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        var panel = document.getElementById('panel-' + tab);
+        if (panel) panel.classList.add('active');
+        var btn = el || (window.event && window.event.target);
+        if (!btn || !btn.classList) {
+            // 程序化调用（如 hash 深链）：按 onclick 找到对应的 tab 按钮
+            btn = null;
+            document.querySelectorAll('.tab-btn').forEach(function(b) {
+                if ((b.getAttribute('onclick') || '').indexOf("'" + tab + "'") > -1) btn = b;
+            });
+        }
+        if (btn && btn.classList) btn.classList.add('active');
+    }
+
+    // =============================================
+    // 共享 AI Engine - 走后端代理 -> AWS Bedrock (Claude)
+    // callAI(prompt, model) 由 /shared/ai.js 提供，签名不变。
+    // =============================================
+    function showToast(m) { var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3000); }
+
+    // =============================================
+    // 配音模块
+    // =============================================
+    var VOICE_CHARACTERS = {
+        '年轻男性': ['清亮活力', '阳光开朗'],
+        '成熟男性': ['低沉浑厚', '威严庄重', '沙哑粗犷'],
+        '老年男性': ['沧桑浑厚', '慈祥温和'],
+        '年轻女性': ['甜美柔和', '清亮活力'],
+        '成熟女性': ['温柔知性', '冷艳高贵'],
+        '老年女性': ['慈祥温和', '沧桑低沉'],
+        '怪物': ['低沉咆哮', '诡异扭曲'],
+        '精灵': ['神秘空灵', '轻盈灵动'],
+        '机器人': ['机械电子', '冰冷平板'],
+        '旁白解说': ['浑厚大气', '沉稳专业']
+    };
+    var JACKPOT_MAP = {'MINI弹板弹出':'MINI JACKPOT','MINOR弹板弹出':'MINOR JACKPOT','MAJOR弹板弹出':'MAJOR JACKPOT','MAXI弹板弹出':'MAXI JACKPOT','MEGA弹板弹出':'MEGA JACKPOT','GRAND弹板弹出':'GRAND JACKPOT'};
+    var voiceEntries = {claude:[], gpt:[]}, voiceCustomScenes = [], voiceCustomId = 0;
+
+    function isJackpot(s) { return JACKPOT_MAP.hasOwnProperty(s); }
+    function getJackpotText(s) { return JACKPOT_MAP[s] || null; }
+    function getTonesFor(c) { return VOICE_CHARACTERS[c] || []; }
+
+    function voiceInitSelects() {
+        // No longer needed - voice is set by AI
+    }
+    function voiceUpdateTone() {
+        // No longer needed - voice is set by AI
+    }
+
+    function voiceAddCustomScene() {
+        var input = document.getElementById('v_customInput').value;
+        if (!input || input.trim() === '') { alert('请输入场景描述'); return; }
+        if (voiceCustomScenes.length >= 20) { alert('自定义场景最多添加20个'); return; }
+        var desc = input.trim(); voiceCustomScenes.push(desc); voiceCustomId++;
+        var id = 'vc_' + voiceCustomId;
+        var group = document.getElementById('v_sceneGroup');
+        var item = document.createElement('div'); item.className = 'scene-checkbox-item'; item.setAttribute('data-custom', desc);
+        item.innerHTML = '<input type="checkbox" id="'+id+'" value="'+desc+'" checked><label for="'+id+'">'+desc+'</label>';
+        group.appendChild(item);
+        var list = document.getElementById('v_customList');
+        var tag = document.createElement('span'); tag.className = 'custom-scene-tag'; tag.setAttribute('data-custom', desc);
+        tag.innerHTML = '<span>'+desc+'</span><span class="remove-btn" onclick="voiceRemoveCustom(\''+desc.replace(/'/g,"\\'")+'\')">×</span>';
+        list.appendChild(tag);
+        document.getElementById('v_customInput').value = '';
+    }
+    function voiceRemoveCustom(desc) {
+        voiceCustomScenes = voiceCustomScenes.filter(function(s){return s!==desc;});
+        var el = document.querySelector('#v_sceneGroup .scene-checkbox-item[data-custom="'+desc+'"]'); if(el) el.remove();
+        var tg = document.querySelector('#v_customList .custom-scene-tag[data-custom="'+desc+'"]'); if(tg) tg.remove();
+    }
+
+    function voiceBuildCharSelect(val, idx) { return ''; }
+    function voiceBuildToneSelect(char, val, idx) { return ''; }
+    function voiceCharChange(el) {}
+    function voiceToneChange(el) {}
+
+    function voiceRenderTable() {
+        var card = document.getElementById('v_previewCard');
+        var hasClaude = voiceEntries.claude && voiceEntries.claude.length > 0;
+        var hasGpt = voiceEntries.gpt && voiceEntries.gpt.length > 0;
+        if (!hasClaude && !hasGpt) { card.style.display = 'none'; return; }
+        card.style.display = '';
+        voiceRenderOneTable('v_tbody_claude', voiceEntries.claude || [], 'claude');
+        voiceRenderOneTable('v_tbody_gpt', voiceEntries.gpt || [], 'gpt');
+    }
+
+    function voiceRenderOneTable(tbodyId, entries, modelKey) {
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        entries.forEach(function(entry, i) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td class="seq-cell">'+(i+1)+'</td>';
+            var tdCn = document.createElement('td');
+            var inCn = document.createElement('input'); inCn.type='text'; inCn.className='editable-cell'; inCn.value=entry.chinese||''; inCn.maxLength=200;
+            inCn.addEventListener('input',function(e){voiceEntries[modelKey][i].chinese=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
+            if(!entry.chinese||!entry.chinese.trim()) inCn.classList.add('warning');
+            tdCn.appendChild(inCn); tr.appendChild(tdCn);
+            var tdEn = document.createElement('td');
+            var inEn = document.createElement('input'); inEn.type='text'; inEn.className='editable-cell'; inEn.value=entry.english||''; inEn.maxLength=500;
+            inEn.addEventListener('input',function(e){voiceEntries[modelKey][i].english=e.target.value; e.target.classList.toggle('warning',!e.target.value.trim());});
+            if(!entry.english||!entry.english.trim()) inEn.classList.add('warning');
+            tdEn.appendChild(inEn); tr.appendChild(tdEn);
+            var tdScene = document.createElement('td'); tdScene.textContent = entry.scene; tr.appendChild(tdScene);
+            var tdChar = document.createElement('td');
+            var inChar = document.createElement('input'); inChar.type='text'; inChar.className='editable-cell'; inChar.value=entry.voiceCharacter||''; inChar.style.minWidth='80px';
+            inChar.addEventListener('input',function(e){voiceEntries[modelKey][i].voiceCharacter=e.target.value;});
+            tdChar.appendChild(inChar); tr.appendChild(tdChar);
+            var tdTone = document.createElement('td');
+            var inTone = document.createElement('input'); inTone.type='text'; inTone.className='editable-cell'; inTone.value=entry.voiceTone||''; inTone.style.minWidth='80px';
+            inTone.addEventListener('input',function(e){voiceEntries[modelKey][i].voiceTone=e.target.value;});
+            tdTone.appendChild(inTone); tr.appendChild(tdTone);
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 配音角色数量控制
+    function voiceAdjustCharCount(d) {
+        var input = document.getElementById('v_charCount');
+        input.value = Math.max(1, Math.min(5, parseInt(input.value) + d));
+    }
+
+    // AI生成音色（支持多角色）
+    async function voiceAiSuggest() {
+        var theme = document.getElementById('v_theme').value.trim();
+        var atmo = document.getElementById('v_atmosphere').value.trim();
+        var charCount = parseInt(document.getElementById('v_charCount').value) || 1;
+        if (!theme) { alert('请先输入主题名称'); return; }
+        if (!atmo) { alert('请先输入故事氛围描述'); return; }
+
+        var btn = document.getElementById('v_voiceAiBtn'); btn.classList.add('loading'); btn.disabled = true;
+        var st = document.getElementById('v_voiceStatus');
+        var resultBox = document.getElementById('v_voiceResult');
+        var resultText = document.getElementById('v_voiceResultText');
+        resultBox.style.display = 'none';
+
+        try {
+            st.textContent = '🔄 正在根据故事氛围匹配'+charCount+'个配音角色...'; st.className = 'ai-status generating';
+
+            var prompt = '你是老虎机游戏配音策划专家。请根据以下主题和故事氛围，推荐'+charCount+'个最适合的配音角色方案。\n\n' +
+                '主题名称：'+theme+'\n故事氛围：'+atmo+'\n\n' +
+                '请给出'+charCount+'个角色，每个角色包含：\n' +
+                '1. 配音人物：具体角色身份（如：邪恶小丑、古老法老、精灵女王等）\n' +
+                '2. 性别：男声 / 女声\n' +
+                '3. 音色描述：声音特征（如：沙哑带笑的诡异男声、空灵飘渺的女性低语等）\n' +
+                '4. 推荐理由\n\n' +
+                (charCount > 1 ? '多角色时，请确保角色之间有差异性和互补性，比如主角+配角、正派+反派等。\n\n' : '') +
+                '严格返回JSON数组(不要markdown代码块)：[{"character":"角色身份","gender":"男声或女声","toneDesc":"音色描述","reason":"推荐理由"}]';
+
+            var raw = await callAI(prompt);
+            var result = null;
+            try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
+            // 兼容单角色返回对象的情况
+            if (result && !Array.isArray(result) && result.character) result = [result];
+
+            if (Array.isArray(result) && result.length > 0) {
+                // 存储所有角色
+                window._aiVoiceChars = result.map(function(r) {
+                    return { character: r.character, gender: r.gender, toneDesc: r.toneDesc || '', reason: r.reason || '' };
+                });
+                window._aiVoiceChar = result[0].character;
+                window._aiVoiceTone = result[0].toneDesc || '';
+                window._aiVoiceGender = result[0].gender;
+                window._aiVoiceReason = result[0].reason || '';
+                // 存储角色图片数组
+                window._aiVoiceImages = new Array(result.length).fill(null);
+
+                // 显示氛围描述
+                var atmosText = document.getElementById('v_atmosphere').value.trim();
+                resultText.textContent = '整体氛围：' + atmosText.substring(0, 150) + (atmosText.length > 150 ? '...' : '');
+
+                // 渲染角色列卡片
+                var cardsDiv = document.getElementById('v_charCards');
+                cardsDiv.innerHTML = '';
+                result.forEach(function(r, i) {
+                    var card = document.createElement('div'); card.className = 'char-card';
+                    card.innerHTML = '<div class="char-card-header">' +
+                        '<div><strong>音色人物：</strong>'+r.gender+'，'+r.character+'</div>' +
+                        '<div><strong>音色描述：</strong>'+(r.toneDesc||'')+'</div></div>' +
+                        '<div class="char-card-img" id="v_charImg_'+i+'">' +
+                        '<div class="placeholder">📷 点击上传角色图片</div>' +
+                        '<input type="file" accept="image/*" onchange="voiceUploadCharImg('+i+', this)">' +
+                        '</div>';
+                    cardsDiv.appendChild(card);
+                });
+
+                resultBox.style.display = 'block';
+                voiceUpdateCharAssign();
+                st.textContent = '✅ 已匹配'+result.length+'个配音角色'; st.className = 'ai-status done';
+            } else {
+                st.textContent = '⚠️ AI未能返回有效结果，请重试'; st.className = 'ai-status error';
+            }
+        } catch(err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
+        finally { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    // 更新场景区域为角色Tab结构（多角色时）
+    function voiceUpdateCharAssign() {
+        var chars = window._aiVoiceChars || [];
+        var area = document.getElementById('v_sceneAssignArea');
+        var defaultArea = document.getElementById('v_defaultSceneArea');
+
+        if (chars.length <= 1) {
+            // 单角色：保持原有checkbox结构
+            defaultArea.style.display = 'block';
+            // 清除之前多角色生成的面板
+            area.querySelectorAll('.char-tab-nav, .char-scene-panel').forEach(function(el){el.remove();});
+            return;
+        }
+
+        // 多角色：隐藏默认面板，生成角色Tab
+        defaultArea.style.display = 'none';
+        area.querySelectorAll('.char-tab-nav, .char-scene-panel').forEach(function(el){el.remove();});
+
+        // 创建Tab导航
+        var tabNav = document.createElement('div'); tabNav.className = 'char-tab-nav';
+        chars.forEach(function(c, i) {
+            var btn = document.createElement('button'); btn.type = 'button';
+            btn.className = 'char-tab-btn' + (i===0?' active':'');
+            btn.textContent = '角色'+(i+1)+'：'+c.character;
+            btn.onclick = function() { voiceSwitchCharTab(i); };
+            tabNav.appendChild(btn);
+        });
+        area.insertBefore(tabNav, defaultArea);
+
+        // 为每个角色创建场景面板
+        var presetScenes = ['进入关卡','预告中奖','scatter图标播放触发动画时','Bonus图标播放触发动画时','MINI弹板弹出','MINOR弹板弹出','MAJOR弹板弹出','MAXI弹板弹出','MEGA弹板弹出','GRAND弹板弹出','收集区播放触发动画时','free结算弹板弹出时','Respin结算弹板弹出时','free开始弹板弹出时','Respin开始弹板弹出时','大赢动画播放时'];
+        chars.forEach(function(c, ci) {
+            var panel = document.createElement('div');
+            panel.className = 'char-scene-panel' + (ci===0?' active':'');
+            panel.id = 'v_charPanel_'+ci;
+            var grid = document.createElement('div'); grid.className = 'scene-checkbox-group';
+            presetScenes.forEach(function(sc, si) {
+                var item = document.createElement('div'); item.className = 'scene-checkbox-item';
+                var cbId = 'vsc_'+ci+'_'+si;
+                item.innerHTML = '<input type="checkbox" id="'+cbId+'" value="'+sc+'" data-char="'+ci+'"><label for="'+cbId+'">'+sc+'</label>';
+                grid.appendChild(item);
+            });
+            panel.appendChild(grid);
+            area.insertBefore(panel, defaultArea);
+        });
+    }
+
+    function voiceSwitchCharTab(idx) {
+        document.querySelectorAll('.char-tab-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
+        document.querySelectorAll('.char-scene-panel').forEach(function(p,i){p.classList.toggle('active',i===idx);});
+    }
+
+    // 角色图片上传
+    function voiceUploadCharImg(idx, inputEl) {
+        var file = inputEl.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var imgArea = document.getElementById('v_charImg_'+idx);
+            imgArea.innerHTML = '<img src="'+e.target.result+'">' +
+                '<input type="file" accept="image/*" onchange="voiceUploadCharImg('+idx+', this)">';
+            // 存储base64图片数据
+            if (window._aiVoiceImages) window._aiVoiceImages[idx] = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function voiceGenerate() {
+        var theme = document.getElementById('v_theme').value.trim();
+        var atmo = document.getElementById('v_atmosphere').value.trim();
+        var chars = window._aiVoiceChars || [];
+        if (!chars.length && window._aiVoiceChar) chars = [{character:window._aiVoiceChar, gender:window._aiVoiceGender||'', toneDesc:window._aiVoiceTone||'', reason:window._aiVoiceReason||''}];
+
+        // 收集场景和角色分配
+        var rawScenes = []; // [{scene, charIdx}]
+        if (chars.length > 1) {
+            // 多角色：从每个角色面板收集
+            chars.forEach(function(c, ci) {
+                var panel = document.getElementById('v_charPanel_'+ci);
+                if (!panel) return;
+                panel.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
+                    rawScenes.push({scene: cb.value, charIdx: ci});
+                });
+            });
+        } else {
+            // 单角色：从默认面板收集
+            document.querySelectorAll('#v_sceneGroup input[type="checkbox"]:checked').forEach(function(cb) {
+                rawScenes.push({scene: cb.value, charIdx: 0});
+            });
+        }
+
+        // 合并同一场景的多个角色：同一场景只输出一条，音色人物合并显示
+        var sceneMap = {};
+        rawScenes.forEach(function(s) {
+            if (!sceneMap[s.scene]) sceneMap[s.scene] = [];
+            if (sceneMap[s.scene].indexOf(s.charIdx) === -1) sceneMap[s.scene].push(s.charIdx);
+        });
+        var scenes = Object.keys(sceneMap).map(function(scene) {
+            return { scene: scene, charIdxList: sceneMap[scene] };
+        });
+
+        if (!theme) { alert('请输入主题名称'); return; }
+        if (!atmo) { alert('请输入故事氛围描述'); return; }
+        if (!chars.length) { alert('请先点击「AI 生成音色」匹配配音角色'); return; }
+        if (scenes.length === 0) { alert('请至少选择一个应用场景'); return; }
+
+        var btn = document.getElementById('v_genBtn'); btn.classList.add('loading'); btn.disabled = true;
+        var st = document.getElementById('v_status');
+        try {
+            st.textContent = '🔄 正在同时调用两个 Claude 模型...'; st.className = 'ai-status generating';
+            var normal = scenes.filter(function(s){return !isJackpot(s.scene);});
+            var jp = scenes.filter(function(s){return isJackpot(s.scene);});
+
+            // 构建prompt（两个模型用同一个prompt）
+            var prompt = '';
+            if (normal.length > 0) {
+                var scenesText = normal.map(function(s,i){
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    return (i+1)+'. '+s.scene+' → '+charNames.join(' + ');
+                }).join('\n');
+                var charsDesc = chars.map(function(c,i){ return '角色'+(i+1)+'：'+c.character+'（'+c.gender+'，'+c.toneDesc+'）'; }).join('\n');
+
+                prompt = '要给以【'+theme+'】为主题的老虎机关卡在以下时间节点添加人物配音，根据以下节点给出英文配音，并中文解释每个方案。\n\n' +
+                    '故事氛围为：'+atmo+'\n\n' +
+                    '配音角色设定：\n'+charsDesc+'\n\n' +
+                    '节点及对应角色（如果一个节点标注了多个角色，表示该节点由多个角色一起说同一句台词）：\n'+scenesText+'\n\n' +
+                    '【严格字数限制】英文配音必须控制在8个英文单词以内！\n' +
+                    '【主题相关性】每句台词都必须包含与【'+theme+'】主题直接相关的意象或词汇，禁止通用台词。\n' +
+                    '【重要】每个节点只输出一条台词。\n\n' +
+                    '具体规则：\n1. 台词以角色第一视角说出\n2. 英文3-8个单词\n3. 中文意译不超过10字\n4. 必须嵌入主题相关词汇\n\n' +
+                    '严格返回JSON数组(不要markdown代码块)：[{"scene":"场景名称","chinese":"中文","english":"English(≤8词)"}]';
+            }
+
+            // 并行调用两个模型
+            st.textContent = '🔄 Claude 双模型生成中 (Sonnet + Haiku)...';
+            var claudePromise = prompt ? callAI(prompt, 'claude-sonnet-4-20250514').catch(function(e){return '[]';}) : Promise.resolve('[]');
+            var gptPromise = prompt ? callAI(prompt, 'gpt-4o-mini').catch(function(e){return '[]';}) : Promise.resolve('[]');
+            var results = await Promise.all([claudePromise, gptPromise]);
+
+            // 解析结果并构建entries
+            function parseAndBuild(raw) {
+                var all = [];
+                var result = null;
+                try { result = JSON.parse(raw); } catch(e) { var m = raw.match(/\[[\s\S]*?\]/); if(m) result = JSON.parse(m[0]); }
+                normal.forEach(function(s) {
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    var toneDescs = s.charIdxList.map(function(ci){ return (chars[ci]||chars[0]).toneDesc; });
+                    var voiceCharStr = charNames.length > 1 ? charNames.join(' + ') + ' 一起说' : charNames[0];
+                    var voiceToneStr = toneDescs.length > 1 ? toneDescs.join(' / ') : toneDescs[0];
+                    var f = Array.isArray(result) ? result.find(function(g){return g.scene===s.scene;}) : null;
+                    all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:voiceToneStr, chinese:f?f.chinese:'', english:f?f.english:''});
+                });
+                jp.forEach(function(s) {
+                    var charNames = s.charIdxList.map(function(ci){ var c=chars[ci]||chars[0]; return c.character+'('+c.gender+')'; });
+                    var toneDescs = s.charIdxList.map(function(ci){ return (chars[ci]||chars[0]).toneDesc; });
+                    var voiceCharStr = charNames.length > 1 ? charNames.join(' + ') + ' 一起说' : charNames[0];
+                    var cn = getJackpotText(s.scene);
+                    all.push({scene:s.scene, voiceCharacter:voiceCharStr, voiceTone:toneDescs.join(' / '), chinese:cn, english:cn});
+                });
+                return all;
+            }
+
+            voiceEntries.claude = parseAndBuild(results[0]);
+            voiceEntries.gpt = parseAndBuild(results[1]);
+            voiceRenderTable();
+            st.textContent = '✅ 双模型生成完成！左边 Sonnet，右边 Haiku'; st.className = 'ai-status done';
+            showToast('✨ Claude 双版本已生成 (Sonnet / Haiku)');
+        } catch (err) { st.textContent = '❌ '+err.message; st.className = 'ai-status error'; }
+        finally { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    async function voiceExport(modelKey) {
+        var entries = voiceEntries[modelKey] || [];
+        if (!entries.length) { alert('没有可导出的配音内容，请先生成'); return; }
+        var theme = document.getElementById('v_theme').value.trim();
+        var atmo = document.getElementById('v_atmosphere').value.trim();
+        var chars = window._aiVoiceChars || [];
+        var charImages = window._aiVoiceImages || [];
+        var modelLabel = modelKey === 'claude' ? 'Claude Sonnet' : 'Claude Haiku';
+        try {
+            var wb = new ExcelJS.Workbook(); var ws = wb.addWorksheet('配音需求');
+            ws.columns = [{width:8},{width:26},{width:36},{width:28},{width:18},{width:18},{width:18}];
+            var bf={name:'Microsoft YaHei',size:11}, bld={name:'Microsoft YaHei',size:11,bold:true}, tf={name:'Microsoft YaHei',size:12,bold:true};
+            var al={vertical:'middle',horizontal:'left',wrapText:true}, bd={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
+
+            // Row 1: 配音人物描述标题
+            ws.mergeCells('A1:G1'); ws.getRow(1).height=20;
+            ws.getCell('A1').value='配音人物描述：'; ws.getCell('A1').font=bld;
+
+            // Row 2: 故事氛围
+            ws.mergeCells('A2:G2'); ws.getRow(2).height=40;
+            ws.getCell('A2').value='整体氛围：'+atmo; ws.getCell('A2').font=bf; ws.getCell('A2').alignment=al;
+
+            // Row 3: 角色音色信息行
+            var row3 = ws.getRow(3); row3.height = 30;
+            if (chars.length > 0) {
+                var charInfos = chars.map(function(c){ return '音色人物：'+c.gender+'，'+c.character+'\n音色描述：'+c.toneDesc; });
+                // 每个角色占两列左右显示
+                for (var ci=0; ci<chars.length; ci++) {
+                    var colStart = 1 + ci * 2;
+                    if (colStart+1 <= 7) {
+                        ws.getCell(3, colStart).value = charInfos[ci];
+                        ws.getCell(3, colStart).font = bf;
+                        ws.getCell(3, colStart).alignment = al;
+                    }
+                }
+            }
+
+            // Row 4: 角色图片行（高度大一点放图片）
+            var imgRow = 4;
+            ws.getRow(imgRow).height = 100;
+            for (var ci=0; ci<chars.length; ci++) {
+                if (charImages[ci]) {
+                    try {
+                        var base64 = charImages[ci].split(',')[1];
+                        var ext = charImages[ci].match(/data:image\/(\w+)/);
+                        var imgId = wb.addImage({ base64: base64, extension: ext ? ext[1] : 'png' });
+                        var colStart = ci * 2;
+                        ws.addImage(imgId, { tl:{col:colStart, row:imgRow-1}, ext:{width:120, height:90} });
+                    } catch(e) { /* 图片添加失败则跳过 */ }
+                }
+            }
+
+            // Row 5: 空行
+            ws.getRow(5).height = 10;
+
+            // Row 6: 表头
+            var dataStartRow = 6;
+            var hdr=['序号','中文内容','内容（翻译）','应用场景','音色人物','音色描述','备注'];
+            var hr=ws.getRow(dataStartRow); hr.height=22;
+            hdr.forEach(function(h,i){var c=hr.getCell(i+1); c.value=h; c.font=bld; c.alignment={vertical:'middle',horizontal:'center',wrapText:true}; c.border=bd; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE8D44D'}};});
+
+            // Row 7+: 数据行
+            entries.forEach(function(e,i){
+                var row=ws.getRow(dataStartRow+1+i); row.height=20;
+                [i+1, e.chinese||'', e.english||'', e.scene, e.voiceCharacter||'', e.voiceTone||'', ''].forEach(function(v,j){
+                    var c=row.getCell(j+1); c.value=v; c.font=bf; c.alignment=al; c.border=bd;
+                });
+                row.getCell(1).alignment={vertical:'middle',horizontal:'center'};
+            });
+
+            var buf = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配音需求文档('+modelLabel+').xlsx');
+            showToast('✅ '+modelLabel+' 版本文档已下载！');
+        } catch(err) { alert('导出失败：'+err.message); }
+    }
+
+    // =============================================
+    // 配乐模块
+    // =============================================
+    function musicAdjustCount(d) {
+        var input = document.getElementById('m_count');
+        input.value = Math.max(1, Math.min(10, parseInt(input.value) + d));
+        musicUpdateSections(); musicUpdateHint();
+    }
+    function musicUpdateHint() {
+        var c = parseInt(document.getElementById('m_count').value) || 3;
+        var h = document.getElementById('m_gradientHint');
+        if (c===1) h.textContent='情绪梯度：仅一段配乐';
+        else if (c===2) h.textContent='情绪梯度：高触发 > BASE';
+        else if (c===3) h.textContent='情绪梯度：最高触发 > 中间触发 > BASE';
+        else h.textContent='情绪梯度：第'+c+'段(最强) > ... > 第2段 > 第1段(BASE)';
+    }
+    function musicIntLevel(i,t){if(t===1)return'mid';var r=i/(t-1);return r<0.4?'low':r<0.75?'mid':'high';}
+    function musicIntLabel(i,t){if(t===1)return'基础';var r=i/(t-1);return r===0?'平静':r<0.4?'轻快':r<0.75?'激昂':'高潮';}
+    function musicDefaultScene(i,t){if(t===1)return'Base';if(i===0)return'Base';if(t===2)return'触发';if(t===3)return i===1?'单、双触发':'三触发';if(i===t-1)return'Super Free';if(i===1)return'Free Games';return'触发'+i;}
+
+    function musicUpdateSections() {
+        var count = parseInt(document.getElementById('m_count').value) || 3;
+        var container = document.getElementById('m_sections');
+        var existing = [];
+        container.querySelectorAll('.music-section').forEach(function(s) {
+            existing.push({scene: s.querySelector('.scene-name')?s.querySelector('.scene-name').value:'', emotion: s.querySelector('.emotion-desc')?s.querySelector('.emotion-desc').value:''});
+        });
+        container.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+            var lv=musicIntLevel(i,count), lb=musicIntLabel(i,count);
+            var sc=(existing[i]&&existing[i].scene)?existing[i].scene:musicDefaultScene(i,count);
+            var em=(existing[i]&&existing[i].emotion)?existing[i].emotion:'';
+            var div=document.createElement('div'); div.className='music-section';
+            div.innerHTML='<div class="section-header"><div class="section-number intensity-'+lv+'">'+(i+1)+'</div><span class="section-title">第 '+(i+1)+' 段配乐</span><span class="intensity-badge badge-'+lv+'">情绪：'+lb+'</span></div><div class="scene-input"><label>使用场景名称</label><input type="text" class="scene-name" value="'+sc+'"></div><div class="scene-input"><label>需求情绪描述</label><textarea class="emotion-desc" placeholder="AI将自动生成，也可手动输入...">'+em+'</textarea></div>';
+            container.appendChild(div);
+        }
+    }
+
+    async function musicAutoGenerate() {
+        var theme = document.getElementById('m_theme').value.trim();
+        var count = parseInt(document.getElementById('m_count').value) || 3;
+        if (!theme) { alert('请先输入主题名称'); return; }
+        var btn = document.getElementById('m_aiBtn'); btn.classList.add('loading'); btn.disabled = true;
+        var st = document.getElementById('m_status');
+        try {
+            st.textContent='🔄 正在生成整体氛围描述...'; st.className='ai-status generating';
+            var atmo = await callAI('你是老虎机游戏创意策划。为主题"'+theme+'"写一段整体氛围描述(150-250字)。要求：描述世界观和视觉场景，有画面感，融入转动、财富、宝藏等老虎机隐喻。直接输出文字，不加标题。');
+            document.getElementById('m_atmosphere').value = atmo.trim();
+            document.getElementById('m_atmoTag').style.display = 'inline-block';
+            musicUpdateSections();
+            var sEls = document.querySelectorAll('#m_sections .music-section');
+            var names = []; for(var i=0;i<sEls.length;i++) names.push(sEls[i].querySelector('.scene-name').value);
+            var scenesStr = names.map(function(n,i){return '第'+(i+1)+'段:"'+n+'"';}).join('、');
+            st.textContent='🔄 正在生成各段配乐情绪描述...';
+            var raw = await callAI('你是老虎机音乐策划。主题"'+theme+'"，氛围：'+atmo.trim().substring(0,200)+'。\n为'+count+'段配乐写情绪描述，场景：'+scenesStr+'。\n要求：1.情绪从第1段到第'+count+'段逐渐增强 2.第1段平静舒缓 3.最后一段全面爆发 4.每段写具体乐器、节奏、情绪(100-180字) 5.贴合主题\n严格返回JSON数组(不要markdown代码块)：[{"scene":"名称","emotion":"描述"}]');
+            var emotions = null;
+            try { emotions = JSON.parse(raw); } catch(e) { var m=raw.match(/\[[\s\S]*?\]/); if(m) emotions=JSON.parse(m[0]); }
+            if (Array.isArray(emotions)) {
+                for (var i=0;i<Math.min(emotions.length,sEls.length);i++) {
+                    sEls[i].querySelector('.emotion-desc').value = emotions[i].emotion||'';
+                    if(emotions[i].scene) sEls[i].querySelector('.scene-name').value = emotions[i].scene;
+                }
+            }
+            document.getElementById('m_sectionsTag').style.display='inline-block';
+            st.textContent='✅ 生成完成！可手动修改后导出'; st.className='ai-status done';
+            showToast('✨ AI 已生成所有描述');
+        } catch(err) { st.textContent='❌ '+(err.message||'生成失败'); st.className='ai-status error'; }
+        finally { btn.classList.remove('loading'); btn.disabled=false; }
+    }
+
+    async function musicGenerateExcel() {
+        var theme = document.getElementById('m_theme').value.trim();
+        var atmosphere = document.getElementById('m_atmosphere').value.trim();
+        var count = parseInt(document.getElementById('m_count').value) || 3;
+        if (!theme) { alert('请输入主题名称'); return; }
+        if (!atmosphere) { alert('请输入整体氛围描述（或点击AI智能生成）'); return; }
+        var sections = [];
+        var els = document.querySelectorAll('#m_sections .music-section');
+        for (var i=0;i<els.length;i++) {
+            var s=els[i].querySelector('.scene-name').value.trim(), e=els[i].querySelector('.emotion-desc').value.trim();
+            if(!e){alert('请填写第'+(i+1)+'段的需求情绪描述');return;}
+            sections.push({scene:s||('场景'+(i+1)),emotion:e});
+        }
+        var grad = count===1?'仅BASE':sections.slice().reverse().map(function(s){return s.scene;}).join(' > ');
+        var wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('Sheet1');
+        ws.columns=[{width:9},{width:15},{width:42},{width:76},{width:41}];
+        var bf={name:'Microsoft YaHei',size:14}, bld={name:'Microsoft YaHei',size:14,bold:true};
+        var al={vertical:'middle',horizontal:'left',wrapText:true}, bd={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}};
+        var sf={type:'pattern',pattern:'solid',fgColor:{argb:'FF92D050'}};
+        ws.getRow(1).height=28; ws.mergeCells('B1:D1'); ws.getCell('B1').value='主题：'+theme; ws.getCell('B1').font=bld; ws.getCell('B1').alignment=al;
+        ws.getRow(2).height=28; ws.mergeCells('B2:D2'); ws.getCell('B2').value='配乐数量：'+count; ws.getCell('B2').font=bld; ws.getCell('B2').alignment=al;
+        ws.getRow(3).height=200; ws.mergeCells('C3:D3'); ws.getCell('B3').value='氛围描述：'; ws.getCell('B3').font=bld; ws.getCell('B3').alignment=al; ws.getCell('C3').value=atmosphere; ws.getCell('C3').font=bf; ws.getCell('C3').alignment=al;
+        ws.getRow(4).height=28; ws.mergeCells('B4:D4'); ws.getCell('B4').value='情绪梯度要求：'+grad; ws.getCell('B4').font=bld; ws.getCell('B4').alignment=al;
+        ws.getRow(5).height=20; ws.getRow(6).height=28;
+        ['使用场景','需求情绪','效果图'].forEach(function(h,i){var c=ws.getCell(['B6','C6','D6'][i]); c.value=h; c.font=bld; c.alignment=al; c.border=bd;});
+        sections.forEach(function(s,i){
+            var r=7+i; ws.getRow(r).height=200;
+            ws.getCell('B'+r).value=s.scene; ws.getCell('B'+r).font=bld; ws.getCell('B'+r).alignment=al; ws.getCell('B'+r).border=bd; ws.getCell('B'+r).fill=sf;
+            ws.getCell('C'+r).value=s.emotion; ws.getCell('C'+r).font=bf; ws.getCell('C'+r).alignment=al; ws.getCell('C'+r).border=bd;
+            ws.getCell('D'+r).value=''; ws.getCell('D'+r).border=bd; ws.getCell('D'+r).alignment=al;
+        });
+        ws.getCell('B'+(8+sections.length)).value='其他场景'; ws.getCell('B'+(8+sections.length)).font=bld; ws.getCell('B'+(8+sections.length)).alignment=al;
+        var buf=await wb.xlsx.writeBuffer();
+        saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'CTS'+theme+'：配乐需求文档.xlsx');
+        showToast('✅ 配乐文档已下载！');
+    }
+
+    // =============================================
+    // 页面初始化
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('v_customInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){e.preventDefault(); voiceAddCustomScene();} });
+        musicUpdateSections();
+        document.getElementById('m_count').addEventListener('change', musicUpdateSections);
+        document.getElementById('m_count').addEventListener('input', musicUpdateHint);
+        // 支持从首页用 #voice / #music 直达对应 tab
+        var h = (location.hash || '').replace('#', '');
+        if (h === 'music' || h === 'voice') switchTab(h);
+    });
+    </script>
+</body>
+</html>

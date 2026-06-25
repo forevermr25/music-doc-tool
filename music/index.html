@@ -6,6 +6,7 @@
     <title>老虎机配乐需求文档生成器</title>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="/shared/ai.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -89,7 +90,7 @@
 
         <div class="card">
             <div class="info-tip">
-                输入主题名称和配乐数量，点击「AI 智能生成」即可。首次使用会弹出授权窗口，点击允许即可（完全免费，无需注册、无需API Key）。
+                输入主题名称和配乐数量，点击「AI 智能生成」即可（由本地服务调用 AWS Bedrock / Claude 生成，需先启动本地服务器）。
             </div>
             <div class="form-group">
                 <label for="theme">🎨 主题名称</label>
@@ -129,56 +130,11 @@
 
     <script>
     // =============================================
-    // AI Engine - 动态加载 Puter.js（避免页面被Puter接管）
+    // AI Engine - 走后端代理 -> AWS Bedrock (Claude)
+    // callAI(prompt, model) 由 /shared/ai.js 提供。
     // =============================================
-    let aiReady = false;
-    let puterLoading = false;
 
-    // 动态加载Puter.js（仅在用户点击生成时才加载）
-    function loadPuterJS() {
-        return new Promise(function(resolve, reject) {
-            if (aiReady) { resolve(); return; }
-            if (puterLoading) {
-                // 正在加载中，等待完成
-                var waitTimer = setInterval(function() {
-                    if (aiReady) { clearInterval(waitTimer); resolve(); }
-                }, 300);
-                setTimeout(function() { clearInterval(waitTimer); reject(new Error('加载超时')); }, 20000);
-                return;
-            }
-            puterLoading = true;
-            var script = document.createElement('script');
-            script.src = 'https://js.puter.com/v2/';
-            script.onload = function() {
-                // 等待puter对象初始化
-                var checkTimer = setInterval(function() {
-                    if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
-                        aiReady = true;
-                        clearInterval(checkTimer);
-                        resolve();
-                    }
-                }, 300);
-                setTimeout(function() { clearInterval(checkTimer); if (!aiReady) reject(new Error('Puter.js初始化超时，请刷新页面重试')); }, 15000);
-            };
-            script.onerror = function() { puterLoading = false; reject(new Error('Puter.js加载失败，请检查网络/VPN')); };
-            document.head.appendChild(script);
-        });
-    }
-
-    async function callAI(prompt) {
-        await loadPuterJS();
-        var response = await puter.ai.chat(prompt, {model:'gpt-4o-mini', temperature:0.8});
-        if (typeof response === 'string') return response;
-        if (response && response.message && response.message.content) {
-            var c = response.message.content;
-            if (Array.isArray(c)) return c.map(function(x){return x.text||x;}).join('');
-            return c;
-        }
-        if (response && response.text) return response.text;
-        return String(response);
-    }
-
-    // 页面加载时初始化UI（不加载Puter.js）
+    // 页面加载时初始化UI
     document.addEventListener('DOMContentLoaded', function() {
         updateSections();
         document.getElementById('musicCount').addEventListener('change', updateSections);

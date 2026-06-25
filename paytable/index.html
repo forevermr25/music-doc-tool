@@ -752,6 +752,7 @@ h1 {
 </style>
 </head>
 <body>
+<a href="/" style="position:fixed;top:16px;left:16px;z-index:999;color:#8892b0;text-decoration:none;font-size:0.9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;">← 首页</a>
 <div class="container">
   <h1>老虎机Paytable需求文档生成器</h1>
   <p class="subtitle">导入玩法文档 · AI智能解析 · 中英对照 · 一键导出</p>
@@ -1948,91 +1949,33 @@ function parse(allLines) {
 }
 
 // ============================================================
-// AI Engine: Puter.js Loading and AI Model Calling
+// AI Engine: 走后端代理 -> AWS Bedrock (Claude)
+// callAI(prompt, model) 直接请求 /api/ai/chat（见下方本地实现）。
+// loadPuterJS 保留为兼容性空实现，避免改动 generatePaytable 流程。
 // ============================================================
 
-/**
- * loadPuterJS()
- * Dynamically loads puter.js v2 from CDN with a 30-second timeout.
- * Returns a Promise that resolves when puter.js is ready.
- * If already loaded (window.puter exists), resolves immediately.
- */
 function loadPuterJS() {
-  return new Promise(function(resolve, reject) {
-    // If already loaded, resolve immediately
-    if (window.puter && window.puter.ai) {
-      resolve();
-      return;
-    }
-
-    // Check protocol - puter.js requires HTTP/HTTPS
-    if (window.location.protocol === 'file:') {
-      reject(new Error('Puter.js不支持file://协议，请通过HTTP服务器访问。\n\n请双击运行"启动服务器.bat"，然后访问:\nhttp://localhost:8080/paytable/'));
-      return;
-    }
-
-    var script = document.createElement('script');
-    script.src = 'https://js.puter.com/v2/';
-    script.type = 'text/javascript';
-
-    // 30-second timeout
-    var timeoutId = setTimeout(function() {
-      script.onload = null;
-      script.onerror = null;
-      reject(new Error('Puter.js加载超时，请检查网络'));
-    }, 30000);
-
-    script.onload = function() {
-      clearTimeout(timeoutId);
-      // puter.js may need time to initialize after script loads
-      var checkInterval = setInterval(function() {
-        if (window.puter && window.puter.ai) {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 200);
-      // Safety timeout for initialization
-      setTimeout(function() {
-        clearInterval(checkInterval);
-        if (window.puter && window.puter.ai) {
-          resolve();
-        } else {
-          reject(new Error('Puter.js初始化超时，请刷新重试'));
-        }
-      }, 15000);
-    };
-
-    script.onerror = function() {
-      clearTimeout(timeoutId);
-      reject(new Error('Puter.js加载失败'));
-    };
-
-    document.head.appendChild(script);
-  });
+  return Promise.resolve();
 }
 
 /**
  * callAI(prompt, model)
- * Calls puter.js AI chat with the specified model.
- * Returns a Promise resolving to the AI response text.
+ * 调用后端代理 -> Bedrock Claude，返回文本。
  */
 function callAI(prompt, model) {
-  if (!window.puter || !window.puter.ai) {
-    return Promise.reject(new Error('Puter.js未加载完成，请稍后重试'));
-  }
-  return puter.ai.chat(prompt, { model: model }).then(function(response) {
-    // puter.ai.chat returns a response object; extract text content
-    if (typeof response === 'string') {
-      return response;
+  return fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt, model: model })
+  }).then(function(resp) {
+    if (!resp.ok) {
+      return resp.json().catch(function(){ return {}; }).then(function(e) {
+        throw new Error(e.error || ('AI 服务错误 (' + resp.status + ')'));
+      });
     }
-    if (response && response.message && response.message.content) {
-      return response.message.content;
-    }
-    if (response && typeof response.text === 'string') {
-      return response.text;
-    }
-    // Fallback: try to get string representation
-    return String(response);
+    return resp.json();
+  }).then(function(data) {
+    return data.text;
   });
 }
 
